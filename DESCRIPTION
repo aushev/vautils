@@ -1,0 +1,14 @@
+Package: vautils
+Type: Package
+Title: handy little functions
+Version: 0.1.0
+Author: Vasily Aushev
+Maintainer: Vasily Aushev <vasily@aushev.name>
+Description: bunch of stuff
+    under development
+License: to be defined
+Encoding: UTF-8
+LazyData: true
+Imports:
+    magrittr,
+    data.table

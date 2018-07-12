@@ -1,0 +1,139 @@
+testab <- function(){
+  print ('a' %+% 'b')
+}
+
+
+
+cs <- function(inputstr, sep=",", fix=T, nonewlines=T){
+  if (missing(sep) & grepl(',', inputstr)==F & grepl(' ', inputstr)==T) {sep=" ";}
+  if (nonewlines) inputstr <- gsub("[\n\r]+", sep, inputstr);
+  rez <- unlist(strsplit(inputstr, sep, fixed=fix));
+  return(rez[rez!=""]);
+}
+
+printcs <- cs1 <- function(input){paste0(cs(input), collapse = ' ')}
+
+
+rightstr <- function(x, n){substr(x, nchar(x)-n+1, nchar(x))}
+substrRight <- rightstr
+
+substr1 <- function(inpStr) {substring(inpStr,1,1)}
+
+strpad <- function(inpstr,padW,padSide='right'){
+  pads <- strrep(' ',padW - nchar(inpstr));
+  switch(padSide, right = paste0(inpstr,pads), left = paste0(pads, inpstr))
+}
+
+
+# sub_str <- function(inputstr, start=NA, stop=NA, len=NA){
+#   tmp = NA
+#   if (tmp>0) print(">!")
+# }
+
+# detach("package:vautils", unload=TRUE)
+# detach("package:ggplot2", unload=TRUE)
+# library(vautils)
+# f2()
+# detach("package:vautils", unload=TRUE)
+# library(ggplot2)
+# library(vautils)
+# f2()
+#
+
+# "+" = function(x,y) {
+#   if(is.character(x) || is.character(y)) {
+#     return(paste(x , y, sep=""))
+#   } else {
+#     .Primitive("+")(x,y)
+#   }
+# }
+
+
+`%+%` <- function(...) UseMethod("%+%")
+`%+%.character` <- paste0
+`%+%.default` <- function (arg1, arg2){
+  e <- parent.env(getEnvByName(.GlobalEnv,'package:vautils'));
+  if (exists('%+%', envir = e)) get('%+%',envir = e)(arg1,arg2);
+}
+
+# %+%: strings concatenation
+# "%+%" <- function(arg1, arg2){
+#   if (is.character(arg1) & is.character(arg2)) {
+#     paste0(arg1, arg2);
+#   } else {
+#     e <- parent.env(parent.env(.GlobalEnv));
+# #    cat(".G:",environmentName(e),'\n')
+#     while (environmentName(e) != 'R_EmptyEnv' & !exists('%+%', envir = e)) {
+# #      print(environmentName(e))
+#       e <- parent.env(e);
+#     } # e. while
+#     if (environmentName(e) != 'R_EmptyEnv'){
+#       old.func <- get('%+%',envir = e)
+#       old.func(arg1,arg2);
+#     }
+#   } # e. else
+# }
+
+prn <- function(...){ # just print(..., collapse=""); - with CRLF at the end
+  arglist <- list(...);
+  cat(paste0(unlist(arglist), collapse=""),'\n');
+  invisible(NULL);
+}
+
+prnc <- function(...){ # just print(..., collapse=""); - no CRLF at the end
+  arglist <- list(...);
+  cat(paste0(unlist(arglist), collapse=""));
+  invisible(NULL);
+}
+
+
+ask <- function(...){
+  readline(prompt=paste0(unlist(list(...)), collapse=""));
+}
+
+
+
+deperc <- function(str_perc){
+  return(as.numeric(gsub('([\\d\\.\\+\\-]*)%','\\1',str_perc))/100);
+}
+
+
+# removes trailing slash (for dir path) ####
+chops <- function(inputstr){
+  return(gsub("(.*)/", "\\1", inputstr));
+}
+
+# chop character
+chopLeft <- function(inpstr,n=1L){
+  return(substring(inpstr,n+1L));
+}
+
+chopRight <- function(inpstr,n=1L){
+  return(substring(inpstr,1,nchar(inpstr)-n));
+}
+
+
+
+
+askfilename <- function(fnInput=NULL, allowEmpty=F, prompt=NULL){
+  if (!is.null(prompt)) cat(prompt);
+
+  while (is.null(fnInput) || !file.exists(fnInput)) {
+    cat("File not found:", fnInput);
+
+    if (allowEmpty==T) {
+      ans <- ask("File not found: ", fnInput, ".\n Enter another file name, or space (\" \") to leave it empty, or press Enter to try again, or ESC to exit: ");
+      if (ans!="") {fnInput <- ans;}
+      if (ans==" ") {return("");}
+    } else {
+      ans <- ask("File not found: ", fnInput, ".\n Enter another file name, or press Enter to try again, or ESC to exit: ");
+      if (ans!="") {fnInput <- ans;}
+    } # end else
+  } # end while
+  fnInput <- gsub('\\\\','/',fnInput);
+  return(fnInput);
+}
+
+
+asc <- function(x) { strtoi(charToRaw(x),16L) }
+chr <- function(n) { rawToChar(as.raw(n)) }
