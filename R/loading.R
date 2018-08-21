@@ -2,6 +2,10 @@ testX <- function(){
   print('Running! 2');
 }
 
+catV <- function(..., verbose=T){
+  if (verbose) return;
+  cat(...);
+}
 
 
 # from list of locations, tries to load source
@@ -32,41 +36,39 @@ loadAny <- function(...){
 } # e. loadAny()
 
 
-req <- function(packagename, verbose=T){
-  if (length(packagename)>1) { # recursively process vector/list
-    if (verbose) cat('Requested', length(packagename), 'packages:', paste0(packagename, collapse = ','),'\n');
-    ndx <- 0L;
-    for (eachpackagename in packagename) {
-      ndx <- ndx + 1L;
-      ndx_s <- paste0('(', ndx, ')');
-      if (verbose) cat(ndx_s);
-      req(eachpackagename);
-    }
-    if (verbose) cat("Finished loading", length(packagename), "packages.\n");
-    return(T);
-  }
+reqS <- function(packagename, verbose=T, tryBioconductor=T){
+  catV <- ifelse(verbose,cat,function(...){})
+  stopifnot(length(packagename)==1L);
+  stopifnot(class(packagename)=='character');
 
-  packagename <- unlist(strsplit(packagename, " ", fixed=T));
-  if (length(packagename)>1) {
-    if (verbose) cat('Splitting package name:', length(packagename), "names.\n");
-    req(packagename);
-    return(T);
-  }
+  catV('Loading',packagename,'...')
 
-  if (verbose) cat(" Checking package ", packagename, "... ");
-  if(packagename %in% rownames(installed.packages()) == TRUE) {
-    if (verbose) cat('already installed... ')
+  # first, check if the package is installed at all:
+  if(packagename %in% rownames(installed.packages())) {
+    catV('already installed... ')
   } else {
-    if (verbose) cat('Not installed! Trying to install... \n');
+    catV('Not installed! Trying to install... \n');
     install.packages(packagename);
-    if (verbose) cat("installation finished, checking... ");
-    if(packagename %in% rownames(installed.packages()) == FALSE) {warning('Still failed!\n'); return(FALSE);}
-  }
+    catV("installation finished, checking... ");
+    if(packagename %in% rownames(installed.packages()) == FALSE) {
+      if (tryBioconductor==T) {
+        catV(' Trying from Bioconductor... ')
+        if (!exists('biocLite')) source("https://bioconductor.org/biocLite.R");
+        biocLite(packagename);
+       } # e.tryBioconductor
+    }
 
+    if(packagename %in% rownames(installed.packages()) == FALSE){
+      warning('Still failed!\n'); return(FALSE);
+    }
+  } # e. else
+
+  # now check if it is already loaded:
   if (paste0('package:',packagename) %in% search()) {
-    if (verbose) cat('already loaded!\n'); return(TRUE);
+    catV('already loaded!\n'); return(TRUE);
   }
 
+  # if it is installed but not loaded:
   reqrez <- TRUE;
   tryrez <- tryCatch(
     expr    = {reqrez <<- require(packagename, character.only = T);},
@@ -81,12 +83,57 @@ req <- function(packagename, verbose=T){
       reqrez <<- FALSE;
     },
     finally = cat("finished with", packagename, ".\n")
-  );
-  if (verbose) cat('\ntryrez: ', tryrez, 'reqrez: ', reqrez, '\n');
+  ); # e. tryCatch()
+
+  catV('\ntryrez: ', tryrez, 'reqrez: ', reqrez, '\n');
   #if (is.null(reqrez)) reqrez <- FALSE;
 
-  if (reqrez) {if (verbose) cat("Success!\n"); return(T);}
+  if (tryrez) {catV("Success!\n"); return(T);}
+  if (tryrez==F) {cat("Failed!\n"); return(F);}
+
 }
+
+
+req <- function(packagename, verbose=T, tryBioconductor=T){
+  catV <- ifelse(verbose,cat,function(...){})
+  pkname.subs <- substitute(packagename);
+  catV('Loading [',class(pkname.subs),']',sep='')
+  if (class(pkname.subs)=='name') {
+    catV(" It's a name! ");
+    if (exists(deparse(pkname.subs))){
+      cat(" And it exists!");
+      packagename <- eval.parent(pkname.subs);
+    } else {
+      cat(" But it doesn't exist!");
+      packagename <- deparse(pkname.subs);
+    }
+    #,);
+  }
+  #if (class(pkname.subs)!='character') packagename <- deparse(pkname.subs);
+  catV(' [',packagename,']\n',sep='')
+
+  if (length(packagename)>1) { # recursively process vector/list
+    catV('Requested', length(packagename), 'packages:', paste0(packagename, collapse = ','),'\n');
+    ndx <- 0L;
+    for (eachpackagename in packagename) {
+      ndx <- ndx + 1L;
+      ndx_s <- paste0('(', ndx, ')');
+      catV(ndx_s);
+      reqS(eachpackagename);
+    }
+    catV("Finished loading", length(packagename), "packages.\n");
+    return(T);
+  }
+
+  packagename <- unlist(strsplit(packagename, " ", fixed=T));
+  if (length(packagename)>1) {
+    catV('Splitting package name:', length(packagename), "names.\n");
+    req(packagename);
+    return(T);
+  }
+
+  reqS(packagename,verbose = verbose,tryBioconductor=tryBioconductor);
+} # e. req()
 
 reload <- function(pkgName){
   pkgNameP <- paste0('package:',pkgName);
@@ -98,7 +145,7 @@ reload <- function(pkgName){
     #detach(name = pkgNameP, unload=TRUE);
     unloadNamespace(pkgName);
     }
-  req(pkgName);
+  reqS(pkgName);
 }
 
 
