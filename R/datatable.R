@@ -778,6 +778,11 @@ cnames <- function(dtIn) return(c(names(dtIn))); # copy names() to avoid updates
 
 
 setfirstcol <- function(dtIn, firstcols){
+  missingcols <- firstcols %-% names(dtIn)
+  if (length(missingcols)>0){
+    warning('These columns are missing and will be ignored: ',missingcols);
+  }
+  firstcols <- intersect(firstcols,names(dtIn));
   setcolorder(dtIn, c(firstcols, (names(dtIn) %-% firstcols))  )
 }
 

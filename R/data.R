@@ -56,9 +56,18 @@ show.envs.plus <- function(){
   return(setdiff(arg1, arg2));
 }
 
+"%--%" <- function(arg1, arg2){
+  return(setdiff(arg2, arg1));
+}
+
 # intersect
 "%&%" <- function(arg1, arg2){return(intersect(arg1, arg2));}
 
+"%!=%" <- function(arg1,arg2){
+  eq <- (arg1!=arg2);
+  eq[is.na(eq)] <- T;
+  return(eq)
+}
 
 
 "%~%" <- function(arg1, arg2){
