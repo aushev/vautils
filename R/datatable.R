@@ -599,6 +599,11 @@ dtcleannames <- function(dtIn, worknames=names(dtIn),...){
   invisible(dtIn);
 }
 
+dtgsubnames <- function(dtIn, from, to, ...){
+  setnames(dtIn, gsub(from,to,names(dtIn),...));
+  invisible(dtIn);
+  #print(names(dtIn))
+}
 
 # group records by fields defined in 'bys',
 # then in each group leaves only records
