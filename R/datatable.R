@@ -761,6 +761,7 @@ setnamessp <- function(dtIn, old, new, verbose=T){
     setnames(dtIn, old[foundOld], new[foundOld]);
     if (verbose) {cat(sum(foundOld), ' names changed:\nFrom:', old[foundOld], '\n  to:', new[foundOld], '\n');}
   }
+  invisible(dtIn);
 }
 
 
