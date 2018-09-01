@@ -96,21 +96,22 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T){
 
 req <- function(packagename, verbose=T, tryBioconductor=T){
   catV <- ifelse(verbose,cat,function(...){})
+  catV('\n=======================================================\n');
   pkname.subs <- substitute(packagename);
   catV('Loading [',class(pkname.subs),']',sep='')
   if (class(pkname.subs)=='name') {
-    catV(" It's a name! ");
+    catV(" named variable ");
     if (exists(deparse(pkname.subs))){
-      cat(" And it exists!");
+      cat("exists");
       packagename <- eval.parent(pkname.subs);
     } else {
-      cat(" But it doesn't exist!");
+      cat(" doesn't exist");
       packagename <- deparse(pkname.subs);
     }
     #,);
   }
   #if (class(pkname.subs)!='character') packagename <- deparse(pkname.subs);
-  catV(' [',packagename,']\n',sep='')
+  catV(' [',packagename,']\n',sep=' ')
 
   if (length(packagename)>1) { # recursively process vector/list
     catV('Requested', length(packagename), 'packages:', paste0(packagename, collapse = ','),'\n');

@@ -113,7 +113,8 @@ build_surv_plot <- function(surv.input,inp.field,threshold,form.time,form.evnt,f
   sf1 <- survfit(as.formula('Surv(OS_YRS, isBRCA) ~ this.isHigh'), data=surv.input)
   sf2 <- survfit(as.formula(sform2s), data=surv.input)
 
-  p <-   ggsurvplot(sf1, palette = cs('black red'),
+  p <-   ggsurvplot(sf1, data =  surv.input,
+                    palette = cs('black red'),
                     break.time.by = 5, xlab = 'Time (years)',
                     tables.col = 'strata', risk.table = T, risk.table.pos = 'in', legend = 'none')
 
