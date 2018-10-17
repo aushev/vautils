@@ -436,21 +436,33 @@ reordcols <- function(dtIn, first=NULL, last=NULL) {
 
 
 # deluselesscol: deletes column(s) if they contain only one value (i.e. no diff between records) ####
-deluselesscol <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, padON=F, padW=NULL, padSide='right') {
+deluselesscol <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, padON=F, padW=NULL, padSide='right', verbose=F) {
+  catV <- ifelse(verbose,cat,function(...){})
+  if (!is.data.table(dtIn)){
+    catV('Input is not data.table! ')
+    if (is.data.frame(dtIn)){
+      catV('Converting from data.frame... ');
+      dtIn <- as.data.table(dtIn);
+    } else {stop('Required data.table or data.frame!')}
+  }
   cols2del <- NULL;
   if (padON==T & is.null(padW)) padW <- max(nchar(icolnames));
   for (colname in icolnames) {
+    catV('\n',colname,'... ')
     values <- dtIn[[colname]];
     # (!any(is.na(values)) && all(values==values[1]))
+    if (is.list(values)) {catV('list!!! '); next;}
     if ( all(is.na(values)) || isTRUE(all(values==values[1], na.rm = ignNA))) {
       cols2del <- c(cols2del, colname);
       if (silent==F){
         col_print <- paste0("[", colname, "]");
         padded <- ifelse1(padON==F, col_print, strpad(col_print,padW+2L))
         cat(padded,"is all equal to: ", dtIn[[colname]][1],'\n');
-      }
-    }
+      }# e. not silent
+    } # e. identical
   } # e. for
+  # catV('\nClass:',class(dtIn))
+  catV('\n\nFor deletion:\n', paste0(cols2del,collapse = ' '))
   if (!is.null(cols2del)) dtIn[, (cols2del):=NULL];
   invisible(dtIn);
 } # e. deluselesscol()
@@ -681,10 +693,10 @@ mergefiles <- function(fn_files, fill=T, fn.col=NULL, FUN=fread, ...){
 
 
 
-mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T, ...){
+mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T, recursive = T, ...){
 
   if (is.null(fn.list))
-    fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE)
+    fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE, recursive=recursive)
 
   dt.all <- NULL;
 
@@ -692,7 +704,7 @@ mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T,
     fn.this.show <- ifelse(full.names==T, fn.this, basename(fn.this))
     dt.this <- flexread(fn.this, ...)
     dt.this[, ffn:=fn.this.show]
-    dt.all <- rbind(dt.all, dt.this)
+    dt.all <- rbind(dt.all, dt.this, fill=T)
   }
   invisible(dt.all);
 }

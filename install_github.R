@@ -1,0 +1,1 @@
+install_github("aushev/vautils", auth_token = '066c1212eadad9efc621d6cd480b083356d89f5f')
