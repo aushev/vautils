@@ -34,7 +34,7 @@ tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, ...){
   return(df);
 }
 
-tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, ...){
+tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, ...){
   if (useNA==F | na.rm==T) useNA <- 'no';
   if (useNA==T | na.rm==F) useNA <- 'ifany';
 
@@ -42,12 +42,13 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, ...){
   df1 <- data.frame(table(input, useNA = useNA, ...));
   df1 <- df1[df1$Freq!=0,]
   sum1 <- sum(df1$Freq);
-  df1$FreqP <- percent(df1$Freq/sum1);
+  if (keepP) {df1$FreqP <- percent(df1$Freq/sum1);}
 #  print(names(df));
   names(df1)[names(df1)=='input'] <- name1;
 #  print(order(-df$Freq));
   if (do.sort) df1 <- df1[order(-df1$Freq),];
 #  print(names(df));
+  if (!keepN) {row.names(df1) <- NULL;}
   return(df1);
 }
 
