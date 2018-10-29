@@ -678,11 +678,11 @@ splitcol2rows <- function(dtIn, col2split, sep, req=T){
 
 
 # read all files and merge into one data.table
-mergefiles <- function(fn_files, fill=T, fn.col=NULL, FUN=fread, ...){
+mergefiles <- function(fn.list, fill=T, fn.col=NULL, FUN=fread, ...){
   final.dt <- NULL;
-  for (this.file in fn_files){
-    this.dt <- FUN(this.file, ...); # read file with chosen function: fread() by default
-    if (!is.null(fn.col)) this.dt[,(fn.col):=this.file]; # add column with file name
+  for (fn.this in fn.list){
+    this.dt <- FUN(fn.this, ...); # read file with chosen function: fread() by default
+    if (!is.null(fn.col)) this.dt[,(fn.col):=fn.this]; # add column with file name
     if (!is.null(final.dt)) {
       final.dt <- rbind(final.dt, this.dt, fill=fill);
     } else final.dt <- this.dt;
