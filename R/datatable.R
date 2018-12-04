@@ -112,7 +112,7 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 
 }
 
-flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA, reqFile=T, char=NULL, num=NULL, ...){
+flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA, reqFile=T, char=NULL, num=NULL, filetype=NULL, ...){
   cat('\nOpen ' %+% fnRead);
 
   if (!file.exists(fnRead)){
@@ -121,13 +121,25 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA,
     return(NULL);
   }
 
-  if (substrRight(fnRead,4) %in% cs('xlsx xlsm .xls')) {
+  if (is.null(filetype)){
+    #cat('Trying to guess filetype... ');
+    if (substrRight(fnRead,4) %in% cs('xlsx xlsm .xls')) {
+      filetype <- 'xls';
+    }
+    else if (substrRight(fnRead,8) == 'sas7bdat') {
+      filetype <- 'sas7bdat';
+    }
+    else {filetype <- 'auto';}
+    cat(' as ', filetype);
+  }
+
+  if (filetype=='xls'){
     cat(' with read.xlsx... ');
     req('xlsx', verbose = F);
     rez <- read.xlsx(fnRead, sheetIndex, sheetName, ...);
     rez <- data.table(rez);
   }
-  else if (substrRight(fnRead,8) == 'sas7bdat') {
+  else if (filetype == 'sas7bdat') {
     cat(' with read.sas7bdat... ');
     req('sas7bdat', verbose = F);
     rez <- read.sas7bdat(fnRead);
@@ -137,6 +149,14 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA,
     cat(' with fread... ');
     rez <- fread(fnRead, ...);
   }
+
+  if (!missing(skip) & filetype!='auto'){
+    skip <- as.numeric(skip);
+    if (!isTRUE(skip>0)) error('*skip* argument must be a positive integer');
+    names(rez) <- as.character(unlist(rez[skip,]));
+    rez <- rez[-(1:skip),]
+  }
+
   if (length(rez)>0) cat('Success:', paste(dim(rez),collapse = ' x '));
   if (!is.na(keyby)) setkeyv(rez, keyby)
 
