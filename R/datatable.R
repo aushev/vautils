@@ -150,7 +150,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA,
     rez <- fread(fnRead, ...);
   }
 
-  if (!missing(skip) & filetype!='auto'){
+  if (exists('skip') & filetype!='auto'){
     skip <- as.numeric(skip);
     if (!isTRUE(skip>0)) error('*skip* argument must be a positive integer');
     names(rez) <- as.character(unlist(rez[skip,]));
