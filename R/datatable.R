@@ -115,6 +115,8 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA, reqFile=T, char=NULL, num=NULL, filetype=NULL, ...){
   cat('\nOpen ' %+% fnRead);
 
+  dots <- substitute(list(...));
+
   if (!file.exists(fnRead)){
     if (reqFile) stop('... File not found!\n')
     else warning('... File not found!\n');
@@ -150,10 +152,10 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA,
     rez <- fread(fnRead, ...);
   }
 
-  if (exists('skip') & filetype!='auto'){
-    skip <- as.numeric(skip);
+  if (!is.null(dots$skip) & filetype!='auto'){
+    skip <- as.numeric(dots$skip);
     if (!isTRUE(skip>0)) error('*skip* argument must be a positive integer');
-    names(rez) <- as.character(unlist(rez[skip,]));
+    names(rez) <- sapply(rez[skip,], as.character); #as.character(unlist(rez[skip,]));
     rez <- rez[-(1:skip),]
   }
 
