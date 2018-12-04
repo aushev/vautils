@@ -617,8 +617,9 @@ compcols <- function(inptab1, inptab2){
   }
 }
 
-cleannames <- function(inputnames, dotLeading=T, dotTrailing=T, dotMulti=T, spaceTo=''){
+cleannames <- function(inputnames, dotLeading=T, dotTrailing=T, dotMulti=T, spaceTo='.', dashTo='.'){
   if (!is.na(spaceTo)) inputnames <- (gsub(" +",spaceTo,inputnames));
+  if (!is.na( dashTo)) inputnames <- (gsub(" +",dashTo,inputnames));
   if (dotTrailing==T)  inputnames <- gsub( "\\.+$","",  inputnames); # just remove trailing "."
   if (dotLeading==T)   inputnames <- gsub("^\\.+", "",  inputnames); # just remove trailing "."
   if (dotMulti==T)     inputnames <- gsub( "\\.+", ".", inputnames); # change ".." to "."
