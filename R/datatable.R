@@ -850,7 +850,7 @@ cast.char <- function(inp.dt, cols2cast){
 }
 
 cast.num <- function(inp.dt, cols2cast){
-  return(cast.fun(inp.dt,cols2cast,as.numeric));
+  return(cast.fun(inp.dt,cols2cast,all2num));
 }
 
 cast.factor <- function(inp.dt, cols2cast){

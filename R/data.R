@@ -200,15 +200,20 @@ list <- structure(NA,class="result")
   x
 }
 
-# fac2num() - convert factors to numeric ####
-fac2num <- function(inpdt, cols){
-  for(col in cols){
-    if(col %in% names(inpdt)){
-      inpdt[[col]] <- as.numeric(inpdt[[col]]);
-    }
-  }
-  return(inpdt);
+
+#  convert factors to numeric ####
+fac2num <- function(f) {
+  if (!is.factor(f)) {
+    return(f);
+  } else return(as.numeric(levels(f))[f])
 }
+
+all2num <- function(f) {
+  if (!is.factor(f)) {
+    return(as.numeric(f));
+  } else return(as.numeric(levels(f))[f])
+}
+
 
 # roundC(): rounds all negative to 0, all positive to integer ####
 # ex.: roundC(c(-1, 0.2, 1.5, -3.8))
