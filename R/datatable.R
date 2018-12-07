@@ -619,7 +619,7 @@ compcols <- function(inptab1, inptab2){
   }
 }
 
-cleannames <- function(inputnames, dotLeading='', dotTrailing='', dotMulti=T, forbidden = '- :,+\\/', replTo='.'){
+cleannames <- function(inputnames, dotLeading='', dotTrailing='', dotMulti=T, forbidden = '- :,+\\/()', replTo='.'){
   if (!is.na( forbidden))  inputnames <- gsub('[' %+% forbidden %+% ']',     replTo, inputnames);
   if (!is.na(dotLeading))  inputnames <- gsub('^\\' %+% replTo %+% '+',  dotLeading, inputnames); # just remove leading "."
   if (!is.na(dotTrailing)) inputnames <- gsub( '\\' %+% replTo %+% '+$',dotTrailing, inputnames); # just remove trailing "."
