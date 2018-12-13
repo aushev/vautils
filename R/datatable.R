@@ -619,14 +619,19 @@ compcols <- function(inptab1, inptab2){
   }
 }
 
-cleannames <- function(inputnames, dotLeading='', dotTrailing='', dotMulti=T, forbidden = '- :,+\\/()', replTo='.'){
-  if (!is.na( forbidden))  inputnames <- gsub('[' %+% forbidden %+% ']',     replTo, inputnames);
-  if (!is.na(dotLeading))  inputnames <- gsub('^\\' %+% replTo %+% '+',  dotLeading, inputnames); # just remove leading "."
-  if (!is.na(dotTrailing)) inputnames <- gsub( '\\' %+% replTo %+% '+$',dotTrailing, inputnames); # just remove trailing "."
-  if (dotMulti==T)     inputnames <- gsub('\\' %+% replTo %+% '+', replTo, inputnames); # change ".." to "."
+cleannames <- function(inputnames,
+               forbidden = '[^[:alnum:]_]+', replaceTo='.',
+               leading='', trailing='', multi=T){
+  if (!is.na( forbidden))  inputnames <- gsub(forbidden,     replaceTo, inputnames);
+  if (!is.na(leading))  inputnames <- gsub('^\\' %+% replaceTo %+% '+',  leading, inputnames); # just remove leading "."
+  if (!is.na(trailing)) inputnames <- gsub( '\\' %+% replaceTo %+% '+$',trailing, inputnames); # just remove trailing "."
+  if (multi==T)         inputnames <- gsub( '\\' %+% replaceTo %+% '+', replaceTo,inputnames); # change ".." to "."
 
   inputnames;
 }
+
+
+
 
 dtcleannames <- function(dtIn, worknames=names(dtIn),...){
   setnames(dtIn, worknames, cleannames(worknames,...));
