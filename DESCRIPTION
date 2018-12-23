@@ -1,8 +1,8 @@
 Package: vautils
 Type: Package
 Title: handy little functions
-Date: 2018-12-13
-Version: 0.1.1.19
+Date: 2018-12-22
+Version: 0.1.1.20
 Author: Vasily Aushev
 Maintainer: Vasily Aushev <vasily@aushev.name>
 Description: bunch of stuff under development
