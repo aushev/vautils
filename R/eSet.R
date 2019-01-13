@@ -109,3 +109,19 @@ es.rename.s <- function(es, kcol){ # rename samples
   sampleNames(es)  <- pData(es)[[kcol]]
   invisible(es)
 }
+
+
+debugES <- function(es){
+  tmpX <- exprs(es.raw)
+  tmpF <- fData(es.raw)
+  tmpP <- pData(es.raw)
+  
+  assign('tmpF',tmpF,pos = 1L)
+  assign('tmpP',tmpP,pos = 1L)
+  assign('tmpX',tmpX,pos = 1L)
+  
+  View(tmpX)
+  View(tmpF)
+  View(tmpF)
+  
+}
