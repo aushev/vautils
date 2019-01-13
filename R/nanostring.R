@@ -63,7 +63,7 @@ apply.PCF <- function(es, extract=TRUE){
   backgrounds <- sapply(posA, FUN = '*',PCFs)
   X <- exprs(es) - backgrounds
   X[X<0] <- 0
-  exprs(es) <- X
+  exprs(es) <- round(X)
   pData(es)$PCF.applied <- TRUE;
   invisible(es)
 }

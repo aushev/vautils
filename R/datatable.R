@@ -60,7 +60,7 @@ save_DT <- function(dtIn, fnSaveTo=NULL, quote=F, sep="\t", header=T, row.names=
 
 inexcel <- function(dtIn, ...){
   fn_save <- tempfile(pattern=paste0(deparse(substitute(dtIn)),"_"), fileext = '.xls');
-  save_DT(dtIn, fnSaveTo = fn_save, ...)
+  save_DT(dtIn, fnSaveTo = fn_save, row.names=T, ...)
   system(command = paste0('cmd /C ', fn_save));
   return(fn_save);
 }
