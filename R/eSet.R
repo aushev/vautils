@@ -122,6 +122,6 @@ debugES <- function(es){
   
   View(tmpX)
   View(tmpF)
-  View(tmpF)
+  View(tmpP)
   
 }
