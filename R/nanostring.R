@@ -58,7 +58,7 @@ apply.PCF <- function(es, extract=TRUE){
   if (sum(PCF.applied,na.rm = T)>0) {stop('PCF seems to be already applied!');}
   PCFs <- fData(es)$PCF;
   if (is.null(PCFs) && extract!=TRUE) {stop('Need to extract PCF first!');}
-  if (is.null(PCFs)) {es %<>% extract.PCF; }
+  if (is.null(PCFs)) {es %<>% extract.PCF; PCFs <- fData(es)$PCF;}
   posA <- exprs(es)[fData(es)$GeneName=='POS_A']
   backgrounds <- sapply(posA, FUN = '*',PCFs)
   X <- exprs(es) - backgrounds
