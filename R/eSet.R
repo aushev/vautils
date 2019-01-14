@@ -1,7 +1,7 @@
 
 # extends phenoData of given eSet by adding a data.table
 attachpData <- function(es, dat, by.dat=NULL, by.es=NULL, reqUniqESkeys=T){
-  
+
   # if no fields indicated, then add complete [dat] to pData
   if (is.null(by.es) & is.null(by.dat)) {
      pData(es) <-  cbind(pData(es), dat);
@@ -10,7 +10,7 @@ attachpData <- function(es, dat, by.dat=NULL, by.es=NULL, reqUniqESkeys=T){
 
   if (!is.data.table(dat)) dat <- data.table(dat);
 
-  # 
+  #
   if (!is.null(by.dat)){
     keyvals <- dat[[by.dat]];
     if (anyDuplicated(keyvals)) {
@@ -112,16 +112,16 @@ es.rename.s <- function(es, kcol){ # rename samples
 
 
 debugES <- function(es){
-  tmpX <- exprs(es.raw)
-  tmpF <- fData(es.raw)
-  tmpP <- pData(es.raw)
-  
+  tmpX <- exprs(es)
+  tmpF <- fData(es)
+  tmpP <- pData(es)
+
   assign('tmpF',tmpF,pos = 1L)
   assign('tmpP',tmpP,pos = 1L)
   assign('tmpX',tmpX,pos = 1L)
-  
+
   View(tmpX)
   View(tmpF)
   View(tmpP)
-  
+
 }
