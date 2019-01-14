@@ -6,10 +6,13 @@ nses.ini1 <- function(es){
   # should be done AFTER applying PCF!
   sum.pos <- colSums(exprs(es[fData(es)$CodeClass == 'Positive',]))
   sum.neg <- colSums(exprs(es[fData(es)$CodeClass == 'Negative',]))
+  sum.lig <- colSums(exprs(es[fData(es)$CodeClass == 'Ligation',]))
+  sum.ligP<- colSums(exprs(es[grepl('LIG_POS',fData(es)$GeneName),]))
+  sum.ligN<- colSums(exprs(es[grepl('LIG_NEG',fData(es)$GeneName),]))
   sum.hkg <- colSums(exprs(es[fData(es)$CodeClass == 'Housekeeping',]))
   sum.gen <- colSums(exprs(es[fData(es)$CodeClass %in% cs('Housekeeping Endogenous Endogenous1'),]))
   sum.end <- colSums(exprs(es[fData(es)$CodeClass %in% cs('Endogenous Endogenous1'),]))
-  dat.add <- cbind(sum.pos,sum.neg,sum.hkg,sum.gen,sum.end)
+  dat.add <- cbind(sum.pos,sum.neg,sum.lig,sum.ligP,sum.ligN,sum.hkg,sum.gen,sum.end)
   dat.add %<>% as.data.frame
   es %<>% attachpData(dat.add)
 }
@@ -62,7 +65,8 @@ apply.PCF <- function(es, extract=TRUE){
   posA <- exprs(es)[fData(es)$GeneName=='POS_A']
   backgrounds <- sapply(posA, FUN = '*',PCFs)
   X <- exprs(es) - backgrounds
-  X[X<0] <- 0
+  #X[X<0] <- 0
+  X[X<1] <- 1
   exprs(es) <- round(X)
   pData(es)$PCF.applied <- TRUE;
   invisible(es)
