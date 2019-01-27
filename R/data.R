@@ -184,6 +184,7 @@ time2 <- function() {
   #  time1before <-
   (time1after-time1before);
   #rm(time1before);
+  timestamp();
 }
 
 

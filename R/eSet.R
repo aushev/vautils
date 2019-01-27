@@ -125,3 +125,44 @@ debugES <- function(es){
   View(tmpP)
 
 }
+
+eSetFromTable <- function(tabInput,samples,featureNamesCol=NULL,featuresCols=character(0),orientation=T){
+  # by default, we expect features as rownames, samples as column names
+  # samples: sample names as character vector, we'll check those within column names
+  # featureNamesCol: column containing feature ID. If NULL, row.names(tabInput) will be used
+  # featuresCols: columns with feature data - will go to fData(es). If TRUE, all remaining columns
+
+  if (orientation==F){
+    stop('Not implemented yet');
+  }
+
+  if(is.data.table(tabInput)) tabInput <- as.data.frame(tabInput);
+
+  samplesNotFound <- (samples %-% names(tabInput))
+  if (length(samplesNotFound)>0) {stop('Samples not found: ', samplesNotFound)}
+
+  expr <- as.matrix(tabInput[,(samples)]);
+  tabRest <- tabInput[,(names(tabInput) %-% samples)]
+
+  if (!is.null(featureNamesCol)){
+    if (!featureNamesCol %in% names(tabInput)){
+      stop('Column with gene names not found! ',featureNamesCol);
+    }
+    row.names(expr) <- as.character(tabInput[[featureNamesCol]]);
+    tabRest <- tabRest[,(names(tabRest) %-% featureNamesCol)]
+  }
+
+  es <- ExpressionSet(assayData = expr);
+
+  if (length(featuresCols)>0){
+    if (isTRUE(featuresCols)){ # include all remaining columns
+      fData(es) <- cbind(fData(es),tabRest)
+    } else {
+      featurecolsNotFound <- (featuresCols %-% names(tabRest))
+      if (length(featurecolsNotFound)>0) {stop('featurecols not found: ', featurecolsNotFound)}
+      fData(es) <- cbind(fData(es),tabRest[featuresCols])
+    }
+  } # e. if featuresCols not empty
+
+  return(es);
+}
