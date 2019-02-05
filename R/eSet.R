@@ -166,3 +166,23 @@ eSetFromTable <- function(tabInput,samples,featureNamesCol=NULL,featuresCols=cha
 
   return(es);
 }
+
+summaryG <- function(es){
+  n.samples <- dim(es)[2]
+  tmpX <- exprs(es)
+
+  dt.SummaryG        <- as.data.table(fData(es))
+  dt.SummaryG$oriID <- seqlen(dt.SummaryG)
+  dt.SummaryG$not0   <- apply(tmpX,1,function(X){sum(X!=0)})
+  dt.SummaryG[,not0f:=not0/n.samples]
+  dt.SummaryG$avgTPM <- apply(tmpX,1,mean)
+  dt.SummaryG$medTPM <- apply(tmpX,1,median)
+  dt.SummaryG$rank1 <- frank(dt.SummaryG[,.(-not0,-avgTPM)], ties.method = 'first')
+  dt.SummaryG$rank2 <- frank(dt.SummaryG[,.(-avgTPM,-not0)], ties.method = 'first')
+
+  dt.SummaryG$IQR <- apply(tmpX,1,IQR)
+
+  fData(es) <- dt.SummaryG
+
+  return(es);
+}
