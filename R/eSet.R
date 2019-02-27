@@ -169,16 +169,17 @@ eSetFromTable <- function(tabInput,samples,featureNamesCol=NULL,featuresCols=cha
 
 summaryG <- function(es){
   n.samples <- dim(es)[2]
+  n.genes   <- dim(es)[1]
   tmpX <- exprs(es)
 
   dt.SummaryG        <- as.data.table(fData(es))
-  dt.SummaryG$oriID <- seqlen(dt.SummaryG)
+  dt.SummaryG$oriID  <- seq_len(n.genes)
   dt.SummaryG$not0   <- apply(tmpX,1,function(X){sum(X!=0)})
   dt.SummaryG[,not0f:=not0/n.samples]
-  dt.SummaryG$avgTPM <- apply(tmpX,1,mean)
-  dt.SummaryG$medTPM <- apply(tmpX,1,median)
-  dt.SummaryG$rank1 <- frank(dt.SummaryG[,.(-not0,-avgTPM)], ties.method = 'first')
-  dt.SummaryG$rank2 <- frank(dt.SummaryG[,.(-avgTPM,-not0)], ties.method = 'first')
+  dt.SummaryG$avgSig <- apply(tmpX,1,mean)
+  dt.SummaryG$medSig <- apply(tmpX,1,median)
+  dt.SummaryG$rank1 <- frank(dt.SummaryG[,.(-not0,-avgSig)], ties.method = 'first')
+  dt.SummaryG$rank2 <- frank(dt.SummaryG[,.(-avgSig,-not0)], ties.method = 'first')
 
   dt.SummaryG$IQR <- apply(tmpX,1,IQR)
 
@@ -186,3 +187,28 @@ summaryG <- function(es){
 
   return(es);
 }
+
+
+summaryS <- function(es){
+  n.samples <- dim(es)[2]
+  n.genes   <- dim(es)[1]
+  tmpX <- exprs(es)
+
+  dt.SummaryS        <- as.data.frame(pData(es))
+  dt.SummaryS$oriID  <- seq_len(n.samples)
+  dt.SummaryS$oriName  <- sampleNames(es)
+  dt.SummaryS %<>% as.data.table; # this should be after assigning oriID!
+
+  dt.SummaryS$not0   <- apply(tmpX,2,function(X){sum(X!=0)})
+  dt.SummaryS[,not0f:=not0/n.genes]
+  dt.SummaryS$avgSig <- apply(tmpX,2,mean)
+  dt.SummaryS$medSig <- apply(tmpX,2,median)
+  dt.SummaryS$rank1 <- frank(dt.SummaryG[,.(-not0,-avgSig)], ties.method = 'first')
+  dt.SummaryS$rank2 <- frank(dt.SummaryG[,.(-medSig,-not0)], ties.method = 'first')
+
+  pData(es) <- dt.SummaryS
+  sampleNames(es) <- dt.SummaryS$oriName
+
+  return(es);
+}
+
