@@ -205,8 +205,8 @@ summaryS <- function(es){
   dt.SummaryS[,not0f:=not0/n.genes]
   dt.SummaryS$avgSig <- apply(tmpX,2,mean)
   dt.SummaryS$medSig <- apply(tmpX,2,median)
-  dt.SummaryS$rank1 <- frank(dt.SummaryG[,.(-not0,-avgSig)], ties.method = 'first')
-  dt.SummaryS$rank2 <- frank(dt.SummaryG[,.(-medSig,-not0)], ties.method = 'first')
+  dt.SummaryS$rank1 <- frank(dt.SummaryS[,.(-not0,-avgSig)], ties.method = 'first')
+  dt.SummaryS$rank2 <- frank(dt.SummaryS[,.(-medSig,-not0)], ties.method = 'first')
 
   pData(es) <- dt.SummaryS
   sampleNames(es) <- dt.SummaryS$oriName
