@@ -172,8 +172,9 @@ summaryG <- function(es){
   n.genes   <- dim(es)[1]
   tmpX <- exprs(es)
 
-  dt.SummaryG        <- as.data.frame(fData(es))
-  dt.SummaryG$oriID  <- seq_len(n.genes)
+  dt.SummaryG         <- as.data.frame(fData(es))
+  dt.SummaryG$oriID   <- seq_len(n.genes)
+  dt.SummaryG$oriName <- featureNames(es)
   dt.SummaryG %<>% as.data.table
 
   dt.SummaryG$not0   <- apply(tmpX,1,function(X){sum(X!=0)})
@@ -186,6 +187,7 @@ summaryG <- function(es){
   dt.SummaryG$IQR <- apply(tmpX,1,IQR)
 
   fData(es) <- dt.SummaryG
+  featureNames(es) <- dt.SummaryG$oriName
 
   return(es);
 }
