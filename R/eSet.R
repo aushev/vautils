@@ -67,7 +67,7 @@ attachfData <- function(es, dat, key.dat=NULL, key.es=NULL, reqUniqESkeys=T){
     warning('Replaced columns in phenoData: ', paste(names.dup, collapse = ', '))
   }
 
-  fData(es) <-  fbind(fData(es), dat.use);
+  fData(es) <-  cbind(fData(es), dat.use);
   invisible(es);
 }
 
