@@ -172,7 +172,7 @@ trylocs <- function(..., req=F, all=F){
 
 loadv <- function(file=NULL, ...){
   if (is.null(file)) {file <- askfilename();}
-  load(file, verbose=T, ...)
+  load(file, verbose=T, envir = parent.frame(n=1L), ...)
 }
 
 

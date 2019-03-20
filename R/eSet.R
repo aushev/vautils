@@ -90,15 +90,15 @@ es.rename.s <- function(es, kcol){ # rename samples
 }
 
 
-debugES <- function(es){
+debugES <- function(es, prefix='tmp'){
   #if ()
   tmpX <- exprs(es)
   tmpF <- fData(es)
   tmpP <- pData(es)
 
-  assign('tmpF',tmpF,pos = 1L)
-  assign('tmpP',tmpP,pos = 1L)
-  assign('tmpX',tmpX,pos = 1L)
+  assign(paste0(prefix,'F'),tmpF,pos = 1L)
+  assign(paste0(prefix,'P'),tmpP,pos = 1L)
+  assign(paste0(prefix,'X'),tmpX,pos = 1L)
 
   View(tmpX)
   View(tmpF)
