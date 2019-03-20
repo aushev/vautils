@@ -459,7 +459,7 @@ reordcols <- function(dtIn, first=NULL, last=NULL) {
 
 
 # deluselesscol: deletes column(s) if they contain only one value (i.e. no diff between records) ####
-deluselesscol <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, padON=F, padW=NULL, padSide='right', verbose=F) {
+deluselesscol0 <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, padON=F, padW=NULL, padSide='right', verbose=F) {
   catV <- ifelse(verbose,cat,function(...){})
   if (!is.data.table(dtIn)){
     catV('Input is not data.table! ')
@@ -487,6 +487,45 @@ deluselesscol <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, pad
   # catV('\nClass:',class(dtIn))
   catV('\n\nFor deletion:\n', paste0(cols2del,collapse = ' '))
   if (!is.null(cols2del)) dtIn[, (cols2del):=NULL];
+  invisible(dtIn);
+} # e. deluselesscol()
+
+deluselesscol <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, padON=F, padW=NULL, padSide='right', verbose=F) {
+  catV <- ifelse(verbose,cat,function(...){})
+  if (!is.data.table(dtIn)){
+    catV('Input is not data.table! ')
+    if (is.data.frame(dtIn)){
+      catV('Converting from data.frame... ');
+      dtIn <- as.data.table(dtIn);
+    } else {stop('Required data.table or data.frame!')}
+  }
+  cols2del <- NULL;
+  colNs2del <- NULL;
+  if (padON==T & is.null(padW)) padW <- max(nchar(icolnames));
+
+  for (colN in seq_len(length(names(dtIn)))) {
+    colname <- names(dtIn)[colN];
+    if (! colname %in% icolnames) next;
+    catV('\n',colname,'... ')
+    #values <- dtIn[[colname]];
+    values <- dtIn[[colN]];
+    refVal <- values[1];
+    # (!any(is.na(values)) && all(values==values[1]))
+    if (is.list(values)) {catV('list!!! '); next;}
+    if ( all(is.na(values)) || isTRUE(all(values==refVal, na.rm = ignNA))) {
+      cols2del <- c(cols2del, colname);
+      colNs2del <- c(colNs2del, colN);
+      if (silent==F){
+        col_print <- paste0("[", colname, "]");
+        padded <- ifelse1(padON==F, col_print, strpad(col_print,padW+2L))
+        cat(padded,"is all equal to: ", refVal,'\n');
+      }# e. not silent
+    } # e. identical
+  } # e. for
+  # catV('\nClass:',class(dtIn))
+  catV('\n\nFor deletion:\n', paste0(cols2del,collapse = ' '))
+  #if (!is.null(cols2del)) dtIn[, (cols2del):=NULL];
+  if (!is.null(colNs2del)) dtIn[, c(colNs2del):=NULL];
   invisible(dtIn);
 } # e. deluselesscol()
 

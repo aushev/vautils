@@ -91,6 +91,7 @@ es.rename.s <- function(es, kcol){ # rename samples
 
 
 debugES <- function(es){
+  #if ()
   tmpX <- exprs(es)
   tmpF <- fData(es)
   tmpP <- pData(es)

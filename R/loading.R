@@ -170,6 +170,11 @@ trylocs <- function(..., req=F, all=F){
   return(NULL);
 }
 
+loadv <- function(file=NULL, ...){
+  if (is.null(file)) {file <- askfilename();}
+  load(file, verbose=T, ...)
+}
+
 
 getvloc <- function(){
   locs <- list();
