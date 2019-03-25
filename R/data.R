@@ -262,6 +262,51 @@ orderby <- function(x,y){
 
 }
 
+
+melt.distance <- function(inpDist){
+  L <- length(inpDist)
+  N <- length(labels(inpDist))
+  df.melted <- data.frame(i=1:L,X=NA,Y=NA,dist=NA)
+  distLabels <- labels(inpDist)
+  i <- 1L
+  for (x in 1:(N-1)){
+    for (y in (x+1):N){
+      #cat(i,x,y,distLabels[x],distLabels[y], '\n')
+      nameX <- distLabels[x]
+      nameY <- distLabels[y]
+      df.melted[i, 'X'] <- nameX
+      df.melted[i, 'Y'] <- nameY
+      df.melted[i, 'dist'] <- inpDist[i]
+      i <- i+1L
+    } # e. for y
+  } # e. for x
+  return(df.melted)
+} # e. melt.distance()
+
+mtx.distance <- function(inpDist){
+  L <- length(inpDist)
+  N <- length(labels(inpDist))
+  distLabels <- labels(inpDist)
+
+  distMtx <- matrix(,nrow = N, ncol = N)
+  colnames(distMtx) <- distLabels
+  rownames(distMtx) <- distLabels
+
+  i <- 1L
+  for (x in 1:(N-1)){
+    for (y in (x+1):N){
+      nameX <- distLabels[x]
+      nameY <- distLabels[y]
+      distMtx[nameX, nameY] <- inpDist[i]
+      distMtx[nameY, nameX] <- inpDist[i]
+      i <- i+1L
+    } # e. for y
+  } # e. for x
+  return(distMtx)
+} # e. mtx.distance()
+
+
+
 na.allow <- function(input) return(is.na(input) | input);
 
 
