@@ -760,7 +760,7 @@ mergefiles <- function(fn.list, fill=T, fn.col=NULL, FUN=fread, ...){
 
 
 
-mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T, recursive = T, ...){
+mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T, recursive = T, rn=NULL, colnames = NULL, ...){
 
   if (is.null(fn.list))
     fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE, recursive=recursive)
@@ -771,8 +771,10 @@ mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T,
     fn.this.show <- ifelse(full.names==T, fn.this, basename(fn.this))
     dt.this <- flexread(fn.this, ...)
     dt.this[, ffn:=fn.this.show]
+    if (!is.null(rn)) {dt.this[, (rn):=seq_len(nrow(dt.this))]}
     dt.all <- rbind(dt.all, dt.this, fill=T)
   }
+  if (!is.null(colnames)) {setnames(dt.all, colnames);}
   invisible(dt.all);
 }
 
