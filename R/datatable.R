@@ -770,11 +770,13 @@ mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T,
   for (fn.this in fn.list){
     fn.this.show <- ifelse(full.names==T, fn.this, basename(fn.this))
     dt.this <- flexread(fn.this, ...)
+    if (!is.null(colnames)) {setnames(dt.this, colnames);}
+
     dt.this[, ffn:=fn.this.show]
     if (!is.null(rn)) {dt.this[, (rn):=seq_len(nrow(dt.this))]}
     dt.all <- rbind(dt.all, dt.this, fill=T)
   }
-  if (!is.null(colnames)) {setnames(dt.all, colnames);}
+
   invisible(dt.all);
 }
 
