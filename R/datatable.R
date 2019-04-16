@@ -749,9 +749,10 @@ mergefiles <- function(fn.list, fill=T, fn.col=NULL, FUN=fread, ...){
   final.dt <- NULL;
   for (fn.this in fn.list){
     this.dt <- FUN(fn.this, ...); # read file with chosen function: fread() by default
+    if (is.null(this.dt)) next;
     if (!is.null(fn.col)) this.dt[,(fn.col):=fn.this]; # add column with file name
     if (!is.null(final.dt)) {
-      final.dt <- rbind(final.dt, this.dt, fill=fill);
+      final.dt <- rbindlist(l = list(final.dt, this.dt), use.names = T, fill=fill);
     } else final.dt <- this.dt;
   }
   return(final.dt)
