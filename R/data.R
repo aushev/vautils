@@ -242,7 +242,6 @@ seqlen <- function(obj){
   return(seq_len(length(obj)));
 }
 
-
 replace.mult <- function(inpvec, from, to){
   stopifnot(length(from)>0 & length(from)==length(to));
   for (i in seqlen(from)){
@@ -250,7 +249,6 @@ replace.mult <- function(inpvec, from, to){
   }
   return(inpvec)
 }
-
 
 orderby <- function(x,y){
   if (is.character(y) && length(y)==1 && (y %in% names(x))) {
@@ -333,3 +331,36 @@ tryRdat <- function(fnRdat, FUN, nEnv=1L, ...){
   } # e. else
 
 } # e. try_rdat
+
+
+
+compare.lists <- function(list1,list2) {
+  names1 <- names(list1);
+  names2 <- names(list2);
+  if ('' %in% names(list1)){
+    cat('List1 contains nameless components!\n')
+  }
+  
+  if ('' %in% names(list2)){
+    cat('List2 contains nameless components!\n')
+  }
+  
+  if ( !identical(sort(names1),sort(names2)) ){
+    cat('List1 and List2 have different names of components!\n')
+    only1 <- names1 %-% names2;
+    only2 <- names2 %-% names1;
+    if (length(only1)>0) cat('Only in List1: ', paste0(only1,collapse = ', '),'.\n')
+    if (length(only2)>0) cat('Only in List2: ', paste0(only2,collapse = ', '),'.\n')
+  } # e. if names different
+  
+  common <- intersect(names1, names2);
+  cat(length(common),'common names found.\n')
+  
+  for(i in common){
+    if (!identical(list1[i],list2[i])){
+      cat(i,':\t Different\n')
+    }
+    
+  }
+  
+} # e. compare.lists()
