@@ -909,3 +909,14 @@ cast.factor <- function(inp.dt, cols2cast){
 
 
 each.row <- function(inp.dt) seq_len(nrow(inp.dt));
+
+
+compare.df <- function(df1,df2) {
+  stopifnot(dim(df1)==dim(df2))
+  for (i in seq_len(dim(df1)[2])){
+    if (! identical(df1[,i], df2[,i])) {
+      not.eq <- sum(df1[,i] != df2[,i], na.rm = T)
+      cat(i, colnames(df1)[i],not.eq, '\n')
+    }
+  }
+}
