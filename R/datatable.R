@@ -920,3 +920,12 @@ compare.df <- function(df1,df2) {
     }
   }
 }
+
+
+split_vers <- function(inpDT, col_format, col_content, sep=':'){
+  for (this.format in unique(inpDT[[col_format]])){
+    inpDT[get(col_format)==this.format, unlist(strsplit(this.format,sep)):=tstrsplit(get(col_content),sep)]
+  }
+#  invisible(inpDT)
+}
+
