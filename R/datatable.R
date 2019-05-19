@@ -761,7 +761,7 @@ mergefiles <- function(fn.list, fill=T, fn.col=NULL, FUN=fread, ...){
 
 
 
-mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T, recursive = T, rn=NULL, colnames = NULL, ...){
+mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T, recursive = T, rn=NULL, colnames = NULL, mask.remove='NULL', mask.replace='', ...){
 
   if (is.null(fn.list))
     fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE, recursive=recursive)
@@ -769,10 +769,11 @@ mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T,
   dt.all <- NULL;
 
   for (fn.this in fn.list){
-    fn.this.show <- ifelse(full.names==T, fn.this, basename(fn.this))
     dt.this <- flexread(fn.this, ...)
     if (!is.null(colnames)) {setnames(dt.this, colnames);}
 
+    fn.this.show <- ifelse(full.names==T, fn.this, basename(fn.this))
+    if (!is.null(mask.remove)) fn.this.show <- gsub(mask.remove,mask.replace,fn.this.show);
     dt.this[, ffn:=fn.this.show]
     if (!is.null(rn)) {dt.this[, (rn):=seq_len(nrow(dt.this))]}
     dt.all <- rbind(dt.all, dt.this, fill=T)
@@ -929,3 +930,26 @@ split_vers <- function(inpDT, col_format, col_content, sep=':'){
   invisible(inpDT)
 }
 
+split_vers2 <- function(inpDT, col_format, col_content, sep=':', prefix=''){
+  allnewnames <- c()
+  for (this.format in unique(inpDT[[col_format]])){
+    newnames <- unlist(strsplit(this.format,sep))
+    allnewnames <- unique(c(allnewnames, newnames))
+    inpDT[get(col_format)==this.format, (newnames):=tstrsplit(get(col_content),sep)]
+  }
+  setnames(inpDT, allnewnames, paste0(prefix, allnewnames))
+  invisible(inpDT)
+}
+
+
+#
+
+extract.fld <- function(inpDT,fldFrom,fldTo,regex1,regex2='\\1',regex3='',pos=1L,remove=T){
+  str.wide <- paste0('.*',regex1,'.*')
+  inpDT[grepl(regex1,get(fldFrom)), (fldTo):=gsub(str.wide, regex2, get(fldFrom))]
+  if (remove==T){
+    inpDT[grepl(regex1,get(fldFrom)), (fldFrom):=gsub(regex1, regex3,get(fldFrom))]
+  }
+
+  invisible(inpDT)
+}

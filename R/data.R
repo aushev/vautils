@@ -340,11 +340,11 @@ compare.lists <- function(list1,list2) {
   if ('' %in% names(list1)){
     cat('List1 contains nameless components!\n')
   }
-  
+
   if ('' %in% names(list2)){
     cat('List2 contains nameless components!\n')
   }
-  
+
   if ( !identical(sort(names1),sort(names2)) ){
     cat('List1 and List2 have different names of components!\n')
     only1 <- names1 %-% names2;
@@ -352,15 +352,33 @@ compare.lists <- function(list1,list2) {
     if (length(only1)>0) cat('Only in List1: ', paste0(only1,collapse = ', '),'.\n')
     if (length(only2)>0) cat('Only in List2: ', paste0(only2,collapse = ', '),'.\n')
   } # e. if names different
-  
+
   common <- intersect(names1, names2);
   cat(length(common),'common names found.\n')
-  
+
   for(i in common){
     if (!identical(list1[i],list2[i])){
       cat(i,':\t Different\n')
     }
-    
+
   }
-  
+
 } # e. compare.lists()
+
+
+
+guessyear <- function(inpdates, datesformat='%a %b %e %H:%M:%S', years){
+  rez <- strptime(inpdates, datesformat)
+  for (year in years){
+    fulldate <- paste0(year, ' ', inpdates)
+    fullformat <- paste0('%Y', ' ', datesformat)
+    convdate <- strptime(fulldate, fullformat)
+    teststr <- strftime(convdate, datesformat)
+    correct <- (teststr == inpdates)
+    rez[correct] <- convdate[correct]
+  }
+  return(rez)
+}
+
+# tmp <- guessyear(cs('Sun Dec 30 02:34:21;Wed Jan  2 17:06:35;Fri Sep 21 16:23:33',sep=';'),
+#                  years=cs('2018 2019'))

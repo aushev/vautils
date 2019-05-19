@@ -196,3 +196,46 @@ summaryS <- function(es){
   return(es);
 }
 
+
+star.quant.to.eset <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded=0){
+  # fnInput - directory or list of files
+  #
+
+
+  dt.all <- mergefiletabs(fnInput, fn.mask = mask, full.names = F, recursive = F, colnames = cs('geneID countsU counts1 counts2'), mask.remove = mask)
+
+  cols.meta <- cs('N_unmapped N_multimapping N_noFeature N_ambiguous')
+  dt.counts <- dt.all[geneID %!in% cols.meta,]
+  dat.meta <- dt.all[geneID %in% cols.meta,]
+  rm(dt.all)
+
+  dat.meta <- dat.meta[,
+                       .(
+                         unmapped    =.SD[geneID=='N_unmapped',    countsU],
+                         multimapping=.SD[geneID=='N_multimapping',countsU],
+                         noFeature0  =.SD[geneID=='N_noFeature',   countsU],
+                         noFeature1  =.SD[geneID=='N_noFeature',   counts1],
+                         noFeature2  =.SD[geneID=='N_noFeature',   counts2],
+                         ambiguous0  =.SD[geneID=='N_ambiguous',  countsU],
+                         ambiguous1  =.SD[geneID=='N_ambiguous',  counts1],
+                         ambiguous2  =.SD[geneID=='N_ambiguous',  counts2]
+                       ),
+                       by=ffn]
+  setDF(dat.meta, rownames = dat.meta$ffn)
+  dat.meta$ffn <- NULL
+
+  if (stranded==0) dt.counts.sel <- dt.counts[,.(geneID,counts=countsU,ffn)]
+  else if (stranded!=0) stop('Not implemented yet!')
+
+  dat.counts <- dcast(dt.counts.sel, geneID ~ ffn, value.var = 'counts')
+  setDF(dat.counts, rownames = dat.counts$geneID)
+  dat.counts$geneID <- NULL
+  dat.counts <- as.matrix(dat.counts)
+
+  es <- ExpressionSet(dat.counts)
+  #sampleNames(es)
+  pData(es) <- cbind(pData(es), dat.meta)
+
+
+  invisible(es)
+}
