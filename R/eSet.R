@@ -106,9 +106,10 @@ debugES <- function(es, prefix='tmp'){
 
 }
 
-eSetFromTable <- function(tabInput,samples,featureNamesCol=NULL,featuresCols=character(0),orientation=T){
+eSetFromTable <- function(tabInput,samples=NULL,featureNamesCol=NULL,featuresCols=character(0),orientation=T){
   # by default, we expect features as rownames, samples as column names
   # samples: sample names as character vector, we'll check those within column names
+  #          If NULL, all the columns minus featureNamesCol and featuresCols
   # featureNamesCol: column containing feature ID. If NULL, row.names(tabInput) will be used
   # featuresCols: columns with feature data - will go to fData(es). If TRUE, all remaining columns
 
@@ -117,6 +118,15 @@ eSetFromTable <- function(tabInput,samples,featureNamesCol=NULL,featuresCols=cha
   }
 
   if(is.data.table(tabInput)) tabInput <- as.data.frame(tabInput);
+
+  if (is.null(samples)){
+    samples <- names(tabInput) %-% unique(c(featureNamesCol, featuresCols))
+  }
+
+  if (is.null(samples)){
+    stop('Samples not defined!')
+  }
+
 
   samplesNotFound <- (samples %-% names(tabInput))
   if (length(samplesNotFound)>0) {stop('Samples not found: ', samplesNotFound)}
@@ -147,7 +157,23 @@ eSetFromTable <- function(tabInput,samples,featureNamesCol=NULL,featuresCols=cha
   return(es);
 }
 
-summaryG <- function(es){
+
+eSetFromLong <- function(tabInput,featureNamesCol='geneID',sampleNamesCol='ffn',valueCol='counts'){
+  dtInput <- as.data.table(tabInput)
+
+  frm <- as.formula(paste(featureNamesCol,'~',sampleNamesCol))
+
+  dtInput <- dcast(dtInput, frm, value.var = valueCol)
+  setDF(dtInput, rownames = dtInput[[featureNamesCol]])
+  dtInput[[featureNamesCol]] <- NULL
+  #dat.counts <- as.matrix(dtInput)
+  es <- ExpressionSet(as.matrix(dtInput))
+  invisible(es)
+}
+
+
+
+summaryG <- function(es, not0.thr=0){
   n.samples <- dim(es)[2]
   n.genes   <- dim(es)[1]
   tmpX <- exprs(es)
@@ -157,7 +183,7 @@ summaryG <- function(es){
   dt.SummaryG$oriName <- featureNames(es)
   dt.SummaryG %<>% as.data.table
 
-  dt.SummaryG$not0   <- apply(tmpX,1,function(X){sum(X!=0)})
+  dt.SummaryG$not0   <- apply(tmpX,1,function(X){sum(X>not0.thr)})
   dt.SummaryG[,not0f:=not0/n.samples]
   dt.SummaryG$avgSig <- apply(tmpX,1,mean)
   dt.SummaryG$medSig <- apply(tmpX,1,median)
@@ -173,7 +199,7 @@ summaryG <- function(es){
 }
 
 
-summaryS <- function(es){
+summaryS <- function(es, not0.thr=0){
   n.samples <- dim(es)[2]
   n.genes   <- dim(es)[1]
   tmpX <- exprs(es)
@@ -183,7 +209,7 @@ summaryS <- function(es){
   dt.SummaryS$oriName  <- sampleNames(es)
   dt.SummaryS %<>% as.data.table; # this should be after assigning oriID!
 
-  dt.SummaryS$not0   <- apply(tmpX,2,function(X){sum(X!=0)})
+  dt.SummaryS$not0   <- apply(tmpX,2,function(X){sum(X>not0.thr)})
   dt.SummaryS[,not0f:=not0/n.genes]
   dt.SummaryS$avgSig <- apply(tmpX,2,mean)
   dt.SummaryS$medSig <- apply(tmpX,2,median)
@@ -203,6 +229,8 @@ star.quant.to.eset <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded=
 
 
   dt.all <- mergefiletabs(fnInput, fn.mask = mask, full.names = F, recursive = F, colnames = cs('geneID countsU counts1 counts2'), mask.remove = mask)
+
+  if (nrow(dt.all)==0L) stop('Read failed! Check that the path exists.');
 
   cols.meta <- cs('N_unmapped N_multimapping N_noFeature N_ambiguous')
   dt.counts <- dt.all[geneID %!in% cols.meta,]

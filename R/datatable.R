@@ -953,3 +953,10 @@ extract.fld <- function(inpDT,fldFrom,fldTo,regex1,regex2='\\1',regex3='',pos=1L
 
   invisible(inpDT)
 }
+
+
+setDF_my <- function(inpDT, col2rownames){
+  setDF(inpDT)
+  row.names(inpDT) <- inpDT[[col2rownames]]
+  invisible(inpDT)
+}
