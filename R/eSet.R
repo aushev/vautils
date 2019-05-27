@@ -40,6 +40,10 @@ attachpData <- function(es, dat, key.dat=NULL, key.es=NULL, reqUniqESkeys=T){
 # key.dat='' - use row.names(dat) as key
 attachfData <- function(es, dat, key.dat=NULL, key.es=NULL, reqUniqESkeys=T){
   if(!identical(featureNames(es), row.names(fData(es)))) stop('Input eSet is broken! featureNames(es) must be equal to row.names(fData(es))!');
+  if (ncol(dat)==0 | nrow(dat)==0) {
+    warning('Data is empty. Returning unchanged eSet.')
+    invisible(es);
+  }
 
 
   if (!is.data.table(dat)) {
