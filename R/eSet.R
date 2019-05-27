@@ -267,3 +267,32 @@ star.quant.to.eset <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded=
 
   invisible(es)
 }
+
+
+
+# compare_esets(): merges melted exprs() for both eSets
+compare_esets <- function(es1,es2){
+  if (is.character(es1)) {
+    es1.name <- loadv(es1)
+    es1 <- get(es1.name)
+    if (es1.name!='es1') rm(list=es1.name)
+  }
+
+  if (is.character(es2)) {
+    es2.name <- loadv(es2)
+    es2 <- get(es2.name)
+    if (es2.name!='es2') rm(list=es2.name)
+  }
+
+  dtX1 <- es1 %>% exprs %>% as.data.table(keep.rownames = T) %>% melt
+  dtX2 <- es2 %>% exprs %>% as.data.table(keep.rownames = T) %>% melt
+
+  setnames(dtX1, 'value', 'value1')
+  setnames(dtX2, 'value', 'value2')
+
+  dtX <- merge(dtX1,dtX2,by=cs('rn variable'), all=T)
+  rm(dtX1, dtX2)
+
+  invisible(dtX)
+
+}
