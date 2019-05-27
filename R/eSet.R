@@ -1,6 +1,7 @@
 
 # extends phenoData of given eSet by adding a data.table
 attachpData <- function(es, dat, key.dat=NULL, key.es=NULL, reqUniqESkeys=T){
+  if(!identical(sampleNames(es), row.names(pData(es)))) stop('Input eSet is broken! sampleNames(es) must be equal to row.names(pData(es))!');
 
   if (!is.data.table(dat)) dat <- data.table(dat);
   dat.use <- dat;
@@ -28,19 +29,27 @@ attachpData <- function(es, dat, key.dat=NULL, key.es=NULL, reqUniqESkeys=T){
   names.dup <- colnames(dat.use) %&% varLabels(es); # colnames() instead of ... in case of matrix
   if (length(names.dup)>0) {
     pData(es) <- pData(es)[,(varLabels(es) %-% names.dup)]
-    warning('Replaced columns in phenoData: ', paste(names.dup, collapse = ', '))
+    warning('Replaced columns in pData: ', paste(names.dup, collapse = ', '))
   }
 
   pData(es) <-  cbind(pData(es), dat.use);
   invisible(es);
 }
 
-# extends featureData of given eSet by adding a data.table
+# attachfData(): extends featureData of given eSet by adding a data.table
+# key.dat='' - use row.names(dat) as key
 attachfData <- function(es, dat, key.dat=NULL, key.es=NULL, reqUniqESkeys=T){
+  if(!identical(featureNames(es), row.names(fData(es)))) stop('Input eSet is broken! featureNames(es) must be equal to row.names(fData(es))!');
 
-  if (!is.data.table(dat)) dat <- data.table(dat);
+
+  if (!is.data.table(dat)) {
+    if ('rn' %in% names(dat)) stop('Name "rn" is reserved. Please rename that column.')
+    dat <- data.table(dat, keep.rownames = T);
+    if (key.dat=='') key.dat <- 'rn';
+  }
+
   dat.use <- dat;
-  if (is.null(key.dat) & !is.null(key.es)) warning('Key of dat is not defined => Key of es will be ignored!');
+#  if (is.null(key.dat) & !is.null(key.es)) warning('Key of dat is not defined => Key of eSet will be ignored!');
 
   if (!is.null(key.dat)){
     keyvals <- dat[[key.dat]];
@@ -64,7 +73,7 @@ attachfData <- function(es, dat, key.dat=NULL, key.es=NULL, reqUniqESkeys=T){
   names.dup <- colnames(dat.use) %&% fvarLabels(es); # colnames() instead of ... in case of matrix
   if (length(names.dup)>0) {
     fData(es) <- fData(es)[,(fvarLabels(es) %-% names.dup)]
-    warning('Replaced columns in phenoData: ', paste(names.dup, collapse = ', '))
+    warning('Replaced columns in fData: ', paste(names.dup, collapse = ', '))
   }
 
   fData(es) <-  cbind(fData(es), dat.use);
@@ -143,6 +152,7 @@ eSetFromTable <- function(tabInput,samples=NULL,featureNamesCol=NULL,featuresCol
   }
 
   es <- ExpressionSet(assayData = expr);
+  fData(es)$oriID <- featureNames(es);
 
   if (length(featuresCols)>0){
     if (isTRUE(featuresCols)){ # include all remaining columns
@@ -222,11 +232,19 @@ summaryS <- function(es, not0.thr=0){
   return(es);
 }
 
+eSet.From.fCounts <- function(fn.fCounts,maskRemove='_Aligned.sortedByCoord.out.bam'){
+  dt.fcounts <- flexread(fn.fCounts)
+  names(dt.fcounts) %<>% gsub(maskRemove,'',.)
+  es <- eSetFromTable(dt.fcounts, featureNamesCol='Geneid', featuresCols=cs('Chr Start End Strand Length'))
+  fData(es)$Chr <- sapply(strsplit(fData(es)$Chr,';'),function(X){paste0(unique(X),collapse = ';')})
+  invisible(es)
+}
 
-star.quant.to.eset <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded=0){
+
+
+eSet.From.starquant <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded=0){
   # fnInput - directory or list of files
   #
-
 
   dt.all <- mergefiletabs(fnInput, fn.mask = mask, full.names = F, recursive = F, colnames = cs('geneID countsU counts1 counts2'), mask.remove = mask)
 
@@ -271,7 +289,7 @@ star.quant.to.eset <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded=
 
 
 # compare_esets(): merges melted exprs() for both eSets
-compare_esets <- function(es1,es2){
+compare_esets <- function(es1,es2, add_feat_cols=NULL){
   if (is.character(es1)) {
     es1.name <- loadv(es1)
     es1 <- get(es1.name)
@@ -284,15 +302,24 @@ compare_esets <- function(es1,es2){
     if (es2.name!='es2') rm(list=es2.name)
   }
 
-  dtX1 <- es1 %>% exprs %>% as.data.table(keep.rownames = T) %>% melt
-  dtX2 <- es2 %>% exprs %>% as.data.table(keep.rownames = T) %>% melt
+  dtX1 <- es1 %>% exprs %>% as.data.table(keep.rownames = T) %>% setnames('rn','featureID')
+  dtX2 <- es2 %>% exprs %>% as.data.table(keep.rownames = T) %>% setnames('rn','featureID')
 
-  setnames(dtX1, 'value', 'value1')
-  setnames(dtX2, 'value', 'value2')
+  if (!is.null(add_feat_cols)){
+    dtX1 <- cbind(dtX1, fData(es1)[,add_feat_cols,drop=FALSE])
+    dtX2 <- cbind(dtX2, fData(es1)[,add_feat_cols,drop=FALSE])
+  }
 
-  dtX <- merge(dtX1,dtX2,by=cs('rn variable'), all=T)
+  dtX1 <- melt(dtX1, id.vars=c('featureID', add_feat_cols))
+  dtX2 <- melt(dtX2, id.vars=c('featureID', add_feat_cols))
+
+  setnames(dtX1, cs('value variable'), cs('value1 sampleID'))
+  setnames(dtX2, cs('value variable'), cs('value2 sampleID'))
+
+  dtX <- merge(dtX1,dtX2,by=c('featureID', add_feat_cols, 'sampleID'), all=T)
   rm(dtX1, dtX2)
 
   invisible(dtX)
 
 }
+

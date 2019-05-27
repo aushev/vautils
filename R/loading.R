@@ -104,6 +104,12 @@ req <- function(packagename, verbose=T, tryBioconductor=T){
     if (exists(deparse(pkname.subs))){
       cat("exists");
       packagename <- eval.parent(pkname.subs);
+
+      if (!is.character(packagename)){
+        catV(' but is not character. ')
+        packagename <- deparse(pkname.subs);
+      }
+
     } else {
       cat(" doesn't exist");
       packagename <- deparse(pkname.subs);
@@ -173,6 +179,15 @@ trylocs <- function(..., req=F, all=F){
 loadv <- function(file=NULL, ...){
   if (is.null(file)) {file <- askfilename();}
   load(file, verbose=T, envir = parent.frame(n=1L), ...)
+}
+
+
+loadv1 <- function(fnRdat, verbose=T){
+  obj.names <- load(fnRdat, verbose=verbose)
+  if (length(obj.names)>1) warning('Multiple objects loaded! Only first one will be returned.')
+  obj.name <- obj.names[1]
+  obj.ret <- get(obj.name)
+  invisible(obj.ret)
 }
 
 
