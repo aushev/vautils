@@ -333,6 +333,23 @@ tryRdat <- function(fnRdat, FUN, nEnv=1L, ...){
 } # e. try_rdat
 
 
+tryRdat1 <- function(fnRdat, lazyobj, objname='result'){
+# This function tries to load data from the indicated Rdat file
+# if it doesn't exist, it will call indicated function, and save the results to the file
+  cat('Checking pre-existing Rdat file:', fnRdat, '... ');
+  if (file.exists(fnRdat)) {
+    cat(' found. ');
+    result <- loadv1(fnRdat);
+  } else {
+      cat(' not found. Will be generated and saved.\n');
+      result <- lazyobj;
+      assign(value = result, x=objname)
+      save(list = objname, file = fnRdat);
+    }
+
+  invisible(result);
+} # e. try_rdat
+
 
 compare.lists <- function(list1,list2) {
   names1 <- names(list1);
