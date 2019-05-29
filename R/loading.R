@@ -53,8 +53,9 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T){
     if(packagename %in% rownames(installed.packages()) == FALSE) {
       if (tryBioconductor==T) {
         catV(' Trying from Bioconductor... ')
-        if (!exists('biocLite')) source("https://bioconductor.org/biocLite.R");
-        biocLite(packagename);
+        #if (!exists('biocLite')) source("https://bioconductor.org/biocLite.R");
+        #biocLite(packagename);
+        BiocManager::install(packagename);
        } # e.tryBioconductor
     }
 
@@ -135,7 +136,7 @@ req <- function(packagename, verbose=T, tryBioconductor=T){
   packagename <- unlist(strsplit(packagename, " ", fixed=T));
   if (length(packagename)>1) {
     catV('Splitting package name:', length(packagename), "names.\n");
-    req(packagename);
+    req(packagename,verbose = verbose,tryBioconductor=tryBioconductor);
     return(T);
   }
 

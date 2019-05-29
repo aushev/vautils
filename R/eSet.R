@@ -241,6 +241,7 @@ eSet.From.fCounts <- function(fn.fCounts,maskRemove='_Aligned.sortedByCoord.out.
   names(dt.fcounts) %<>% gsub(maskRemove,'',.)
   es <- eSetFromTable(dt.fcounts, featureNamesCol='Geneid', featuresCols=cs('Chr Start End Strand Length'))
   fData(es)$Chr <- sapply(strsplit(fData(es)$Chr,';'),function(X){paste0(unique(X),collapse = ';')})
+  fData(es)$Strand <- sapply(strsplit(fData(es)$Strand,';'),function(X){paste0(unique(X),collapse = ';')})
   invisible(es)
 }
 
