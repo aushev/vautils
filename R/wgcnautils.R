@@ -10,6 +10,7 @@ net_ini <- function(inp_net, sample_names=NULL){
   inp_net$N <- ncol(inp_net$MEs) - 1L; # 17
   inp_net$colList <- labels2colors(0:inp_net$N); # grey turquoise blue ...
   inp_net$colorsNamed  <- labels2colors(inp_net$colors); # moduleColorsAutomatic
+  inp_net$colorsNamed %<>% factor(levels = inp_net$colList)
 
   inp_net$MEsNamed <- inp_net$MEs # ME0-ME17 MEsColors <- MEsAutomatic <-
   # 13 1 6 5 10
