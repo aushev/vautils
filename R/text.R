@@ -25,6 +25,18 @@ strpad <- function(inpstr,padW,padSide='right'){
 }
 
 
+print_list <- function(inp) {
+  for (i in seqlen(inp)){
+    .member <- inp[i];
+    cat(i,
+        str_pad(names(.member), max(nchar(names(inp)))),
+        unlist(unname(.member)),
+        #str_pad(unlist(unname(fn[i])), max(nchar(unlist(unname(fn))))),
+        '\n')
+  } # e. for
+} # e. fun
+
+
 # sub_str <- function(inputstr, start=NA, stop=NA, len=NA){
 #   tmp = NA
 #   if (tmp>0) print(">!")
