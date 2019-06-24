@@ -326,5 +326,13 @@ compare_esets <- function(es1,es2, add_feat_cols=NULL){
 
   invisible(dtX)
 
-}
+} # e. compare_esets()
 
+
+# returns expression valued transformed by a chosen method
+exprsV <- function(es, method=NULL){
+  switch(method,
+         log2=as.matrix(log2(exprs(es)+1)),
+         vst =as.matrix(vst(exprs(es))),
+         as.matrix(exprs(es)))
+}
