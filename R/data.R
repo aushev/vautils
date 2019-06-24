@@ -182,9 +182,10 @@ time1 <- function() {
 time2 <- function() {
   time1after<-proc.time()[3];
   #  time1before <-
-  (time1after-time1before);
+
   #rm(time1before);
-  timestamp();
+  cat('\n',timestamp(), sep = '');
+  return(time1after-time1before)
 }
 
 

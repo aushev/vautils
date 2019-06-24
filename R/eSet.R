@@ -330,7 +330,8 @@ compare_esets <- function(es1,es2, add_feat_cols=NULL){
 
 
 # returns expression valued transformed by a chosen method
-exprsV <- function(es, method=c('','log2','vst'), trans=FALSE, form=c('matrix','df','dt')){
+# method=c('','log2','vst'), form=c('matrix','df','dt')
+exprsV <- function(es, method=NULL, trans=FALSE, form='matrix'){
   values <- exprs(es);
 
   values <- switch(method,
