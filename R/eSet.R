@@ -153,9 +153,7 @@ eSetFromTable <- function(tabInput,samples=NULL,featureNamesCol=NULL,featuresCol
     }
     row.names(expr) <- as.character(tabInput[[featureNamesCol]]);
     tabRest.names <- (names(tabRest) %-% featureNamesCol)
-    tabRest <- ifelse(is.null(tabRest.names),
-                      NULL,
-                      tabRest[,(tabRest.names)])
+    if (is.null(tabRest.names)) {tabRest <- NULL;} else tabRest <- tabRest[,(tabRest.names)];
   }
 
   es <- ExpressionSet(assayData = expr);
