@@ -119,7 +119,7 @@ debugES <- function(es, prefix='tmp'){
 
 }
 
-eSetFromTable <- function(tabInput,samples=NULL,featureNamesCol=NULL,featuresCols=character(0),orientation=T){
+eSetFromTable <- function(tabInput,samples=NULL,featureNamesCol=NULL,featuresCols=T,orientation=T){
   # by default, we expect features as rownames, samples as column names
   # samples: sample names as character vector, we'll check those within column names
   #          If NULL, all the columns minus featureNamesCol and featuresCols
