@@ -55,6 +55,8 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T){
         catV(' Trying from Bioconductor... ')
         #if (!exists('biocLite')) source("https://bioconductor.org/biocLite.R");
         #biocLite(packagename);
+        if (!requireNamespace("BiocManager", quietly = TRUE))
+          install.packages("BiocManager")
         BiocManager::install(packagename);
        } # e.tryBioconductor
     }
