@@ -1,5 +1,5 @@
-#BiocManager::install("waldronlab/MicrobiomeWorkshop", build_vignettes=TRUE, 
-                     dependencies=TRUE)
+#BiocManager::install("waldronlab/MicrobiomeWorkshop", build_vignettes=TRUE,
+#                     dependencies=TRUE)
 
 #remove.packages("BiocParallel", lib="~/R/win-library/3.6")
 #remove.packages("BiocParallel")
