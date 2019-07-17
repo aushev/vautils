@@ -152,7 +152,10 @@ eSetFromTable <- function(tabInput,samples=NULL,featureNamesCol=NULL,featuresCol
       stop('Column with gene names not found! ',featureNamesCol);
     }
     row.names(expr) <- as.character(tabInput[[featureNamesCol]]);
-    tabRest <- tabRest[,(names(tabRest) %-% featureNamesCol)]
+    tabRest.names <- (names(tabRest) %-% featureNamesCol)
+    tabRest <- ifelse(is.null(tabRest.names),
+                      NULL,
+                      tabRest[,(tabRest.names)])
   }
 
   es <- ExpressionSet(assayData = expr);
