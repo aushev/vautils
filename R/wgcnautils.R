@@ -1,6 +1,6 @@
 
-req('WGCNA')
 net_ini <- function(inp_net, sample_names=NULL){
+req('WGCNA')
   # adds to net object:
   # N - number of modules not including grey
   # colList - list of colors including grey, length = N+1
@@ -26,6 +26,7 @@ net_ini <- function(inp_net, sample_names=NULL){
 
 scaleFreePlot.makeVA <- function (connectivity, nBreaks = 10, truncated = FALSE, removeFirst = FALSE, main = "", ...)
 {
+req('WGCNA')
   k <- connectivity
   discretized.k <- cut(k, nBreaks)
   dk <- tapply(k, discretized.k, mean)
