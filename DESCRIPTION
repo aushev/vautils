@@ -2,7 +2,7 @@ Package: vautils
 Type: Package
 Title: handy little functions
 Date: 2019-07-28
-Version: 0.1.1.68
+Version: 0.1.1.69
 Author: Vasily Aushev
 Maintainer: Vasily Aushev <vasily@aushev.name>
 Description: bunch of stuff under development
@@ -11,3 +11,4 @@ Encoding: UTF-8
 LazyData: true
 Imports: magrittr, data.table, BiocManager, ggplot2
 Suggests: WGCNA, quantmod
+Collate: 'loading.R'
