@@ -1,5 +1,7 @@
-req(quantmod)
 mergesymbols <- function(symbols, ...){
+
+req(quantmod)
+
   symbols.in <- na.omit(unique(symbols))
   symbols.out <- getSymbols(symbols.in, ...)
   all.data <- NULL
@@ -14,6 +16,9 @@ mergesymbols <- function(symbols, ...){
 }
 
 mergesymbolsdt <- function(symbols, ...){
+
+req(quantmod)
+
   symdata <- mergesymbols(symbols, ...)
   dtWide <- data.table(symdata, keep.rownames = T)
   names(dtWide) %<>% gsub('(.*)\\.(.*)','\\2.\\1',.)
@@ -28,6 +33,8 @@ mergesymbolsdt <- function(symbols, ...){
 }
 
 stocks.convert.continuous <- function(inpDT, nmTicker='Ticker', nmDate='Date', nmOpen='Open', nmClose='Close'){
+req(quantmod)
+
   setnames(inpDT, c(nmTicker, nmDate, nmOpen, nmClose), cs('colTicker colDate colOpen colClose'))
   dt.Open  <- inpDT[,.(Time1=as.POSIXct(paste0(colDate,' 09:30:00')), colTicker, colPrice=colOpen)]
   dt.close <- inpDT[,.(Time1=as.POSIXct(paste0(colDate,' 16:00:00')), colTicker, colPrice=colClose)]
