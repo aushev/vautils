@@ -43,11 +43,9 @@ print_list <- function(inp) {
 # }
 
 # detach("package:vautils", unload=TRUE)
-# detach("package:ggplot2", unload=TRUE)
 # library(vautils)
 # f2()
 # detach("package:vautils", unload=TRUE)
-# library(ggplot2)
 # library(vautils)
 # f2()
 #
