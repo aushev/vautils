@@ -7,7 +7,7 @@ resetPar <- function() {
 }
 
 
-req(ggplot2)
+reqq(ggplot2)
 
 gg_nogrids <- theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())
 

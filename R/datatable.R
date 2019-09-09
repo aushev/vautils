@@ -138,13 +138,13 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA,
 
   if (filetype=='xls'){
     cat(' with read.xlsx... ');
-    req('xlsx', verbose = F);
+    reqq('xlsx', verbose = F);
     rez <- read.xlsx(fnRead, sheetIndex, sheetName, ...);
     rez <- data.table(rez);
   }
   else if (filetype == 'sas7bdat') {
     cat(' with read.sas7bdat... ');
-    req('sas7bdat', verbose = F);
+    reqq('sas7bdat', verbose = F);
     rez <- read.sas7bdat(fnRead);
     rez <- data.table(rez);
   }

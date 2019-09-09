@@ -97,7 +97,7 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T){
 }
 
 
-req <- function(packagename, verbose=T, tryBioconductor=T){
+reqq <- function(packagename, verbose=T, tryBioconductor=T){
   catV <- ifelse(verbose,cat,function(...){})
   catV('\n=======================================================\n');
   pkname.subs <- substitute(packagename);
@@ -138,12 +138,12 @@ req <- function(packagename, verbose=T, tryBioconductor=T){
   packagename <- unlist(strsplit(packagename, " ", fixed=T));
   if (length(packagename)>1) {
     catV('Splitting package name:', length(packagename), "names.\n");
-    req(packagename,verbose = verbose,tryBioconductor=tryBioconductor);
+    reqq(packagename,verbose = verbose,tryBioconductor=tryBioconductor);
     return(T);
   }
 
   reqS(packagename,verbose = verbose,tryBioconductor=tryBioconductor);
-} # e. req()
+} # e. reqq()
 
 reload <- function(pkgName){
   pkgNameP <- paste0('package:',pkgName);
@@ -208,9 +208,9 @@ getvloc <- function(){
 }
 
 
-req('data.table magrittr');
+reqq('data.table magrittr');
 
 vai <- function(){
-  req('data.table magrittr');
+  reqq('data.table magrittr');
 }
 
