@@ -762,7 +762,20 @@ mergefiles <- function(fn.list, fill=T, fn.col=NULL, FUN=fread, ...){
 
 
 
-mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T, recursive = T, rn=NULL, colnames = NULL, mask.remove='NULL', mask.replace='', ...){
+mergefiletabs <- function(
+  fn.inpdir,      # input directory
+  fn.mask='.*',   # files mask
+  recursive = T,  # recursive
+  fn.list=NULL,   # list of files => fn.inpdir, recursive and fn.mask will be ignored
+  full.names = T, # which form of filenames to put in the table
+  rn=NULL,        # if not NULL, add rn column with id
+  colnames = NULL, # rbind mode: if not NULL, each table names will be set to this
+                   # cbind mode: if not NULL, these columns are considered 'constant'
+  fn.mask.remove='NULL',
+  fn.mask.replace='',
+  mode = 'r', # default: rbind (long table), alternative: cbind (wide table)
+  ...
+  ){
 
   if (is.null(fn.list))
     fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE, recursive=recursive)
@@ -771,13 +784,26 @@ mergefiletabs <- function(fn.inpdir, fn.mask='.*', fn.list=NULL, full.names = T,
 
   for (fn.this in fn.list){
     dt.this <- flexread(fn.this, ...)
-    if (!is.null(colnames)) {setnames(dt.this, colnames);}
-
     fn.this.show <- ifelse(full.names==T, fn.this, basename(fn.this))
-    if (!is.null(mask.remove)) fn.this.show <- gsub(mask.remove,mask.replace,fn.this.show);
-    dt.this[, ffn:=fn.this.show]
-    if (!is.null(rn)) {dt.this[, (rn):=seq_len(nrow(dt.this))]}
-    dt.all <- rbind(dt.all, dt.this, fill=T)
+    if (!is.null(fn.mask.remove)) fn.this.show <- gsub(fn.mask.remove,fn.mask.replace,fn.this.show);
+
+    if (mode=='r'){
+      if (!is.null(colnames)) {setnames(dt.this, colnames);}
+      dt.this[, ffn:=fn.this.show]
+      if (!is.null(rn)) {dt.this[, (rn):=seq_len(nrow(dt.this))]}
+      dt.all <- rbind(dt.all, dt.this, fill=T)
+    } else {
+      dt.left <- dt.this[,(colnames), with=F]
+      dt.right <- dt.this[,-(colnames), with=F]
+      if (is.null(dt.all)){
+        dt.const <- dt.left
+        dt.all <- dt.this
+      } else {
+        stopifnot(dt.left==dt.const)
+        dt.all <- cbind(dt.all, dt.right)
+      }
+
+    }
   }
 
   invisible(dt.all);
