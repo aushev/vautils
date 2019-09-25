@@ -350,3 +350,33 @@ exprsV <- function(es, method=NULL, trans=FALSE, form='matrix'){
 
   return(values)
   }
+
+
+
+
+
+
+annotateENS <- function(es,
+                        es.ID='ENSG',
+                        mart_filter="ensembl_gene_id",
+                        mart_attr=cs("external_gene_name gene_biotype")){
+  mart <- useDataset("hsapiens_gene_ensembl", useMart("ENSEMBL_MART_ENSEMBL"))
+
+  annotLookup <- getBM(
+    attributes=c(mart_filter,mart_attr), # cs("ensembl_gene_id gene_biotype external_gene_name")
+    filters=mart_filter, # "ensembl_gene_id"
+    values=fData(es.sebra10)[[es.ID]], # $ENSG,
+    mart=mart,
+    uniqueRows=TRUE)
+
+  dt.annotlookup <- data.table(annotLookup)
+  dt.annotlookup <- unique(dt.annotlookup)
+
+  setkeyv(dt.annotlookup,mart_filter); # ensembl_gene_id
+
+  es %<>% attachfData(dt.annotlookup, key.dat=mart_filter, key.es=es.ID)
+
+  invisible(es)
+
+}
+
