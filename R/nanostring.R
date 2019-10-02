@@ -42,13 +42,14 @@ invisible(es.all)
 nses.ini1 <- function(es){
 
   fData(es)$CodeClass[fData(es)$CodeClass=='Endogenous1'] <- 'Endogenous'
+  if (! 'GeneName' %in% fvarLabels(es)) fData(es)$GeneName <- featureNames(es)
 
   # should be done AFTER applying PCF!
   sum.pos <- colSums(exprs(es[fData(es)$CodeClass == 'Positive',]))
   sum.neg <- colSums(exprs(es[fData(es)$CodeClass == 'Negative',]))
   sum.lig <- colSums(exprs(es[fData(es)$CodeClass == 'Ligation',]))
-  sum.ligP<- colSums(exprs(es[grepl('LIG_POS',fData(es)$GeneName),]))
-  sum.ligN<- colSums(exprs(es[grepl('LIG_NEG',fData(es)$GeneName),]))
+  sum.ligP<- colSums(exprs(es[grepl('LIG_POS',featureNames(es)),])) # was fData(es)$GeneName instead of featureNames()
+  sum.ligN<- colSums(exprs(es[grepl('LIG_NEG',featureNames(es)),])) # was fData(es)$GeneName instead of featureNames()
   sum.hkg <- colSums(exprs(es[fData(es)$CodeClass == 'Housekeeping',]))
   sum.gen <- colSums(exprs(es[fData(es)$CodeClass %in% cs('Housekeeping Endogenous Endogenous1'),]))
   sum.end <- colSums(exprs(es[fData(es)$CodeClass %in% cs('Endogenous Endogenous1'),]))

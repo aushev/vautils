@@ -900,9 +900,42 @@ setfirstcol <- function(dtIn, firstcols){
   if (length(missingcols)>0){
     warning('These columns are missing and will be ignored: ',missingcols);
   }
-  firstcols <- intersect(firstcols,names(dtIn));
+  firstcols %<>% intersect(names(dtIn));
   setcolorder(dtIn, c(firstcols, (names(dtIn) %-% firstcols))  )
 }
+
+setlastcol <- function(dtIn, lastcols){
+  missingcols <- firstcols %-% names(dtIn)
+  if (length(missingcols)>0){
+    warning('These columns are missing and will be ignored: ',missingcols);
+  }
+  lastcols %<>% intersect(names(dtIn));
+  setcolorder(dtIn, c((names(dtIn) %-% firstcols), lastcols))
+}
+
+setcolorderV <- function(dtIn, newcols, ellipsis='...'){
+  ell.pos <- match(ellipsis, newcols)
+  if (!is.na(ell.pos)){
+    firstcols <- newcols[1:(ell.pos-1)]
+    lastcols  <- newcols[(ell.pos+1):length(newcols)]
+    newcols <- c(firstcols,lastcols)
+    missingcols <- newcols %-% names(dtIn)
+    firstcols %<>% intersect(names(dtIn));
+    lastcols  %<>% intersect(names(dtIn));
+    newcols   %<>% intersect(names(dtIn));
+  } else {
+    missingcols <- newcols %-% names(dtIn)
+    firstcols  <- intersect(newcols, names(dtIn))
+    lastcols <- NULL
+  }
+
+  if (length(missingcols)>0){
+    warning('These columns are missing and will be ignored: ',missingcols);
+  }
+
+  setcolorder(dtIn, c(firstcols, (names(dtIn) %-% newcols), lastcols))
+}
+
 
 names.comm <- function(dt1,dt2) {return(intersect(names(dt1),names(dt2)))}
 names.diff <- function(dt1,dt2) {return(setdiff(names(dt1),names(dt2)))}
