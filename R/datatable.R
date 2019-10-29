@@ -1002,7 +1002,17 @@ split_vers2 <- function(inpDT, col_format, col_content, sep=':', prefix=''){
 }
 
 
-#
+
+shrink.col <- function(inpDT, cols, sep=';'){
+  # 'chrX;chrX;chrX;chrX' => 'chrX'
+  for (this.col in cols){ # this.col='Chr'
+    inpDT[, c(this.col):=paste0( unique(unlist(strsplit(get(this.col),sep,fixed = T))), collapse = sep) , by=c(this.col)]
+  }
+  invisible(inpDT)
+}
+
+
+# getfldFrom <- 'aaa; level 32; transcript_support_level "4";'
 
 extract.fld <- function(inpDT,fldFrom,fldTo,regex1,regex2='\\1',regex3='',pos=1L,remove=T){
   str.wide <- paste0('.*',regex1,'.*')

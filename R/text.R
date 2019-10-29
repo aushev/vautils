@@ -122,6 +122,11 @@ chopRight <- function(inpstr,n=1L){
   return(substring(inpstr,1,nchar(inpstr)-n));
 }
 
+shrink_str <- function(inp_str, sep=';'){
+  # opposite of rep()
+  # 'chrX;chrX;chrX;chrX' => 'chrX'
+  paste0(unique(unlist(strsplit(inp_str,sep,fixed = T))), collapse = sep);
+}
 
 
 

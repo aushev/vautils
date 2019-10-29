@@ -26,7 +26,7 @@ ggX.notitle <- theme(axis.title.x = element_blank())
 leg.no <- theme(legend.position="none")
 ggH <- geom_hline(yintercept = 0)
 ggV <- geom_vline(xintercept = 0)
-
+ggD <- geom_abline(slope = 1)
 
 
 # Multiple plot function ######################################
