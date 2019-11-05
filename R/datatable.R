@@ -807,7 +807,74 @@ mergefiletabs <- function(
   }
 
   invisible(dt.all);
-}
+} # e. mergefiletabs()
+
+mergefiletabs.partial <- function(fnInput, mask='*.*', colsHeader=NULL, colValue=-1, separate=F){
+  # merge files where part of the columns ("header" columns) are supposed to be the same across all files
+
+  # fnInput - directory or list of files
+  # colsHeader - columns describing features (must be the same across all files)
+  #              can be column numbers or names
+  # colValue - column containing expression value to keep. Can be column number (-1 means last column), or name
+  if (length(colValue)!=1) stop('colValue must be of length 1!')
+  if (dir.exists(fnInput)) fnInput <- dir(fnInput, mask, full.names = T)
+
+  par.dir <- '';
+  dt.all <- NULL;
+  base.header <- NULL;
+  cat('\n ')
+  for (this.fn in fnInput){
+    this.dir <- dirname(this.fn);
+    if (this.dir != par.dir){
+      cat(this.dir,'\n '); par.dir <- this.dir;
+    }
+    this.fn.base <- basename(this.fn)
+    cat(this.fn.base)
+    if (!file.exists(this.fn)) {cat(' ERROR!\n ');next;}
+    this.dt <- fread(this.fn);
+
+    colValue.eff <- colValue;
+    if (is.character(colValue)){
+      colValue.eff <- which(names(this.dt)==colValue)
+      if (length(colValue.eff)>1) {stop('Ambiguous column names!')}
+      if (length(colValue.eff)==0) {stop('colValue',colValue, 'not found!')}
+    } else if (colValue<0){ # last column
+      colValue.eff <- ncol(this.dt)+colValue+1;
+    }
+
+    this.values <- this.dt[,(colValue.eff),with=F]
+    names(this.values) <- this.fn.base;
+
+    colsHeader.eff <- colsHeader;
+    if (is.null(colsHeader)){
+      colsHeader.eff <- seq_len(ncol(this.dt)) %-% colValue.eff
+    } else if (is.character(colsHeader)){
+      colsHeader.eff <- match(colsHeader,names(this.dt))
+      if (length(colsHeader.eff)==0) {stop('colsHeader: columns not defined!')}
+      if (any(is.na(colsHeader.eff))) {stop('colsHeader: some columns not found!')}
+      if (sum(duplicated(colsHeader.eff))) {stop('colsHeader: ambiguous column names!')}
+    } else if (any(colsHeader<0)){
+      stop('Negative colsHeader not implemented')
+    }
+
+    this.header <- this.dt[,(colsHeader.eff),with=F]
+    if (is.null(base.header)){
+      base.header <- this.header;
+    } else {
+      if (! base.header %===% this.header) stop('Header columns are not the same!')
+    }
+
+    dt.all %<>% cbind(this.values)
+
+    cat('\n ')
+  } # e. for
+
+
+  if (separate==F){
+    return(cbind(base.header,dt.all))
+  } else return(list(header=base.header, data=dt.all));
+
+} # e. mergefiletabs.partial()
 
 
 

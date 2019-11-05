@@ -247,6 +247,20 @@ eSet.From.fCounts <- function(fn.fCounts,maskRemove='_Aligned.sortedByCoord.out.
 }
 
 
+eSet.From.salmon <- function(fnInput, mask='*.txt', colsHeader=NULL, colValue=-1, colID=1){
+
+  all <- mergefiletabs.partial(fnInput,mask,colsHeader,colValue, separate = T)
+
+  m.all <- as.matrix(all$data)
+  es <- ExpressionSet(assayData = m.all)
+
+  featureNames(es) <- all$header[[colID]]
+  fData(es) <- all$header
+
+  #return(list(es, all$header))
+  return(es)
+} # e. eSet.From.salmon()
+
 
 eSet.From.starquant <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded=0){
   # fnInput - directory or list of files
@@ -291,6 +305,11 @@ eSet.From.starquant <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded
 
   invisible(es)
 }
+
+
+
+
+
 
 
 
