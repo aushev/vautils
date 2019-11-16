@@ -247,8 +247,9 @@ eSet.From.fCounts <- function(fn.fCounts,maskRemove='_Aligned.sortedByCoord.out.
 }
 
 
-eSet.From.salmon <- function(fnInput, mask='*.txt', colsHeader=NULL, colValue=-1, colID=1){
-
+eSet.From.salmon <- function(fnInput, mask='*.txt', colsHeader=NULL, colValue=-1, colID=1, colsNameSplit=NULL){
+# usage:
+# eSet.From.salmon(fn$d.quant, colsHeader=c(1,2), colsNameSplit=cs('ENST ENSG OTTHUMG OTTHUMT NameT NameG x1 type'))
   all <- mergefiletabs.partial(fnInput,mask,colsHeader,colValue, separate = T)
 
   m.all <- as.matrix(all$data)
@@ -256,6 +257,13 @@ eSet.From.salmon <- function(fnInput, mask='*.txt', colsHeader=NULL, colValue=-1
 
   featureNames(es) <- all$header[[colID]]
   fData(es) <- all$header
+
+  if (!is.null(colsNameSplit) & !is.null(all$header)){
+    all$header %<>% as.data.table()
+    stopifnot(sapply(strsplit(all$header$Name, split = '|', fixed = T), length)==length(colsNameSplit))
+    all$header[,(colsNameSplit):=tstrsplit(Name,split = '|', fixed = T)]
+    fData(es) <- all$header
+  }
 
   #return(list(es, all$header))
   return(es)

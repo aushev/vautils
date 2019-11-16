@@ -662,11 +662,11 @@ compcols <- function(inptab1, inptab2){
 cleannames <- function(inputnames,
                forbidden = '[^[:alnum:]_]+', replaceTo='.',
                leading='', trailing='', multi=T){
-  inputnames <- make.names(inputnames);
   if (!is.na( forbidden))  inputnames <- gsub(forbidden,     replaceTo, inputnames);
   if (!is.na(leading))  inputnames <- gsub('^\\' %+% replaceTo %+% '+',  leading, inputnames); # just remove leading "."
   if (!is.na(trailing)) inputnames <- gsub( '\\' %+% replaceTo %+% '+$',trailing, inputnames); # just remove trailing "."
   if (multi==T)         inputnames <- gsub( '\\' %+% replaceTo %+% '+', replaceTo,inputnames); # change ".." to "."
+  inputnames <- make.names(inputnames);
 
   inputnames;
 }
