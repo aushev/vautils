@@ -817,7 +817,15 @@ mergefiletabs.partial <- function(fnInput, mask='*.*', colsHeader=NULL, colValue
   #              can be column numbers or names
   # colValue - column containing expression value to keep. Can be column number (-1 means last column), or name
   if (length(colValue)!=1) stop('colValue must be of length 1!')
-  if (dir.exists(fnInput)) fnInput <- dir(fnInput, mask, full.names = T)
+  if (dir.exists(fnInput)) {
+    fnInput <- dir(fnInput, mask, full.names = T)
+  }
+
+  if (sum(file.exists(fnInput))==0){
+    message('No input files found!');
+    return(NULL);
+  }
+
 
   par.dir <- '';
   dt.all <- NULL;

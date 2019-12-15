@@ -122,10 +122,17 @@ chopRight <- function(inpstr,n=1L){
   return(substring(inpstr,1,nchar(inpstr)-n));
 }
 
-shrink_str <- function(inp_str, sep=';'){
+
+str_shrink <- function(inp_str, sep=';'){
   # opposite of rep()
   # 'chrX;chrX;chrX;chrX' => 'chrX'
-  paste0(unique(unlist(strsplit(inp_str,sep,fixed = T))), collapse = sep);
+  if (length(inp_str)==0) stop('Wrong input!')
+  if (length(inp_str)==1){
+    paste0(unique(unlist(strsplit(inp_str,sep,fixed = T))), collapse = sep);
+  } else {
+    str_shrink_1 <- function(inp,sep=';'){paste0(unique(inp),collapse=sep)}
+    sapply(strsplit(inp_str,sep), str_shrink_1, sep=sep);
+  }
 }
 
 

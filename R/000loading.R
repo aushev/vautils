@@ -190,7 +190,7 @@ loadv1 <- function(fnRdat, verbose=T){
   if (length(obj.names)>1) warning('Multiple objects loaded! Only first one will be returned.')
   obj.name <- obj.names[1]
   obj.ret <- get(obj.name)
-  invisible(obj.ret)
+  return(obj.ret)
 }
 
 

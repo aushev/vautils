@@ -119,7 +119,7 @@ debugES <- function(es, prefix='tmp'){
 
 }
 
-eSetFromTable <- function(tabInput,samples=NULL,featureNamesCol=NULL,featuresCols=T,orientation=T){
+eSet.from.table <- function(tabInput,samples=NULL,featureNamesCol=NULL,featuresCols=T,orientation=T){
   # by default, we expect features as rownames, samples as column names
   # samples: sample names as character vector, we'll check those within column names
   #          If NULL, all the columns minus featureNamesCol and featuresCols
@@ -173,7 +173,7 @@ eSetFromTable <- function(tabInput,samples=NULL,featureNamesCol=NULL,featuresCol
 }
 
 
-eSetFromLong <- function(tabInput,featureNamesCol='geneID',sampleNamesCol='ffn',valueCol='counts'){
+eSet.from.long <- function(tabInput,featureNamesCol='geneID',sampleNamesCol='ffn',valueCol='counts'){
   dtInput <- as.data.table(tabInput)
 
   frm <- as.formula(paste(featureNamesCol,'~',sampleNamesCol))
@@ -237,20 +237,30 @@ summaryS <- function(es, not0.thr=0){
   return(es);
 }
 
-eSet.From.fCounts <- function(fn.fCounts,maskRemove='_Aligned.sortedByCoord.out.bam'){
+#' eSet.from.fCounts
+#'
+#' creates eSet from a `featureCounts` output file
+#'
+#' `featureCounts` is typically run after alignment, it takes bam files as the input and creates a single `counts.txt` file
+eSet.from.fCounts <- function(fn.fCounts,fCols=cs('Chr Start End Strand Length'),maskRemove='_Aligned.sortedByCoord.out.bam'){
   dt.fcounts <- flexread(fn.fCounts)
   names(dt.fcounts) %<>% gsub(maskRemove,'',.)
-  es <- eSetFromTable(dt.fcounts, featureNamesCol='Geneid', featuresCols=cs('Chr Start End Strand Length'))
+  es <- eSet.from.table(dt.fcounts, featureNamesCol='Geneid', featuresCols=fCols)
   fData(es)$Chr <- sapply(strsplit(fData(es)$Chr,';'),function(X){paste0(unique(X),collapse = ';')})
   fData(es)$Strand <- sapply(strsplit(fData(es)$Strand,';'),function(X){paste0(unique(X),collapse = ';')})
   invisible(es)
-}
+} # e. eSet.from.fCounts()
 
 
-eSet.From.salmon <- function(fnInput, mask='*.txt', colsHeader=NULL, colValue=-1, colID=1, colsNameSplit=NULL){
+eSet.from.salmon <- function(fnInput, mask='*.txt', colsHeader=NULL, colValue=-1, colID=1, colsNameSplit=NULL){
 # usage:
 # eSet.From.salmon(fn$d.quant, colsHeader=c(1,2), colsNameSplit=cs('ENST ENSG OTTHUMG OTTHUMT NameT NameG x1 type'))
   all <- mergefiletabs.partial(fnInput,mask,colsHeader,colValue, separate = T)
+
+  if (is.null(all)){
+    message('No input data found!');
+    return(NULL);
+  }
 
   m.all <- as.matrix(all$data)
   es <- ExpressionSet(assayData = m.all)
@@ -267,14 +277,14 @@ eSet.From.salmon <- function(fnInput, mask='*.txt', colsHeader=NULL, colValue=-1
 
   #return(list(es, all$header))
   return(es)
-} # e. eSet.From.salmon()
+} # e. eSet.from.salmon()
 
 
-eSet.From.starquant <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded=0){
+eSet.from.starquant <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded=0){
   # fnInput - directory or list of files
   #
 
-  dt.all <- mergefiletabs(fnInput, fn.mask = mask, full.names = F, recursive = F, colnames = cs('geneID countsU counts1 counts2'), mask.remove = mask)
+  dt.all <- mergefiletabs(fnInput, fn.mask = mask, full.names = F, recursive = F, colnames = cs('geneID countsU counts1 counts2'), fn.mask.remove = mask)
 
   if (nrow(dt.all)==0L) stop('Read failed! Check that the path exists.');
 
@@ -321,8 +331,8 @@ eSet.From.starquant <- function(fnInput, mask='*_ReadsPerGene.out.tab', stranded
 
 
 
-# compare_esets(): merges melted exprs() for both eSets
-compare_esets <- function(es1,es2, add_feat_cols=NULL){
+# compare_esets_x(): merges melted exprs() for both eSets
+compare_esets_x <- function(es1,es2, add_feat_cols=NULL){
   if (is.character(es1)) {
     es1.name <- loadv(es1)
     es1 <- get(es1.name)
@@ -346,6 +356,12 @@ compare_esets <- function(es1,es2, add_feat_cols=NULL){
   dtX1 <- melt(dtX1, id.vars=c('featureID', add_feat_cols))
   dtX2 <- melt(dtX2, id.vars=c('featureID', add_feat_cols))
 
+
+  if (identical(dtX1,dtX2)) {
+    message('Expression tables are identical !');
+    return(NULL);
+  }
+
   setnames(dtX1, cs('value variable'), cs('value1 sampleID'))
   setnames(dtX2, cs('value variable'), cs('value2 sampleID'))
 
@@ -354,7 +370,85 @@ compare_esets <- function(es1,es2, add_feat_cols=NULL){
 
   invisible(dtX)
 
-} # e. compare_esets()
+} # e. compare_esets_x()
+
+compare_esets <- function(es1,es2){
+  if (is.character(es1)) {
+    es1.name <- loadv(es1)
+    es1 <- get(es1.name)
+    if (es1.name!='es1') rm(list=es1.name)
+  }
+
+  if (is.character(es2)) {
+    es2.name <- loadv(es2)
+    es2 <- get(es2.name)
+    if (es2.name!='es2') rm(list=es2.name)
+  }
+
+
+  dtX1 <- es1 %>% exprs %>% as.data.table(keep.rownames = T) %>% setnames('rn','featureID') %>% melt(id.vars=c('featureID'))
+  dtX2 <- es2 %>% exprs %>% as.data.table(keep.rownames = T) %>% setnames('rn','featureID') %>% melt(id.vars=c('featureID'))
+
+  if (identical(dtX1,dtX2)) {
+    message('Expression tables are identical.');
+    dtX <- NULL;
+  } else {
+    message('Expression tables are different!');
+    setnames(dtX1, cs('value variable'), cs('value1 sampleID'))
+    setnames(dtX2, cs('value variable'), cs('value2 sampleID'))
+    dtX <- merge(dtX1,dtX2,by=c('featureID', 'sampleID'), all=T)
+    dtX <- dtX[is.na(value1) | is.na(value2) | (value1!=value2),]
+  }
+  rm(dtX1, dtX2)
+
+
+  dfF1 <- fData(es1)
+  dfF2 <- fData(es2)
+  dtF <- NULL;
+  if (identical(dfF1,dfF2)) {
+    message('Feature tables are identical.');
+  } else {
+    message('Feature tables are different!');
+    dfF1$original.row.names <- row.names(dfF1)
+    dfF2$original.row.names <- row.names(dfF2)
+    if (!identical(featureNames(es1),featureNames(es2))){
+      message(' featureNames are different!');
+    }
+    if (!identical(fvarLabels(es1),fvarLabels(es2))){
+      message(' fvarLabels are different!');
+    }
+    dtF <- merge(dfF1,dfF2,by='original.row.names', all=T)
+
+    if (identical(featureNames(es1),featureNames(es2)) & identical(fvarLabels(es1),fvarLabels(es2))){
+      tbl_cmp <- (dfF1 == dfF2)
+      vec_cmp <- apply(tbl_cmp,1,function(X){all(X, na.rm = T)})
+      dtF <- dtF[!vec_cmp,]
+    }
+
+  }
+  rm(dfF1, dfF2)
+
+
+  dtP1 <- pData(es1)
+  dtP2 <- pData(es2)
+  dtP <- NULL;
+
+  if (identical(dtP1,dtP2)) {
+    message('phenoData tables are identical.');
+  } else {
+    message('phenoData tables are different!');
+    if (!identical(sampleNames(es1),sampleNames(es2))){
+      message('sampleNames are different!');
+    }
+    # dtP <- merge(dtP1,dtP2,by=???, all=T)
+  }
+  rm(dtP1, dtP2)
+
+
+  return(list(expr=dtX,features=dtF,pheno=dtP))
+} # e. compare_esets_x()
+
+
 
 
 # returns expression valued transformed by a chosen method
@@ -383,27 +477,38 @@ exprsV <- function(es, method=NULL, trans=FALSE, form='matrix'){
 
 
 
-annotateENS <- function(es,
-                        es.ID='ENSG',
-                        mart_filter="ensembl_gene_id",
-                        mart_attr=cs("external_gene_name gene_biotype")){
-  mart <- useDataset("hsapiens_gene_ensembl", useMart("ENSEMBL_MART_ENSEMBL"))
 
-  annotLookup <- getBM(
-    attributes=c(mart_filter,mart_attr), # cs("ensembl_gene_id gene_biotype external_gene_name")
-    filters=mart_filter, # "ensembl_gene_id"
-    values=fData(es.sebra10)[[es.ID]], # $ENSG,
-    mart=mart,
-    uniqueRows=TRUE)
+#' es.mergebysample
+#'
+#' merges counts from different flowcell lanes
+#'
+#'
+es.mergebysample <- function(es.split, smpl.col='smpl'){ # formerly es.mergebysample()
+  dt.expr <-
+    exprs(es.split) %>%
+    as.data.table(keep.rownames = T, ) %>%
+    melt(id.vars = 'rn') %>%
+    setnames(cs('geneID ffn counts'))
 
-  dt.annotlookup <- data.table(annotLookup)
-  dt.annotlookup <- unique(dt.annotlookup)
+  dt.P <- as.data.table(pData(es.split), keep.rownames = T)
+  setkey(dt.P, rn)
 
-  setkeyv(dt.annotlookup,mart_filter); # ensembl_gene_id
+  dt.expr$smpl <- dt.P[as.character(dt.expr$ffn), get(smpl.col)]
 
-  es %<>% attachfData(dt.annotlookup, key.dat=mart_filter, key.es=es.ID)
+  # merge results from separate flowcell lanes
+  expr.merged <- dt.expr[,.(n1=.N, counts=sum(counts)),by=.(smpl,geneID)]; # 8,111,640 rows x 4 columns (smpl geneID n1 counts)
+  dt.sample <- expr.merged[,.(nGenes=.N, nFiles=unique(n1)),by=smpl]; # 138 samples
+  #expr.merged$n1 <- NULL
 
-  invisible(es)
+  es.merged <- eSetFromLong(expr.merged, featureNamesCol = 'geneID', sampleNamesCol = 'smpl', valueCol = 'counts')
+  # fData(es.merged) <- fData(es.split); # FUCKING WRONG!!! NEVER DO THAT!!!
+  if (ncol(fData(es.split))>0) es.merged %<>% attachfData(fData(es.split), key.dat='')
+  es.merged %<>% attachpData(dt.sample, key.dat = 'smpl')
 
+  invisible(es.merged)
 }
+
+
+
+
 
