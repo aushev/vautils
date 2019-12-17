@@ -252,6 +252,19 @@ eSet.from.fCounts <- function(fn.fCounts,fCols=cs('Chr Start End Strand Length')
 } # e. eSet.from.fCounts()
 
 
+eSet.dds.from.fCounts <- function(fn.fCounts,fCols=cs('Chr Start End Strand Length'),maskRemove='_Aligned.sortedByCoord.out.bam'){
+  dt.fcounts <- flexread(fn.fCounts)
+  names(dt.fcounts) %<>% gsub(maskRemove,'',.)
+
+
+
+  es <- eSet.from.table(dt.fcounts, featureNamesCol='Geneid', featuresCols=fCols)
+  fData(es)$Chr <- sapply(strsplit(fData(es)$Chr,';'),function(X){paste0(unique(X),collapse = ';')})
+  fData(es)$Strand <- sapply(strsplit(fData(es)$Strand,';'),function(X){paste0(unique(X),collapse = ';')})
+  invisible(es)
+} # e. eSet.from.fCounts()
+
+
 eSet.from.salmon <- function(fnInput, mask='*.txt', colsHeader=NULL, colValue=-1, colID=1, colsNameSplit=NULL){
 # usage:
 # eSet.From.salmon(fn$d.quant, colsHeader=c(1,2), colsNameSplit=cs('ENST ENSG OTTHUMG OTTHUMT NameT NameG x1 type'))
@@ -500,7 +513,7 @@ es.mergebysample <- function(es.split, smpl.col='smpl'){ # formerly es.mergebysa
   dt.sample <- expr.merged[,.(nGenes=.N, nFiles=unique(n1)),by=smpl]; # 138 samples
   #expr.merged$n1 <- NULL
 
-  es.merged <- eSetFromLong(expr.merged, featureNamesCol = 'geneID', sampleNamesCol = 'smpl', valueCol = 'counts')
+  es.merged <- eSet.from.long(expr.merged, featureNamesCol = 'geneID', sampleNamesCol = 'smpl', valueCol = 'counts')
   # fData(es.merged) <- fData(es.split); # FUCKING WRONG!!! NEVER DO THAT!!!
   if (ncol(fData(es.split))>0) es.merged %<>% attachfData(fData(es.split), key.dat='')
   es.merged %<>% attachpData(dt.sample, key.dat = 'smpl')
