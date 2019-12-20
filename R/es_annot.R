@@ -22,12 +22,20 @@ annotateENS <- function(es,
 
 }
 
-
-
-gene.info.from.ENSG <- function(es.input, mart=NULL){ # former gene.info.from.ENSG()
+.orphan <- function(es.input){
   fData(es.input)$oriGeneID <- featureNames(es.input)
   fData(es.input)$ENSG <- gsub('\\..*','',featureNames(es.input))
   fData(es.input)$par <- gsub('ENSG\\d+\\.\\d+','',featureNames(es.input))
+
+}
+
+
+gene.info.from.ENSG <- function(input, mart=NULL){ # former gene.info.from.ENSG()
+  if ('ExpressionSet' %in% class(input)){
+    stop('Function changed. Input must be a character vector (list of ENSG).');
+  }
+
+  list.ENSG <- gsub('\\..*','',input); # remove version and par
 
   if (is.null(mart)){
     require("biomaRt")
@@ -37,7 +45,7 @@ gene.info.from.ENSG <- function(es.input, mart=NULL){ # former gene.info.from.EN
 
   #genes.test <- cs('ENSG00000223972 ENSG00000228589 ENSG00000228943 ENSG00000214812 ENSG00000253005 ENSG00000253005')
   #ensLookup <- genes.test
-  ensLookup <- unique(fData(es.input)$ENSG)
+  ensLookup <- unique(list.ENSG)
 
   annotLookup <- getBM(
     mart=mart,
@@ -52,13 +60,13 @@ gene.info.from.ENSG <- function(es.input, mart=NULL){ # former gene.info.from.EN
 
   setkey(dt.annotlookup,ensembl_gene_id)
 
-  dt.annotlookup <- dt.annotlookup[fData(es.input)$ENSG,]
+  dt.annotlookup <- dt.annotlookup[list.ENSG,]
 
-  es.input %<>% attachfData(dt.annotlookup)
+#  es.input %<>% attachfData(dt.annotlookup)
   #tmpF1 <- tmpF[is.na(dt.annotlookup$gene_biotype),]
 
 #  fData(es.input)$gene_biotype[is.na(fData(es.input)$gene_biotype)] <- '?'
-  return(es.input)
+  return(dt.annotlookup)
 }
 
 

@@ -471,7 +471,7 @@ exprsV <- function(es, method=NULL, trans=FALSE, form='matrix'){
 
   values <- switch(method,
          log2= log2(values+1),
-         vst = vst(values),
+         vst = vst(round(values)),
                values )
 
   if (trans==TRUE) values <- t(values)
