@@ -522,6 +522,16 @@ es.mergebysample <- function(es.split, smpl.col='smpl'){ # formerly es.mergebysa
 }
 
 
+deseqds.from.es <- function(inp.eSet, design = ~ 1){
+  reqq(DESeq2, verbose = F)
+
+  dds <- DESeqDataSetFromMatrix(
+    countData = exprs(inp.eSet),
+    colData = pData(inp.eSet),
+    design = design)
+  return(dds)
+}
+
 
 
 

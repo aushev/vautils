@@ -14,9 +14,11 @@ gg_nogrids <- theme(panel.grid.minor=element_blank(),panel.grid.major=element_bl
 legJ.BL <- theme(legend.justification=c(0,0)); # bottom-left
 legJ.TL <- theme(legend.justification=c(0,1)); # top-left
 legJ.BR <- theme(legend.justification=c(1,0)); # bottom-right
+legJ.BL <- theme(legend.justification=c(0,0)); # bottom-left
 legJ.UR <- theme(legend.justification=c(1,1)); # upper-right
 
 legP.MM <- theme(legend.position=c(0.5,0.5)); # middle-middle
+legP.BL <- theme(legend.position=c(0,0)) + legJ.BL; # bottom-left
 legP.BR <- theme(legend.position=c(1,0)) + legJ.BR; # bottom-right
 legP.UR <- theme(legend.position=c(1,1)) + legJ.UR; # upper-right
 
