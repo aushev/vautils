@@ -262,9 +262,14 @@ dtdup <- function(dtIn, bykey) { # makes new data.table with only duplicated rec
   return(dtOut);
 }
 
-cmp2fldsbynum <- function(dtIn, f1n, f2n, verbose=F){  # compares 2 columns, returns vector (F means equal, T means different)
-  if (length(f1n)>1) stop('cmp2dupfldsbynum: one argument expected in f1n, ', length(f1n), ' received: ', f1n);
-  if (length(f2n)>1) stop('cmp2dupfldsbynum: one argument expected in f2n, ', length(f2n), ' received: ', f2n);
+
+
+
+
+
+cmp2fldsbynum <- function(dtIn, f1n, f2n, verbose=F){  # compares 2 columns, returns vector (F means equal or both NA, T means different, NA means *one* is NA)
+  if (length(f1n)!=1) stop('cmp2dupfldsbynum: one argument expected in f1n, ', length(f1n), ' received: ', f1n);
+  if (length(f2n)!=1) stop('cmp2dupfldsbynum: one argument expected in f2n, ', length(f2n), ' received: ', f2n);
   if (!is.numeric(f1n) | !is.numeric(f2n))  stop('Column indices must be numeric!');
   if (f1n > ncol(dtIn) | f2n > ncol(dtIn)) {warning('Table has less columns than requested number!'); return(F);}
   if (f1n==f2n)                            {warning('Identical indices, nothing to compare!'); return(F);}
@@ -282,17 +287,19 @@ cmp2fldsbynum <- function(dtIn, f1n, f2n, verbose=F){  # compares 2 columns, ret
   if (class(values2)=='Date') {values2 <- as.character(values2);}
 
   diff <- (values1 != values2);
-  diff[is.na(diff)] <- T
+
+  #diff[is.na(diff)] <- T
+  diff[is.na(values1) & is.na(values2)] <- F
 
   invisible(diff);
 }
 
 
-cmp2flds.bak <- function(dtIn, f1, f2, verbose=F){  # compares 2 fields
+cmp2flds <- function(dtIn, f1, f2, verbose=F){  # compares 2 fields
   if (length(f1)!=1) stop('cmp2dupflds: one value expected in f1, ', length(f1), ' received: ', f1);
   if (length(f2)!=1) stop('cmp2dupflds: one value expected in f2, ', length(f2), ' received: ', f2);
 
-  if (is.numeric(f1) & is.numeric(f2)) {return(cmp2dupfldsbynum(dtIn, f1, f2, tolNA));}
+  if (is.numeric(f1) & is.numeric(f2)) {return(cmp2dupfldsbynum(dtIn, f1, f2));}
 
   ftitle <- f1 %+% " vs " %+% f2;
   if (! f1 %in% names(dtIn)) {warning("No column named ", f1); return(F);}
@@ -306,15 +313,25 @@ cmp2flds.bak <- function(dtIn, f1, f2, verbose=F){  # compares 2 fields
   f1n = which(names(dtIn)==f1)
   f2n = which(names(dtIn)==f2)
 
-  if (f1==f2){f1n = f1n[1]; f2n = f2n[2];}
+  if (f1==f2){f1n = f1n[1]; f2n = f2n[2];} #
 
   if (length(f1n)>1){warning('Multiple fields named ', f1);}
   if (length(f2n)>1){warning('Multiple fields named ', f2);}
 
   invisible(cmp2fldsbynum(dtIn, f1n[1], f2n[1], verbose=verbose));
+} # e. cmp2flds()
+
+# strictly compares 2 fields
+cmp2dupflds.strict <- function(dtIn, f1, f2){
+  if (length(f1)!=1) stop('cmp2dupflds: one value expected in f1, ', length(f1), ' received: ', f1);
+  if (length(f2)!=1) stop('cmp2dupflds: one value expected in f2, ', length(f2), ' received: ', f2);
+  if (identical(dtIn[[f1]],dtIn[[f2]])) return(TRUE);
+  return(FALSE);
 }
 
-deldupflds <- function(dtIn, f1=names(dtIn), f2=NA, tolNA=TRUE) { # delete one of 2 fields if they are "identical"
+
+
+deldupflds.bak <- function(dtIn, f1=names(dtIn), f2=NA, tolNA=FALSE) { # delete one of 2 fields if they are "identical"
   #dtOut <- dtIn;
   lf1 <- length(f1);
   lf2 <- length(f2);
@@ -335,13 +352,6 @@ deldupflds <- function(dtIn, f1=names(dtIn), f2=NA, tolNA=TRUE) { # delete one o
 }
 
 
-# strictly compares 2 fields
-cmp2dupflds <- function(dtIn, f1, f2){
-  if (length(f1)!=1) stop('cmp2dupflds: one value expected in f1, ', length(f1), ' received: ', f1);
-  if (length(f2)!=1) stop('cmp2dupflds: one value expected in f2, ', length(f2), ' received: ', f2);
-  if (identical(dtIn[[f1]],dtIn[[f2]])) return(TRUE);
-  return(FALSE);
-}
 
 cleanXY <- function(dtIn, cols2check, rename=T, verbose=F){
   for (this.col in cols2check){

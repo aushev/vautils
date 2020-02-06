@@ -77,3 +77,11 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     }
   }
 }
+
+aes_add <- function(aes1,aes2){
+  aesAll <- aes2
+  only1 <- setdiff(names(aes1),names(aes2))
+  aes1 <- aes1[only1]
+  aesAll[only1] <- aes1[only1]
+  return(aesAll)
+}

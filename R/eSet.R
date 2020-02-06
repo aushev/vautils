@@ -196,7 +196,7 @@ summaryG <- function(es, not0.thr=0){
   dt.SummaryG         <- as.data.frame(fData(es))
   dt.SummaryG$oriID   <- seq_len(n.genes)
   dt.SummaryG$oriName <- featureNames(es)
-  dt.SummaryG %<>% as.data.table
+  setDT(dt.SummaryG)
 
   dt.SummaryG$not0   <- apply(tmpX,1,function(X){sum(X>not0.thr)})
   dt.SummaryG[,not0f:=not0/n.samples]
@@ -214,6 +214,23 @@ summaryG <- function(es, not0.thr=0){
 }
 
 
+nses.ini <- function(es, colCodeClass='CodeClass'){
+  #  ex <- as.data.table(exprs(es), keep.rownames = T);
+  #  setnames(ex, 'rn', 'ori.probe');
+  #  stopifnot(ex$ori.probe == featureNames(es));
+  #  fData(es) %>% View
+  sum.pos <- colSums(exprs(es[fData(es)[[colCodeClass]] == 'Positive',]))
+  sum.neg <- colSums(exprs(es[fData(es)[[colCodeClass]] == 'Negative',]))
+  sum.hkg <- colSums(exprs(es[fData(es)[[colCodeClass]] == 'Housekeeping',]))
+  sum.gen <- colSums(exprs(es[fData(es)[[colCodeClass]] %in% cs('Housekeeping Endogenous'),]))
+  dat.add <- cbind(sum.pos,sum.neg,sum.hkg,sum.gen)
+  dat.add <- as.data.frame(dat.add)
+  #  dat.add$filename <- row.names(dat.add)
+  es %<>% attachpData(dat.add)
+}
+
+
+
 summaryS <- function(es, not0.thr=0){
   n.samples <- dim(es)[2]
   n.genes   <- dim(es)[1]
@@ -225,6 +242,7 @@ summaryS <- function(es, not0.thr=0){
   dt.SummaryS %<>% as.data.table; # this should be after assigning oriID!
 
   dt.SummaryS$not0   <- apply(tmpX,2,function(X){sum(X>not0.thr)})
+  dt.SummaryS$sumTot <- apply(tmpX,2,function(X){sum(X)})
   dt.SummaryS[,not0f:=not0/n.genes]
   dt.SummaryS$avgSig <- apply(tmpX,2,mean)
   dt.SummaryS$medSig <- apply(tmpX,2,median)
