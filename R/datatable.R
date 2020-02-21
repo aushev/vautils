@@ -362,7 +362,7 @@ cleanXY <- function(dtIn, cols2check, rename=T, verbose=F){
       next;
     } # e.if col not found
 
-    if (cmp2dupflds(dtIn, f1x, f1y)){
+    if (cmp2dupflds.strict(dtIn, f1x, f1y)){
       if (verbose==T) {cat('Identical: ',this.col,'\n');}
       dtIn[, (f1y):=NULL];
       if (rename==T) setnames(dtIn,f1x,this.col)

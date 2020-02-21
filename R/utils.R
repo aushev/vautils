@@ -1,5 +1,11 @@
 detachAllPackages <- function() {lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE);}
 
+pkgparent <- function (fun) {
+  nsenv <- topenv(environment(fun))
+  environmentName(nsenv)
+}
+
+
 # from https://stackoverflow.com/questions/1358003/tricks-to-manage-the-available-memory-in-an-r-session
 # improved list of objects
 .ls.objects <- function (pos = 1, pattern, order.by,

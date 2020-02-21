@@ -189,6 +189,8 @@ eSet.from.long <- function(tabInput,featureNamesCol='geneID',sampleNamesCol='ffn
 
 
 summaryG <- function(es, not0.thr=0){
+  if (pkgparent(exprs)!='Biobase') warning('Exprs overriden by not-Biobase package! It may break normal behavior.')
+
   n.samples <- dim(es)[2]
   n.genes   <- dim(es)[1]
   tmpX <- exprs(es)
@@ -232,7 +234,9 @@ nses.ini <- function(es, colCodeClass='CodeClass'){
 
 
 summaryS <- function(es, not0.thr=0){
-  n.samples <- dim(es)[2]
+  if (pkgparent(exprs)!='Biobase') warning('Exprs overriden by not-Biobase package! It may break normal behavior.')
+
+    n.samples <- dim(es)[2]
   n.genes   <- dim(es)[1]
   tmpX <- exprs(es)
 
