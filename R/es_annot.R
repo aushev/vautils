@@ -32,10 +32,19 @@ annotateENS <- function(es,
 
 gene.info.from.ENSG <- function(input, mart=NULL){ # former gene.info.from.ENSG()
   if ('ExpressionSet' %in% class(input)){
-    stop('Function changed. Input must be a character vector (list of ENSG).');
+    #stop('Function changed. Input must be a character vector (list of ENSG).');
+    dt.annotlookup <- gene.info.from.ENSG(featureNames(input))
+    input %<>% attachfData(dat=dt.annotlookup, key.dat = 'oriID')
+    return(input);
   }
 
-  list.ENSG <- gsub('\\..*','',input); # remove version and par
+  if (! 'character' %in% class(input)){
+    stop('Please provide eSet or character vector as input.')
+  }
+
+  dt.lookup <- data.table(oriID=input)
+  dt.lookup[, ENSG:=gsub('\\..*','',oriID)]; # remove version and par
+  ensLookup <- unique(dt.lookup$ENSG);
 
   if (is.null(mart)){
     require("biomaRt")
@@ -45,7 +54,6 @@ gene.info.from.ENSG <- function(input, mart=NULL){ # former gene.info.from.ENSG(
 
   #genes.test <- cs('ENSG00000223972 ENSG00000228589 ENSG00000228943 ENSG00000214812 ENSG00000253005 ENSG00000253005')
   #ensLookup <- genes.test
-  ensLookup <- unique(list.ENSG)
 
   annotLookup <- getBM(
     mart=mart,
@@ -55,12 +63,13 @@ gene.info.from.ENSG <- function(input, mart=NULL){ # former gene.info.from.ENSG(
     values=ensLookup,
     uniqueRows=TRUE)
 
-  dt.annotlookup <- data.table(annotLookup); # 58611
-  dt.annotlookup <- unique(dt.annotlookup)
+  dt.annot <- data.table(annotLookup); # 58611
+  dt.annot <- unique(dt.annot)
 
-  setkey(dt.annotlookup,ensembl_gene_id)
+  setkey(dt.annot,ensembl_gene_id)
+  setkey(dt.lookup,ENSG)
 
-  dt.annotlookup <- dt.annotlookup[list.ENSG,]
+  dt.annotlookup <- dt.annot[dt.lookup]
 
 #  es.input %<>% attachfData(dt.annotlookup)
   #tmpF1 <- tmpF[is.na(dt.annotlookup$gene_biotype),]
@@ -70,18 +79,24 @@ gene.info.from.ENSG <- function(input, mart=NULL){ # former gene.info.from.ENSG(
 }
 
 
-gene.info.from.salmon <- function(es.input,
-                                  fn_salmon,
-                                  colsNameSplit=cs('ENST ENSG OTTHUMG OTTHUMT NameT NameG x1 type')){
+tx2gene.from.salmon <- function(fn_salmon, colsNameSplit=cs('ENST ENSG OTTHUMG OTTHUMT NameT NameG x1 type'), removeVersions=F){
   dt.features.g <- fread(fn_salmon[1]); # 205,870 x 5
   stopifnot(sapply(strsplit(dt.features.g$Name, split = '|', fixed = T), length)==length(colsNameSplit))
   dt.features.g[,(colsNameSplit):=tstrsplit(Name,split = '|', fixed = T)]
   dt.features.g[, Name:=NULL]
   dt.features.g[, hasProt:=('protein_coding' %in% type), by=ENSG]
   dt.features.g[, txTypes:=paste0(unique(type),collapse = ';'), by=ENSG]
+  if (removeVersions){
+    dt.features.g[, ENST:=gsub('(ENST\\d+).*','\\1',ENST)]
+    dt.features.g[, ENSG:=gsub('(ENSG\\d+).*','\\1',ENSG)]
+  }
+  return(dt.features.g)
+}
+
+gene.info.from.salmon <- function(es.input,
+                                  fn_salmon,
+                                  colsNameSplit=cs('ENST ENSG OTTHUMG OTTHUMT NameT NameG x1 type')){
+  dt.features.g <- tx2gene.from.salmon(fn_salmon, colsNameSplit);
   dt.features.g <- unique(dt.features.g[,.(ENSG,OTTHUMG,NameG,txTypes,hasProt)])
-
-  es.input %<>% attachfData(dt.features.g, key.dat = 'ENSG')
-
-
+  es.input %<>% attachfData(dt.features.g, key.dat = 'ENSG');
 }

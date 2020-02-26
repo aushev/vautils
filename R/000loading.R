@@ -1,6 +1,3 @@
-testX <- function(){
-  print('Running! 2');
-}
 
 catV <- function(..., verbose=T){
   if (verbose) return;
@@ -88,7 +85,7 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T){
     finally = cat("finished with", packagename, ".\n")
   ); # e. tryCatch()
 
-  catV('\ntryrez: ', tryrez, 'reqrez: ', reqrez, '\n');
+  # catV('\ntryrez: ', tryrez, 'reqrez: ', reqrez, '\n');
   #if (is.null(reqrez)) reqrez <- FALSE;
 
   if (tryrez) {catV("Success!\n"); return(T);}
