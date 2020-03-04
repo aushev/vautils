@@ -114,7 +114,7 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 }
 
 flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA, reqFile=T, char=NULL, num=NULL, filetype=NULL, ...){
-  cat('\nOpen ' %+% fnRead);
+  cat(' Open ' %+% fnRead);
 
   dots <- substitute(list(...));
 
@@ -1115,3 +1115,49 @@ setDF_my <- function(inpDT, col2rownames){
   row.names(inpDT) <- inpDT[[col2rownames]]
   invisible(inpDT)
 }
+
+
+# merge more than 2 data.tables:
+mergemulti <- function(dlist,key,...){
+  if (length(dlist)<2) return(dlist);
+  dt.rez <- dlist[[1]];
+  for (i in 2:length(dlist)){
+    dt.next <- dlist[[i]]
+    dt.rez <- merge.data.table(dt.rez,dt.next,by = key,...)
+  }
+  return(dt.rez)
+}
+
+
+
+
+get_top_via_ranks <- function(inpDT,colVal,inpConditions,rankNum=5L,side=c('top','btm')) {
+  for (this.condition in inpConditions){
+    if ('top' %in% side){
+      inpDT[eval(parse(text = this.condition)),newRankCol:=frank(-get(colVal), ties.method =  'average')]
+      #eff.thr <- ifelse(rankNum>min(inpDT$newRankCol,na.rm=T),rankNum,)
+      inpDT[newRankCol<=rankNum,selected:=TRUE]
+    }
+    if ('btm' %in% side){
+      inpDT[eval(parse(text = this.condition)),newRankCol:=frank(get(colVal), ties.method =  'average')]
+      inpDT[newRankCol<=max(rankNum,min(newRankCol)),selected:=TRUE]
+    }
+  }
+  inpDT[,newRankCol:=NULL]
+  return(inpDT)
+}
+
+get_top_via_headtail <- function(inpDT,colVal,inpConditions,rankNum=5L,side='both') {
+  ht <- function(x, n=5L) unique(c(head(x, n), tail(x, n)))
+  inpDT[, rn := .I]
+  for (this.condition in inpConditions){
+    if (side=='top') {
+      inpDT[rn %in% inpDT[order(get(colVal)),head(rn[eval(parse(text = this.condition))], rankNum)],selected:=TRUE]
+    } else if (side=='btm'){
+      inpDT[rn %in% inpDT[order(get(colVal)),tail(rn[eval(parse(text = this.condition))], rankNum)],selected:=TRUE]
+    } else inpDT[rn %in% inpDT[order(get(colVal)),ht(rn[eval(parse(text = this.condition))], rankNum)],selected:=TRUE]
+  }
+  return(inpDT)
+}
+
+
