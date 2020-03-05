@@ -1,6 +1,6 @@
 
 net_ini <- function(inp_net, sample_names=NULL){
-reqq('WGCNA')
+reqq('WGCNA', verbose = F)
   # adds to net object:
   # N - number of modules not including grey
   # colList - list of colors including grey, length = N+1

@@ -132,6 +132,9 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA,
     else if (substrRight(fnRead,8) == 'sas7bdat') {
       filetype <- 'sas7bdat';
     }
+    else if (substrRight(fnRead,3) == 'sav') {
+      filetype <- 'spss';
+    }
     else {filetype <- 'auto';}
     cat(' as ', filetype);
   }
@@ -147,6 +150,12 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA,
     reqq('sas7bdat', verbose = F);
     rez <- read.sas7bdat(fnRead);
     rez <- data.table(rez);
+  }
+  else if (filetype == 'spss') {
+    cat(' with read.spss... ');
+    reqq('foreign', verbose = F);
+    rez <- read.spss(fnRead);
+    rez <- as.data.table(rez);
   }
   else {
     cat(' with fread... ');
@@ -177,7 +186,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA,
         }
     } # e. for
   } # e. if !is.null(char)
-
+  cat('\n')
   return(rez);
 }
 
@@ -802,7 +811,7 @@ mergefiletabs <- function(
       dt.this[, ffn:=fn.this.show]
       if (!is.null(rn)) {dt.this[, (rn):=seq_len(nrow(dt.this))]}
       dt.all <- rbind(dt.all, dt.this, fill=T)
-    } else {
+    } else { # mode == 'c'
       dt.left <- dt.this[,(colnames), with=F]
       dt.right <- dt.this[,-(colnames), with=F]
       if (is.null(dt.all)){
