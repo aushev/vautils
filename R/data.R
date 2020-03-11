@@ -334,7 +334,7 @@ tryRdat <- function(fnRdat, FUN, nEnv=1L, ...){
 } # e. try_rdat
 
 
-tryRdat1 <- function(fnRdat, lazyobj, objname='result'){
+tryRdat1 <- function(fnRdat, lazyobj, objname='result', saveResult=TRUE){
 # This function tries to load data from the indicated Rdat file
 # if it doesn't exist, it will call indicated function, and save the results to the file
   cat('Checking pre-existing Rdat file:', fnRdat, '... ');
@@ -342,10 +342,10 @@ tryRdat1 <- function(fnRdat, lazyobj, objname='result'){
     cat(' found. ');
     result <- loadv1(fnRdat);
   } else {
-      cat(' not found. Will be generated and saved.\n');
+      cat(' not found. Will be generated.\n');
       result <- lazyobj;
-      assign(value = result, x=objname)
-      save(list = objname, file = fnRdat);
+      assign(value = result, x=objname);
+      if (saveResult==T) save(list = objname, file = fnRdat);
     }
 
   invisible(result);

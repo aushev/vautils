@@ -557,3 +557,41 @@ deseqds.from.es <- function(inp.eSet, design = ~ 1){
 
 
 
+# proc_set():
+# for a given design formula (for example, ' ~ csex'),
+# runs DESeq() and returns results as a table
+# where each row is a gene
+# and columns include logFC, pvalue, etc
+# also adds other requested columns from fData(es)
+proc_set <- function(es, var_name, design_str, add_cols=NULL){
+  # sub_vec <- !is.na(pData(es)[[var_name]]) & pData(es)[[var_name]] %in% var_values;
+  # es.subset <- es[,sub_vec]
+
+  es.subset <- es
+  phData <- pData(es.subset);
+  var_vals <- phData[[var_name]];
+  var_NA <- is.na(var_vals)
+  if (sum(var_NA)>0){
+    es.subset <- es.subset[,!var_NA]
+    warning('\n',sum(var_NA), ' NAs found, will be excluded. Remaining: ',dim(es.subset)[2],'\n')
+  }
+
+  ds <- DESeqDataSetFromMatrix(countData=(exprs(es.subset)), # floor
+                               colData=pData(es.subset),
+                               design = as.formula(design_str),
+                               tidy = FALSE, ignoreRank = FALSE)
+  dds <- DESeq(ds)
+  res <- results(dds)
+  dt.res <- as.data.table(res)
+  dt.res$oriID <- res@rownames;
+
+  for (this.col in add_cols){
+    if (this.col %in% names(fData(es.subset)))
+      dt.res[[this.col]] <- fData(es.subset)[[this.col]]
+  }
+
+  dt.res[, pvalrank:=rank(pvalue)]
+
+  invisible(dt.res)
+
+} # e. proc_set()

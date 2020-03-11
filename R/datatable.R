@@ -46,16 +46,19 @@ loadDT <- function(fnInput, sep="\t", header=T, refresh=T, colsIncl, colsExcl=NU
 }
 
 
-save_DT <- function(dtIn, fnSaveTo=NULL, quote=F, sep="\t", header=T, row.names=F, ...) {
+save_DT <- function(dtIn, fnSaveTo=NULL, quote=F, sep="\t", header=T, row.names=F, commentString=NULL, ...) {
+  if (!is.data.frame(dtIn)) {dtIn <- as.data.frame(dtIn);}
   if (is.null(fnSaveTo)) {
     fnSaveTo <- deparse(substitute(dtIn));
     if (sep=='\t') fnSaveTo <- paste0(fnSaveTo, '.tsv');
     if (sep==',')  fnSaveTo <- paste0(fnSaveTo, '.csv');
   }
-  cat("Saving to:", fnSaveTo, "... ");
-  if (!is.data.frame(dtIn)) {dtIn <- as.data.frame(dtIn);}
-  write.table(dtIn, file=fnSaveTo, quote=quote, sep=sep, row.names=row.names, col.names=header, ...);
-  cat(nrow(dtIn), "records saved.");
+  cat('Saving', nrow(dtIn),'records to:', fnSaveTo, "... ");
+  con <- file(fnSaveTo, open="wt")
+  if (!is.null(commentString)) writeLines(paste0('# ',commentString), con)
+  write.table(dtIn, file=con, quote=quote, sep=sep, row.names=row.names, col.names=header, ...);
+  close(con)
+  cat("done.");
 }
 
 inexcel <- function(dtIn, ...){
@@ -908,7 +911,7 @@ mergefiletabs.partial <- function(fnInput, mask='*.*', colsHeader=NULL, colValue
 
 # loadOrBuild - if file exists, then loads the table from it, otherwise re-buils the table ####
 # inDT inpuit parameter is a function call, but in fact the function is only evaluated if the file doesn't exist => saves time
-loadOrBuild <- function (fnDT, inDT, ...){
+loadOrBuild <- function (fnDT, inDT, saveResult=TRUE, ...){
   nm.load <- c(names(formals(fread)), names(formals(loadDT)));
   nm.save <- c(names(formals(write.table)), names(formals(save_DT)));
   dots <- list(...);
@@ -923,11 +926,15 @@ loadOrBuild <- function (fnDT, inDT, ...){
       ) # instead of  loadDT(fnDT, ...)
     );
   } else {
-    cat('File not found:', fnDT, '; we\'ll build new table and then save it.\n');
-    do.call('save_DT',
-            c(list(dtIn=inDT, fnSaveTo = fnDT),
-              dots[names(dots) %in% nm.save])
-    ) # instead of  save_DT(inDT, fnDT, ...);
+    cat('File not found:', fnDT, '; we\'ll build new table.\n');
+    inDT <- eval(inDT);
+    if (saveResult){
+      do.call('save_DT',
+              c(list(dtIn=inDT, fnSaveTo = fnDT),
+                dots[names(dots) %in% nm.save])
+      ) # instead of  save_DT(inDT, fnDT, ...);
+
+    }
     return(inDT);
   }
 }

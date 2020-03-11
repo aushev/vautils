@@ -78,6 +78,9 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
+# example usage:
+# aes.point=aes(fill=Tissue, color=Run.by, shape=Run.by, label=Sample.ID)
+# ggplot(data = inpdata, aes_add(aes(x=tmp.id, y=sum.pos),aes.point)) + ...
 aes_add <- function(aes1,aes2){
   aesAll <- aes2
   only1 <- setdiff(names(aes1),names(aes2))
@@ -85,3 +88,48 @@ aes_add <- function(aes1,aes2){
   aesAll[only1] <- aes1[only1]
   return(aesAll)
 }
+
+
+
+
+gghist_quick <- function(values, breaks=50) {
+  hist_base <- hist(values, plot=FALSE, breaks=breaks)
+
+  dat <- data.frame(xmin=head(hist_base$breaks, -1L),
+                    xmax=tail(hist_base$breaks, -1L),
+                    ymin=0.0,
+                    ymax=hist_base$counts)
+
+  ggplot(dat, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)) +
+    geom_rect(size=0.5, colour="grey30", fill="grey80")
+}
+
+annotation_compass <- function(label,position='N',
+                               padding=grid::unit(c(0.5,0.5),"line"), ...){
+  #position <- match.arg(position)
+  x <- switch (position,
+               W=0,NW=0,SW=0,
+               N=0.5, S=0.5,
+               E=1,NE=1,SE=1)
+  y <- switch (position,
+               S=0, SE=0,SW=0,
+               E=0.5,W=0.5,
+               N=1,NE=1,NW=1)
+  hjust <- x
+  vjust <- y
+  f1 <- switch (position,
+                E=-1,NE=-1,SE=-1,
+                N=0,S=0,
+                W=1,NW=1,SW=1 )
+  f2 <- switch (position,
+                N=-1,NE=-1,NW=-1,
+                W=0,E=0,
+                S=1, SE=1,SW=1 )
+  annotation_custom(grid::textGrob(label,
+                                   x=grid::unit(x,"npc") + f1*padding[1] ,
+                                   y=grid::unit(y,"npc") + f2*padding[2],
+                                   hjust=hjust,vjust=vjust, ...))
+}
+
+
+
