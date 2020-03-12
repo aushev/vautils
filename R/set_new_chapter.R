@@ -13,7 +13,7 @@ selectionView <- function(){
   tmp <- context$selection[[1]]$text
 
   print(tmp)
-  View(tmp)
+  View(get(tmp))
 }
 
 # selectionView()
