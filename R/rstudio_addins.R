@@ -1,5 +1,6 @@
-#' Calls RStudio's View() function
-#' for the selected text
+#' Explore selected object:
+#'  for table, calls RStudio's View() function
+#'  for function, calls debugonce()
 #' @return dashes inside RStudio
 selectionView <- function(){
   context <- rstudioapi::getActiveDocumentContext()
@@ -15,6 +16,8 @@ selectionView <- function(){
     View(tmpX, title=paste0(sel_text,'$X'))
     View(tmpF, title=paste0(sel_text,'$F'))
     View(tmpP, title=paste0(sel_text,'$P'))
+  } else if (is.function(sel_obj)) {
+    debugonce(sel_obj)
   } else {
     View(sel_obj, title=sel_text)
   }

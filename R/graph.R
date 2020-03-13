@@ -11,16 +11,17 @@ reqq(ggplot2)
 
 gg_nogrids <- theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())
 
-legJ.BL <- theme(legend.justification=c(0,0)); # bottom-left
-legJ.TL <- theme(legend.justification=c(0,1)); # top-left
-legJ.BR <- theme(legend.justification=c(1,0)); # bottom-right
-legJ.BL <- theme(legend.justification=c(0,0)); # bottom-left
-legJ.UR <- theme(legend.justification=c(1,1)); # upper-right
+legJ.BL <- legJ.DL <- theme(legend.justification=c(0,0)); # bottom-left
+legJ.TL <- legJ.UL <- theme(legend.justification=c(0,1)); # top-left
+legJ.BR <- legJ.DR <- theme(legend.justification=c(1,0)); # bottom-right
+legJ.TR <- legJ.UR <- theme(legend.justification=c(1,1)); # upper-right
+
 
 legP.MM <- theme(legend.position=c(0.5,0.5)); # middle-middle
-legP.BL <- theme(legend.position=c(0,0)) + legJ.BL; # bottom-left
-legP.BR <- theme(legend.position=c(1,0)) + legJ.BR; # bottom-right
-legP.UR <- theme(legend.position=c(1,1)) + legJ.UR; # upper-right
+legP.BL <- legP.DL <- theme(legend.position=c(0,0)) + legJ.BL; # bottom-left
+legP.BR <- legP.DR <- theme(legend.position=c(1,0)) + legJ.BR; # bottom-right
+legP.TL <- legP.UL <- theme(legend.position=c(0,1)) + legJ.TL; # upper-left
+legP.TR <- legP.UR <- theme(legend.position=c(1,1)) + legJ.TR; # upper-right
 
 legP <- function(x,y){return(theme(legend.position=c(x, y)))}
 
