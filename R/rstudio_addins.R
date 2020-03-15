@@ -5,7 +5,12 @@
 selectionView <- function(){
   context <- rstudioapi::getActiveDocumentContext()
   sel_text <- context$selection[[1]]$text
-  sel_obj <- get(sel_text)
+  if (exists(sel_text)){
+    sel_obj <- get(sel_text)
+  } else {
+    sel_obj <- eval(parse(text = sel_text))
+  }
+
   # print(sel_text)
 
   if ('ExpressionSet' %in% class(sel_obj)){

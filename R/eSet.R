@@ -492,9 +492,9 @@ exprsV <- function(es, method=NULL, trans=FALSE, form='matrix'){
   values <- exprs(es);
 
   values <- switch(method,
-         log2= log2(values+1),
-         vst = vst(round(values)),
-               values )
+         log2  = log2(values+1),
+         vst   = vst(ifelse1(is.integer(values), values, as.integer(round(values)))),
+         values )
 
   if (trans==TRUE) values <- t(values)
 
@@ -563,14 +563,24 @@ deseqds.from.es <- function(inp.eSet, design = ~ 1){
 # where each row is a gene
 # and columns include logFC, pvalue, etc
 # also adds other requested columns from fData(es)
-proc_set <- function(es, var_name, design_str, add_cols=NULL){
+proc_set <- function(es, var_name, design_str=NULL, add_cols=NULL){
   # sub_vec <- !is.na(pData(es)[[var_name]]) & pData(es)[[var_name]] %in% var_values;
   # es.subset <- es[,sub_vec]
 
+  if (is.null(design_str)) design_str <- '~ ' %+% var_name;
   es.subset <- es
   phData <- pData(es.subset);
   var_vals <- phData[[var_name]];
   var_NA <- is.na(var_vals)
+  if (sum(var_NA)>0){
+    es.subset <- es.subset[,!var_NA]
+    warning('\n',sum(var_NA), ' NAs found, will be excluded. Remaining: ',dim(es.subset)[2],'\n')
+  }
+
+  vars.in.design <- all.vars(as.formula(design_str))
+  phData <- data.table(pData(es.subset));
+  var_vals <- phData[, (vars.in.design), with=F];
+  var_NA <- ! apply(var_vals, 1, function(X) all(!is.na(X)))
   if (sum(var_NA)>0){
     es.subset <- es.subset[,!var_NA]
     warning('\n',sum(var_NA), ' NAs found, will be excluded. Remaining: ',dim(es.subset)[2],'\n')
@@ -591,6 +601,10 @@ proc_set <- function(es, var_name, design_str, add_cols=NULL){
   }
 
   dt.res[, pvalrank:=rank(pvalue)]
+
+  dt.res[pvalue!=0,logp:=-log10(pvalue)]
+  .min.p <- dt.res[pvalue!=0,min(pvalue)]
+  dt.res[pvalue==0,logp:=-log10(.min.p)]
 
   invisible(dt.res)
 
