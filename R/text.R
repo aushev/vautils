@@ -61,6 +61,7 @@ print_list <- function(inp) {
 
 `%+%` <- function(...) UseMethod("%+%")
 `%+%.character` <- paste0
+`%+%.numeric` <- paste0
 `%+%.default` <- function (arg1, arg2){
   e <- parent.env(getEnvByName(.GlobalEnv,'package:vautils'));
   if (exists('%+%', envir = e)) get('%+%',envir = e)(arg1,arg2);

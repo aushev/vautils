@@ -65,7 +65,7 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T){
 
   # now check if it is already loaded:
   if (paste0('package:',packagename) %in% search()) {
-    catV('already loaded!\n'); return(TRUE);
+    catV('already loaded.\n'); return(TRUE);
   }
 
   # if it is installed but not loaded:
