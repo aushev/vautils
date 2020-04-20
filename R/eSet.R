@@ -1,4 +1,8 @@
 
+nSamples <- function(es) dim(es)[[2]]
+nFeatures <- function(es) dim(es)[[1]]
+
+
 # extends phenoData of given eSet by adding a data.table
 attachpData <- function(es, dat, key.dat=NULL, key.es=NULL, reqUniqESkeys=T){
   if(!identical(sampleNames(es), row.names(pData(es)))) stop('Input eSet is broken! sampleNames(es) must be equal to row.names(pData(es))!');
