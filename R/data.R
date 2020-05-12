@@ -384,6 +384,14 @@ compare.lists <- function(list1,list2) {
 } # e. compare.lists()
 
 
+mtx2int <- function(input){
+  input <- round(input)
+  storage.mode(input) <- 'integer'
+  input;
+}
+
+
+
 
 guessyear <- function(inpdates, datesformat='%a %b %e %H:%M:%S', years){
   rez <- strptime(inpdates, datesformat)
