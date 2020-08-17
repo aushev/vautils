@@ -143,9 +143,11 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA,
   }
 
   if (filetype=='xls'){
-    cat(' with read.xlsx... ');
-    reqq('xlsx', verbose = F);
-    rez <- read.xlsx(fnRead, sheetIndex, sheetName, ...);
+    cat(' with openxlsx/read.xlsx... ');
+    sheet <- sheetIndex;
+    if (!is.null(sheetName)) sheet <- sheetName;
+    reqq('openxlsx', verbose = F);
+    rez <- openxlsx::read.xlsx(fnRead, sheet, ...);
     rez <- data.table(rez);
   }
   else if (filetype == 'sas7bdat') {
@@ -1176,4 +1178,44 @@ get_top_via_headtail <- function(inpDT,colVal,inpConditions,rankNum=5L,side='bot
   return(inpDT)
 }
 
+
+
+# search for pair of columns with identical names and delete one if equal
+del.dupflds.dupnames <- function(inpDT, verbose=T){
+  for (this.f in names(inpDT)){
+    this.is <- which(this.f == names(inpDT)); # indices of occurrences
+    if (length(this.is)>1) {
+      if (verbose) cat('\n', length(this.is), this.f);
+      if (all(inpDT[,(this.is[1]), with=F] == inpDT[,(this.is[2]), with=F])){
+        if (verbose) cat('!!!');
+        set(inpDT, , this.is[2], NULL)
+        if (verbose) cat('+');
+      }
+    }# e. if >1
+  } # e. for
+ invisible(inpDT)
+}
+
+
+
+# given a field with non-unique IDs,
+# selects fields which are unique multiple within same ID, i.e. can't be "reduced"
+# and fields that can be "reduced"
+dt_normalize <- function(inDT, key, verbose=F){ #inDT=dt.PMCC; key='Patient_Natera_ID';
+  cols.gen <- c()
+  cols.unq <- c()
+
+  for (this.f in names(inDT) %-% key){ # this.f='Primary_Institute_Patient_ID'
+    this.subdt <- inDT[,.(xN=.N, xU=nrow(unique(.SD))), by=key, .SDcols=this.f]
+
+    if (all(this.subdt[,xU==1])){
+      cols.gen <- c(cols.gen, this.f)
+    } else {
+      cols.unq <- c(cols.unq, this.f)
+    }
+  }
+
+  cat('\nGen: ', cols.gen, '\nUnq: ', cols.unq)
+
+}
 
