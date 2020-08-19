@@ -136,6 +136,14 @@ str_shrink <- function(inp_str, sep=';'){
   }
 }
 
+# shrink_values():
+# c(3,2,3,NA,4) => '3;2;4'
+shrink_values <- function(values, collapse=';'){
+  values <- na.omit(unique(values));
+  if (length(values)<2) return(values);
+  paste(values, collapse = collapse)
+}
+
 
 
 askfilename <- function(fnInput=NULL, allowEmpty=F, prompt=NULL){

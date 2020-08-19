@@ -61,9 +61,9 @@ save_DT <- function(dtIn, fnSaveTo=NULL, quote=F, sep="\t", header=T, row.names=
   cat("done.");
 }
 
-inexcel <- function(dtIn, ...){
+inexcel <- function(dtIn, row.names=F, ...){
   fn_save <- tempfile(pattern=paste0(deparse(substitute(dtIn)),"_"), fileext = '.xls');
-  dtIn <- cbind(rn=row.names(dtIn),dtIn)
+  if (row.names==T) dtIn <- cbind(rn=row.names(dtIn),dtIn)
   save_DT(dtIn, fnSaveTo = fn_save, ...)
   system(command = paste0('cmd /C ', fn_save));
   return(fn_save);
