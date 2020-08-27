@@ -16,7 +16,7 @@ percent <- function(num1, ndig=2){
   paste0(round(100*num1, digits=ndig),"%")
 }
 
-tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, ...){
+tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, inpName=NA, ...){
   if (useNA==F | na.rm==T) useNA <- 'no';
   if (useNA==T | na.rm==F) useNA <- 'ifany';
 
@@ -34,7 +34,7 @@ tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, ...){
   return(df);
 }
 
-tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, ...){
+tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, inpName=NA, ...){
   if (useNA==F | na.rm==T) useNA <- 'no';
   if (useNA==T | na.rm==F) useNA <- 'ifany';
 
@@ -44,7 +44,10 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, ..
   sum1 <- sum(df1$Freq);
   if (keepP) {df1$FreqP <- percent(df1$Freq/sum1);}
 #  print(names(df));
-  names(df1)[names(df1)=='input'] <- name1;
+  if (is.na(inpName)) {
+    names(df1)[names(df1)=='input'] <- name1
+  } else names(df1)[names(df1)=='input'] <- inpName;
+
 #  print(order(-df$Freq));
   if (do.sort) df1 <- df1[order(-df1$Freq),];
 #  print(names(df));

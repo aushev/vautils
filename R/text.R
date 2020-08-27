@@ -124,6 +124,11 @@ chopRight <- function(inpstr,n=1L){
 }
 
 
+xls_date <- function(input){
+  as.Date(input, origin="1899-12-30")
+}
+
+
 str_shrink <- function(inp_str, sep=';'){
   # opposite of rep()
   # 'chrX;chrX;chrX;chrX' => 'chrX'
