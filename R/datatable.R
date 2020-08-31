@@ -1219,3 +1219,16 @@ dt_normalize <- function(inDT, key, verbose=F){ #inDT=dt.PMCC; key='Patient_Nate
 
 }
 
+# renames duplicated column names
+# MyColumn MyColumn -> MyColumn.1 MyColumn.2
+dedup.colnames <- function(dtIn, sep='.'){
+  inpnames <- names(dtIn)
+  if (sum(duplicated(inpnames))==0) {message('No duplicate names;'); invisible(dtIn);}
+  dupnames <- unique(inpnames[duplicated(inpnames)]);
+  for (dupname in dupnames){
+    positions <- which(inpnames==dupname);
+    newnames <- paste0(dupname,sep,seqlen(positions))
+    names(dtIn)[positions] <- newnames
+  }
+  invisible(dtIn);
+}

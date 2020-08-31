@@ -144,9 +144,10 @@ str_shrink <- function(inp_str, sep=';'){
 # shrink_values():
 # c(3,2,3,NA,4) => '3;2;4'
 shrink_values <- function(values, collapse=';'){
-  values <- na.omit(unique(values));
-  if (length(values)<2) return(values);
-  paste(values, collapse = collapse)
+  values2 <- na.omit(unique(values));
+  if (length(values2)==0) return(values[1]);
+  if (length(values2)<2) return(values2);
+  paste(values2, collapse = collapse)
 }
 
 
