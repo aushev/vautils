@@ -116,7 +116,10 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 
 }
 
-flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA, reqFile=T, char=NULL, num=NULL, filetype=NULL, ...){
+flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
+                     silent=T, keyby = NA, reqFile=T, char=NULL, num=NULL, filetype=NULL,
+                     clean.names = F,
+                     ...){
   cat(' Open ' %+% fnRead);
 
   dots <- substitute(list(...));
@@ -191,6 +194,9 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL, silent=T, keyby = NA,
         }
     } # e. for
   } # e. if !is.null(char)
+
+  if (clean.names == T) names(rez) <- cleannames(names(rez));
+
   cat('\n')
   return(rez);
 }

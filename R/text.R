@@ -174,3 +174,12 @@ askfilename <- function(fnInput=NULL, allowEmpty=F, prompt=NULL){
 
 asc <- function(x) { strtoi(charToRaw(x),16L) }
 chr <- function(n) { rawToChar(as.raw(n)) }
+
+
+lettersX <- c(letters,
+              sapply(letters, function(X){X %+% letters})
+              )
+
+LETTERSX <- toupper(lettersX)
+
+
