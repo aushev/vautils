@@ -204,6 +204,27 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
 
 
+get_data_long2wide <- function(input, field, filters=NULL, multi='error', na.rm=T, dbgI=NULL){ # error, first, last
+  inp.filtered <- input
+  if (!is.null(filters)) {
+    for (this.filter in names(filters)){
+      this.filter.value <- filters[[this.filter]]
+      inp.filtered <- inp.filtered[get(this.filter) %in% this.filter.value,]
+    }# e. foreach filter
+  } # e. if has filters
+
+  output <- inp.filtered[[field]]
+  if (na.rm) output <- na.omit(output);
+  if (length(output)>1){
+    if ('error' %in% multi) stop('Error! Non-unique output!\n', dbgI, '\n', (filters), '\n', paste(output, collapse = '\n'))
+    if ('paste' %in% multi) output <- paste(output, collapse='; ')
+    if ('pasteunique' %in% multi) output <- paste(unique(output), collapse='; ')
+    if ('first' %in% multi) output <- output[1]
+    if ('last' %in% multi) output <- output[length(output)]
+  }
+
+  output
+}
 
 
 

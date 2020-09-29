@@ -408,3 +408,9 @@ guessyear <- function(inpdates, datesformat='%a %b %e %H:%M:%S', years){
 
 # tmp <- guessyear(cs('Sun Dec 30 02:34:21;Wed Jan  2 17:06:35;Fri Sep 21 16:23:33',sep=';'),
 #                  years=cs('2018 2019'))
+
+
+minDate <- function(inpX, na.rm=T) {
+  # browser()
+  if (length(inpX)==0) return(as.Date(NA_real_)) else  min(inpX,na.rm=na.rm);
+}
