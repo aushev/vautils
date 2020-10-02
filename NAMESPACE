@@ -1,5 +1,9 @@
 exportPattern("^[[:alpha:]]+")
 exportPattern("%.*%")
-export("%+%.default")
-export("%+%.character")
+
+export(`%+%`)
+S3method(`%+%`, default)
+S3method(`%+%`, character)
+S3method(`%+%`, numeric)
+
 import(data.table)
