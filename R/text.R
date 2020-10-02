@@ -1,5 +1,9 @@
-testab <- function(){
+testab1 <- function(){
   print ('a' %+% 'b')
+}
+
+testab2 <- function(inpA, inpB){
+  print (inpA %+% inpB)
 }
 
 
