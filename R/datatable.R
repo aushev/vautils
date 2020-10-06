@@ -1242,7 +1242,13 @@ dt_normalize <- function(inDT, key, verbose=F){ #inDT=dt.PMCC; key='Patient_Nate
     }
   }
 
-  cat('\nGen: ', cols.gen, '\nUnq: ', cols.unq)
+  message('\nGen: ', paste(cols.gen, collapse = ' '))
+  message('\nUnq: ', paste(cols.unq, collapse = ' '))
+
+  dt.master <- unique(inDT[,c(key,cols.gen), with=F]);
+  dt.detail <- inDT[,c(key,cols.unq), with=F]
+
+  invisible(list(dt.master=dt.master, dt.detail=dt.detail))
 
 }
 

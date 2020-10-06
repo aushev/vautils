@@ -104,6 +104,58 @@ show.envs.plus <- function(){
 }
 
 
+# multiple return ####
+# taken from https://stackoverflow.com/questions/7519790/assign-multiple-new-variables-on-lhs-in-a-single-line
+
+# Generic form
+'%<<%' = function(leftHS, rightHS, ...) UseMethod('%<<%')
+
+# Binary Operator
+'%<<%.leftbunch' = function(leftHS, rightHS, ...) {
+  #browser()
+  Envir = as.environment(-1)
+
+  if (length(rightHS) > length(leftHS))
+    warning("RHS has more args than LHS. Only first", length(leftHS), "used.")
+
+  if (length(leftHS) > length(rightHS))  {
+    warning("LHS has more args than RHS. RHS will be repeated.")
+    r <- extendToMatch(rightHS, leftHS)
+  }
+
+  for (ndx in 1:length(leftHS)) {
+    do.call('<-', list(leftHS[[ndx]], rightHS[[ndx]]), envir=Envir)
+  }
+}
+
+# Used if LHS is larger than RHS
+extendToMatch <- function(source, destin) {
+  len_source <- length(source)
+  len_dest <- length(destin)
+
+  # Assume that destin is a length when it is a single number and source is not
+  if(len_dest==1 && len_source>1 && !is.null(as.numeric(destin)))
+    len_dest <- destin
+
+  dif <- len_dest - len_source
+  if (dif > 0) {
+    source <- rep(source, ceiling(len_dest/len_source))[1:len_dest]
+  }
+  return (source)
+}
+
+# Grouping the left hand side
+g <- function(...) {
+  List = as.list(substitute(list(...)))[-1L]
+  class(List) = 'leftbunch'
+  return(List)
+}
+
+
+
+
+
+
 # geometric mean
 gm_mean = function(x, na.rm=TRUE){
   exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
