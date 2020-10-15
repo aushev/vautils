@@ -109,9 +109,27 @@ show.envs.plus <- function(){
 
 # Generic form
 '%<<%' = function(leftHS, rightHS, ...) UseMethod('%<<%')
+'%>>%' = function(leftHS, rightHS, ...) UseMethod('%>>%')
 
 # Binary Operator
 '%<<%.leftbunch' = function(leftHS, rightHS, ...) {
+  #browser()
+  Envir = as.environment(-1)
+
+  if (length(rightHS) > length(leftHS))
+    warning("RHS has more args than LHS. Only first", length(leftHS), "used.")
+
+  if (length(leftHS) > length(rightHS))  {
+    warning("LHS has more args than RHS. RHS will be repeated.")
+    r <- extendToMatch(rightHS, leftHS)
+  }
+
+  for (ndx in 1:length(leftHS)) {
+    do.call('<-', list(leftHS[[ndx]], rightHS[[ndx]]), envir=Envir)
+  }
+}
+
+'%<<%.bunch' = function(leftHS, rightHS, ...) {
   #browser()
   Envir = as.environment(-1)
 

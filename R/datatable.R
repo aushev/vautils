@@ -307,8 +307,8 @@ dtdup <- function(dtIn, bykey) { # makes new data.table with only duplicated rec
 
 
 
-
-cmp2fldsbynum <- function(dtIn, f1n, f2n, verbose=F){  # compares 2 columns, returns vector (F means equal or both NA, T means different, NA means *one* is NA)
+# compares 2 columns, returns vector (F means equal or both NA, T means different, NA means *one* is NA)
+cmp2fldsbynum <- function(dtIn, f1n, f2n, verbose=F){
   if (length(f1n)!=1) stop('cmp2dupfldsbynum: one argument expected in f1n, ', length(f1n), ' received: ', f1n);
   if (length(f2n)!=1) stop('cmp2dupfldsbynum: one argument expected in f2n, ', length(f2n), ' received: ', f2n);
   if (!is.numeric(f1n) | !is.numeric(f2n))  stop('Column indices must be numeric!');
@@ -371,8 +371,18 @@ cmp2dupflds.strict <- function(dtIn, f1, f2){
 }
 
 
+del2dupflds <- function(dtIn, f1, f2){
+  if (is.numeric(f1) & is.numeric(f2)) diff <- cmp2fldsbynum(dtIn, f1, f2)
+  else diff <- cmp2flds(dtIn, f1, f2);
+  if (all(!is.na(diff) & diff==F)){
+    cat('\nEqual, deleting: ', f2)
+    dtIn[,c(f2):=NULL]
+  }
 
-deldupflds.bak <- function(dtIn, f1=names(dtIn), f2=NA, tolNA=FALSE) { # delete one of 2 fields if they are "identical"
+}
+
+
+deldupflds <- function(dtIn, f1=names(dtIn), f2=NA, tolNA=FALSE) { # delete one of 2 fields if they are "identical"
   #dtOut <- dtIn;
   lf1 <- length(f1);
   lf2 <- length(f2);

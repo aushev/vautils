@@ -73,16 +73,22 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T){
   tryrez <- tryCatch(
     expr    = {reqrez <<- require(packagename, character.only = T);},
     warning = function(w){
-      cat('Warning: ', w$message, '\n');
+      cat('Warning raised: ', w$message, '\n');
       if (grepl('there is no package called', w$message)) {
         reqrez <<- FALSE;
       } else {reqrez <<- require(packagename, character.only = T);} # very ugly...
     },
     error   = function(e){
-      cat('Error: ',   e$message, '\n');
+      cat('Error occurred: ',   e$message, '\n');
       reqrez <<- FALSE;
+
+      if (grepl('please re-install it', e$message)) {
+        install.packages(packagename);
+        reqrez <<- require(packagename, character.only = T);
+      }
+
     },
-    finally = cat("finished with", packagename, ".\n")
+    finally = {cat(" Finished with", packagename, ".\n");}
   ); # e. tryCatch()
 
   # catV('\ntryrez: ', tryrez, 'reqrez: ', reqrez, '\n');
