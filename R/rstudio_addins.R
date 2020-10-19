@@ -5,6 +5,9 @@
 selectionView <- function(){
   context <- rstudioapi::getActiveDocumentContext()
   sel_text <- context$selection[[1]]$text
+
+  message('\nselectionView called. ')
+
   if (exists(sel_text)){
     sel_obj <- get(sel_text)
   } else {
@@ -13,7 +16,7 @@ selectionView <- function(){
 
   # print(sel_text)
 
-  if ('ExpressionSet' %in% class(sel_obj)){
+  if ('ExpressionSet' %in% class(sel_obj) | 'RccSet' %in% class(sel_obj) ){
     tmpX <- exprs(sel_obj)
     tmpF <- fData(sel_obj)
     tmpP <- pData(sel_obj)
@@ -22,8 +25,10 @@ selectionView <- function(){
     View(tmpF, title=paste0(sel_text,'$F'))
     View(tmpP, title=paste0(sel_text,'$P'))
   } else if (is.function(sel_obj)) {
+    message('Function will be debugged once. ')
     debugonce(sel_obj)
   } else {
+    message('Table will be Viewed. ')
     View(sel_obj, title=sel_text)
   }
 }

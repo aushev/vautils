@@ -1089,10 +1089,10 @@ findnamesrange <- function(inpDT,name1,name2, values=F){
 
 
 
-cast.fun <- function(inp.dt, cols2cast, FUN){
+cast.fun <- function(inp.dt, cols2cast, FUN, ...){
   cols2castY <- intersect(cols2cast,names(inp.dt))
   if (!identical(cols2castY,cols2cast)) warning('Columns not found: ', paste0(setdiff(cols2cast,names(inp.dt)), collapse = ' '),'\n')
-  inp.dt[, (cols2castY) := lapply(.SD, FUN), .SDcols = cols2castY]
+  inp.dt[, (cols2castY) := lapply(.SD, FUN, ...), .SDcols = cols2castY]
   return(inp.dt);
 }
 
@@ -1104,8 +1104,12 @@ cast.num <- function(inp.dt, cols2cast){
   return(cast.fun(inp.dt,cols2cast,all2num));
 }
 
-cast.factor <- function(inp.dt, cols2cast){
-  return(cast.fun(inp.dt,cols2cast,as.factor));
+cast.factor <- function(inp.dt, cols2cast, ...){
+  return(cast.fun(inp.dt,cols2cast,as.factor, ...));
+}
+
+cast.date <- function(inp.dt, cols2cast, ...){
+  return(cast.fun(inp.dt,cols2cast,as.Date, ...));
 }
 
 
