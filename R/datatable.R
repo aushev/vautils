@@ -1242,7 +1242,7 @@ del.dupflds.dupnames <- function(inpDT, verbose=T){
 # given a field with non-unique IDs,
 # selects fields which are unique multiple within same ID, i.e. can't be "reduced"
 # and fields that can be "reduced"
-dt_normalize <- function(inDT, key, verbose=F){ #inDT=dt.PMCC; key='Patient_Natera_ID';
+dt_normalize <- function(inDT, key, verbose=F){ #inDT=dt.PMCC; key='Patient_ID';
   cols.gen <- c()
   cols.unq <- c()
 
