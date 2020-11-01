@@ -18,6 +18,13 @@ cs <- function(inputstr, sep=",", fix=T, nonewlines=T){
 printcs <- cs1 <- function(input){paste0(cs(input), collapse = ' ')}
 
 
+
+catpastelist <- function(inp){
+  if (is.data.frame(inp)) inp <- names(inp);
+  cat(paste(inp,collapse = '\n'))
+}
+
+
 rightstr <- function(x, n){substr(x, nchar(x)-n+1, nchar(x))}
 substrRight <- rightstr
 

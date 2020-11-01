@@ -6,7 +6,7 @@ selectionView <- function(){
   context <- rstudioapi::getActiveDocumentContext()
   sel_text <- context$selection[[1]]$text
 
-  message('\nselectionView called. ')
+#  message('\nselectionView called. ')
 
   if (exists(sel_text)){
     sel_obj <- get(sel_text)
@@ -28,7 +28,7 @@ selectionView <- function(){
     message('Function will be debugged once. ')
     debugonce(sel_obj)
   } else {
-    message('Table will be Viewed. ')
+#    message('Table will be Viewed. ')
     View(sel_obj, title=sel_text)
   }
 }

@@ -223,6 +223,9 @@ get_data_long2wide <- function(input, field, filters=NULL, multi='error', na.rm=
     if ('last' %in% multi) output <- output[length(output)]
   }
 
+  if (length(output)==0) output <- output[NA];
+  if (length(output)>1) warning('Something wrong... ', field)
+
   output
 }
 
@@ -551,8 +554,9 @@ deluselesscol0 <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, pa
   invisible(dtIn);
 } # e. deluselesscol()
 
-deluselesscol <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, padON=F, padW=NULL, padSide='right', verbose=F) {
+deluselesscol <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignNA=F, silent = F, padON=F, padW=NULL, padSide='right', verbose=F) {
   catV <- ifelse(verbose,cat,function(...){})
+  icolnames <- setdiff(icolnames, ignoreColumns);
   if (!is.data.table(dtIn)){
     catV('Input is not data.table! ')
     if (is.data.frame(dtIn)){
@@ -697,6 +701,23 @@ mergerows <- function(dtInput, f_ndx, f_scan, csep=";", delold=TRUE) {
     #cat("new names:", names(dtInput), '\n');
   }
   #  print(mrg.cnt);
+  invisible(dtInput);
+} # f_end mergerows
+
+
+
+mergerows <- function(dtInput, f_ndx, f_scan, csep=";") {
+  dtInput <- data.table(dtInput); # copy to new table
+  if (missing(f_scan)) {f_scan <- setdiff(names(dtInput),f_ndx);} # if fields-to-scan are not defined, we scan all except index
+  newfields <- paste0(f_scan, "_S");
+  cat('Index by:', f_ndx, '; merging fields:\n', f_scan, '\n');
+  #mrg.cnt <- 0L;
+  for (this_col in f_scan){
+    dtInput[,(this_col):=
+              paste(unique(na.omit(get(this_col))), collapse = csep)
+            ,by=f_ndx]
+  }
+
   invisible(dtInput);
 } # f_end mergerows
 

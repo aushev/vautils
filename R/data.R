@@ -484,3 +484,21 @@ minDate <- function(inpX, na.rm=T) {
   # browser()
   if (length(inpX)==0) return(as.Date(NA_real_)) else  min(inpX,na.rm=na.rm);
 }
+
+# maxI() and minI(): modified max() and min();
+# when input is NA only, return NA instead of Inf
+maxI <- function(inp){
+  inp <- na.omit(inp)
+  if (length(inp)==0) {
+     return(ifelse('integer' %in% class(inp), NA_integer_, NA_real_))
+    }
+  return(max(inp))
+}
+
+minI <- function(inp){
+  inp <- na.omit(inp)
+  if (length(inp)==0) {
+    return(ifelse('integer' %in% class(inp), NA_integer_, NA_real_))
+  }
+  return(min(inp))
+}
