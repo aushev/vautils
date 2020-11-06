@@ -118,7 +118,7 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 
 flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                      silent=T, keyby = NA, reqFile=T, char=NULL, num=NULL, filetype=NULL,
-                     clean.names = F,
+                     clean.names = F, trimspaces=F,
                      ...){
   cat(' Open ' %+% fnRead);
 
@@ -196,6 +196,13 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
   } # e. if !is.null(char)
 
   if (clean.names == T) names(rez) <- cleannames(names(rez));
+
+  if (trimspaces==T){
+    for (i in seq_len(ncol(rez))){
+      if (is.character(rez[[i]]))
+        rez[[i]] <- trimws(rez[[i]])
+    }
+  }
 
   cat('\n')
   return(rez);
@@ -380,7 +387,9 @@ del2dupflds <- function(dtIn, f1, f2){
   if (all(!is.na(diff) & diff==F)){
     cat('\nEqual, deleting: ', f2)
     dtIn[,c(f2):=NULL]
-  }
+  } else cat('Not equal, skipping.');
+
+  invisible(dtIn)
 
 }
 
@@ -1277,8 +1286,8 @@ dt_normalize <- function(inDT, key, verbose=F){ #inDT=dt.PMCC; key='Patient_ID';
     }
   }
 
-  message('\nGen: ', paste(cols.gen, collapse = ' '))
-  message('\nUnq: ', paste(cols.unq, collapse = ' '))
+  cat('\n\nGen: \n', paste(cols.gen, collapse = ' \n'))
+  cat('\n\nUnq: \n', paste(cols.unq, collapse = ' \n'))
 
   dt.master <- unique(inDT[,c(key,cols.gen), with=F]);
   dt.detail <- inDT[,c(key,cols.unq), with=F]

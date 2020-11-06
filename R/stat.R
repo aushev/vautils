@@ -214,3 +214,10 @@ add_q <- function(inpDT, inpCols, q=10L, verbose=F){
 }
 
 
+scaleInt <- function(x){
+  if (length(x)==1) return(0)
+  scaled <- scale(x)[,1]
+  ceiling(abs(scaled))*sign(scaled) # <- can this be done simpler?
+}
+
+unqN <- function(x) length(unique(x))
