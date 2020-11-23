@@ -9,13 +9,13 @@ testab2 <- function(inpA, inpB){
 
 
 cs <- function(inputstr, sep=",", fix=T, nonewlines=T){
-  if (missing(sep) & grepl(',', inputstr)==F & grepl(' ', inputstr)==T) {sep=" ";}
+  if (missing(sep) & grepl(',', inputstr[[1]])==F & grepl(' ', inputstr[[1]])==T) {sep=" ";}
   if (nonewlines) inputstr <- gsub("[\n\r]+", sep, inputstr);
   rez <- unlist(strsplit(inputstr, sep, fixed=fix));
   return(rez[rez!=""]);
 }
 
-printcs <- cs1 <- function(input){paste0(cs(input), collapse = ' ')}
+printcs <- cs1 <- function(input, collapse=' '){paste0(cs(input), collapse = collapse)}
 
 
 
@@ -136,7 +136,10 @@ chopRight <- function(inpstr,n=1L){
 
 
 xls_date <- function(input){
-  as.Date(input, origin="1899-12-30")
+  if (is.character(input))
+    input <- suppressWarnings(as.numeric(input));
+
+  suppressWarnings(as.Date(input, origin="1899-12-30"));
 }
 
 

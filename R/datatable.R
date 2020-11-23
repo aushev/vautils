@@ -1286,8 +1286,8 @@ dt_normalize <- function(inDT, key, verbose=F){ #inDT=dt.PMCC; key='Patient_ID';
     }
   }
 
-  cat('\n\nGen: \n', paste(cols.gen, collapse = ' \n'))
-  cat('\n\nUnq: \n', paste(cols.unq, collapse = ' \n'))
+  cat('\nGen: \n', paste(cols.gen, collapse = '\n '))
+  cat('\n\nUnq: \n', paste(cols.unq, collapse = '\n '))
 
   dt.master <- unique(inDT[,c(key,cols.gen), with=F]);
   dt.detail <- inDT[,c(key,cols.unq), with=F]
