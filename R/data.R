@@ -83,6 +83,15 @@ show.envs.plus <- function(){
 
 # %==%: compares with (NA==NA) = TRUE; factors as character ####
 "%==%" <- function(vec1, vec2){
+  dims <- NULL;
+  if (is.data.frame(vec1) | is.data.frame(vec2)){
+    if (!is.data.frame(vec1)){stop("Second variable is a data.frame while first one is not. ")}
+    if (!is.data.frame(vec2)){stop("First variable is a data.frame while second one is not. ")}
+    if (ncol(vec1)!=ncol(vec2)){stop("Can't compare tables with different number of columns.")}
+    if (nrow(vec1)!=nrow(vec2)){stop("Can't (yet) compare tables with different number of rows.")}
+    dims <- c(nrow(vec1),ncol(vec1))
+  }
+
   if (!is.vector(vec1)) vec1 <- unlist(vec1, use.names = F);
   if (!is.vector(vec2)) vec2 <- unlist(vec2, use.names = F);
   if (is.factor(vec1)) vec1 <- as.character(vec1);
@@ -91,6 +100,10 @@ show.envs.plus <- function(){
   rez <- (vec1==vec2);
   rez[is.na(vec1) & is.na(vec2)] <- TRUE;
   rez[is.na(rez)] <- FALSE;
+  if (!is.null(dims)){
+    rez <- matrix(rez, nrow = dims[[1]])
+    rez <- apply(rez, 1, function(x){sum(!x)==0})
+  }
   rez;
 } # e. %==%:
 

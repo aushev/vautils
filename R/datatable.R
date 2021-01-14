@@ -211,8 +211,8 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
 
 
-get_data_long2wide <- function(input, field, filters=NULL, multi='error', na.rm=T, dbgI=NULL){ # error, first, last
-  inp.filtered <- input
+get_data_long2wide <- function(inpDat, field, filters=NULL, multi='error', na.rm=T, dbgI=NULL){ # error, first, last
+  inp.filtered <- inpDat
   if (!is.null(filters)) {
     for (this.filter in names(filters)){
       this.filter.value <- filters[[this.filter]]
@@ -234,6 +234,32 @@ get_data_long2wide <- function(input, field, filters=NULL, multi='error', na.rm=
   if (length(output)>1) warning('Something wrong... ', field)
 
   output
+}
+
+extract_event_data <- function(inpDat, lookupCol='evType', lookupVal, col2get, unq='paste', sep=' !!! ', skip=NULL){
+  vals <- inpDat[[col2get]];
+  filt1 <- inpDat[[lookupCol]]==lookupVal;
+  filt2 <- TRUE
+  if (!is.null(skip)){
+    if (length(skip)>1) stop('Not implemented yet')
+    field1 <- names(skip)[[1]]
+    filt2.vals <- inpDat[[field1]]
+    filt2 <- is.na(filt2.vals) | filt2.vals!=skip[[1]]
+  }
+  vals <- vals[filt1 & filt2]
+  rez <- na.omit(vals)
+  # if (length(rez)>1)
+  #   browser()
+  if (length(rez)==0) return(rez)
+  rez <- switch (unq,
+                 paste = paste(rez, collapse =sep),
+                 first = rez[[1]],
+                 `1` = rez[[1]],
+                 last = rez[[length(rez)]]
+  )
+
+  return(rez)
+  #  return(length(rez))
 }
 
 
@@ -714,6 +740,16 @@ mergerows <- function(dtInput, f_ndx, f_scan, csep=";", delold=TRUE) {
 } # f_end mergerows
 
 
+paste_or_NA <- function(inp,csep=';'){
+  ret <-
+  ifelse1(
+    all(is.na(inp)),
+    inp[1],
+    paste(unique(na.omit(inp)), collapse = csep)
+  )
+  ret
+}
+
 
 mergerows <- function(dtInput, f_ndx, f_scan, csep=";") {
   dtInput <- data.table(dtInput); # copy to new table
@@ -722,11 +758,8 @@ mergerows <- function(dtInput, f_ndx, f_scan, csep=";") {
   cat('Index by:', f_ndx, '; merging fields:\n', f_scan, '\n');
   #mrg.cnt <- 0L;
   for (this_col in f_scan){
-    dtInput[,(this_col):=
-              paste(unique(na.omit(get(this_col))), collapse = csep)
-            ,by=f_ndx]
+    dtInput[,(this_col):=paste_or_NA(get(this_col),csep=csep),by=f_ndx]
   }
-
   invisible(dtInput);
 } # f_end mergerows
 
