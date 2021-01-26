@@ -1219,6 +1219,17 @@ shrink.col <- function(inpDT, cols, sep=';'){
 }
 
 
+
+shrink_cols <- function(inpDT, col_by, cols, sep=';') {
+  for (this.col in cols){ # this.col='Chr'
+    inpDT[, c(this.col):=shrink_values(get(this.col)), by=c(col_by)]
+  }
+  invisible(inpDT)
+}
+
+
+
+
 # getfldFrom <- 'aaa; level 32; transcript_support_level "4";'
 
 extract.fld <- function(inpDT,fldFrom,fldTo,regex1,regex2='\\1',regex3='',pos=1L,remove=T){

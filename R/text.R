@@ -143,6 +143,7 @@ xls_date <- function(input){
 }
 
 
+# 'chrX;chrX;chrX;chrX' => 'chrX'
 str_shrink <- function(inp_str, sep=';'){
   # opposite of rep()
   # 'chrX;chrX;chrX;chrX' => 'chrX'
