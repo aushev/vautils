@@ -1316,7 +1316,9 @@ del.dupflds.dupnames <- function(inpDT, verbose=T){
 # given a field with non-unique IDs,
 # selects fields which are unique multiple within same ID, i.e. can't be "reduced"
 # and fields that can be "reduced"
-dt_normalize <- function(inDT, key, verbose=F){ #inDT=dt.PMCC; key='Patient_ID';
+# usage:
+# g(dt.patients, dt.plasmas) %<<% dt_normalize(dt1a.a, 'pID')
+dt_normalize <- function(inDT, key, verbose=F, nCol=NULL){ #inDT=dt.PMCC; key='Patient_ID';
   cols.gen <- c()
   cols.unq <- c()
 
@@ -1333,7 +1335,13 @@ dt_normalize <- function(inDT, key, verbose=F){ #inDT=dt.PMCC; key='Patient_ID';
   cat('\nGen: \n', paste(cols.gen, collapse = '\n '))
   cat('\n\nUnq: \n', paste(cols.unq, collapse = '\n '))
 
-  dt.master <- unique(inDT[,c(key,cols.gen), with=F]);
+  dt.master <- inDT[,c(key,cols.gen), with=F];
+  if (!is.null(nCol)){
+    dt.master[,myNewNumField:=.N,by=key]
+    setnames(dt.master,'myNewNumField',nCol)
+  }
+  dt.master <- unique(dt.master);
+
   dt.detail <- inDT[,c(key,cols.unq), with=F]
 
   invisible(list(dt.master=dt.master, dt.detail=dt.detail))

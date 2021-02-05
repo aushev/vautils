@@ -515,3 +515,19 @@ minI <- function(inp){
   }
   return(min(inp))
 }
+
+medianI <- function(inp){
+  inp <- na.omit(inp)
+  if (length(inp)==0) {
+    return(ifelse('integer' %in% class(inp), NA_integer_, NA_real_))
+  }
+  return(median(inp))
+}
+
+meanI <- function(inp){
+  inp <- na.omit(inp)
+  if (length(inp)==0) {
+    return(ifelse('integer' %in% class(inp), NA_integer_, NA_real_))
+  }
+  return(mean(inp))
+}
