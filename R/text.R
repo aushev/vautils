@@ -135,11 +135,23 @@ chopRight <- function(inpstr,n=1L){
 }
 
 
-xls_date <- function(input){
-  if (is.character(input))
-    input <- suppressWarnings(as.numeric(input));
+xls_date <- function(input, strict=F){
+  if ('Date' %in% class(input)) return(input);
+  inputNum <- suppressWarnings(as.numeric(input));
+  notNums <- is.na(inputNum)
 
-  suppressWarnings(as.Date(input, origin="1899-12-30"));
+  output <- as.Date(inputNum, origin="1899-12-30", optional=T);
+
+  vec4date <- notNums & (nchar(input)>7)
+  vec4date[is.na(vec4date)] <- FALSE
+
+
+  # dt_debug <-  data.table(inp=input, inpN=inputNum, notn=notNums, outp=output)
+  # sapply(input[vec4date], function(X){cat(X,'. '); a=as.Date(X);})
+
+  output[vec4date] <- as.Date(input[vec4date], optional=T)
+
+  return(output)
 }
 
 

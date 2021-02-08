@@ -25,7 +25,7 @@ selectionView <- function(){
     View(tmpF, title=paste0(sel_text,'$F'))
     View(tmpP, title=paste0(sel_text,'$P'))
   } else if (is.function(sel_obj)) {
-    message('Function will be debugged once. ')
+    message('Function ', sel_text, ' will be debugged once. ')
     debugonce(sel_obj)
   } else {
 #    message('Table will be Viewed. ')
