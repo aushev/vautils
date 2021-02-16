@@ -222,3 +222,4 @@ scaleInt <- function(x){
 
 unqN <- function(x) length(unique(x))
 empty <- function(x) length(x)==0;
+topN <- function(x,thr){sort(unique(x))[1:thr]}

@@ -155,6 +155,21 @@ xls_date <- function(input, strict=F){
 }
 
 
+# charnumchar() deals with the bug of excel import,
+# when "1234567" becomes "1.2345E7":
+# "1.2345E7" -> 1234567 -> "1234567"
+charnumchar <- function(input){
+  #if ('Date' %in% class(input)) return(input);
+  inputNum <- suppressWarnings(as.numeric(input));
+  notNums <- is.na(inputNum)
+
+  output <- as.character(inputNum);
+  output[notNums] <- input[notNums]
+
+  return(output)
+}
+
+
 # 'chrX;chrX;chrX;chrX' => 'chrX'
 str_shrink <- function(inp_str, sep=';'){
   # opposite of rep()
@@ -177,6 +192,9 @@ shrink_values <- function(values, collapse=';'){
   paste(values2, collapse = collapse)
 }
 
+# cs('+ - - - + +') => '+-+'
+# cs('+ - - - ') => '+-'
+str_shrink_rle <- function(x, sep=''){paste(rle(x)$values, collapse = sep)}
 
 
 askfilename <- function(fnInput=NULL, allowEmpty=F, prompt=NULL){
