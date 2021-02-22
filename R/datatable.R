@@ -1220,7 +1220,7 @@ shrink.col <- function(inpDT, cols, sep=';'){
 
 
 
-shrink_cols <- function(inpDT, col_by, cols, sep=';') {
+shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';') {
   for (this.col in cols){ # this.col='Chr'
     inpDT[, c(this.col):=shrink_values(get(this.col)), by=c(col_by)]
   }
