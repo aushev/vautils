@@ -27,3 +27,25 @@ file_findRecent <- function(pattern, dirs, orderstrict=T, recursive=F, include.d
 
 
 
+dir.createS <- function(paths, showWarnings=F, recursive=T, ...){
+  if (length(paths)==0) return;
+  cat(' Creating dirs: asked', length(paths))
+  paths <- unique(paths);
+  cat('; unique ',length(paths))
+  paths <- paths[!dir.exists(paths)]
+  cat('; to create ',length(paths))
+  rez <- sapply(paths, dir.create, showWarnings=showWarnings, recursive=recursive, ...)
+  cat('; success ',sum(unlist(rez)),'. ')
+
+}
+
+dt_file_list <- function(list.fndirs, recursive=T, full.names=T, ...){
+  fns <- list.files(list.fndirs, full.names=full.names, recursive=recursive, no.. = T, ...)
+  dt.rez <- data.table(fn=fns)
+
+  dt.rez[, bfn:=basename(fn)]
+  dt.rez[, dir:=dirname(fn)]
+  dt.rez[, bdir:=basename(dirname(fn))]
+
+  return(dt.rez)
+}

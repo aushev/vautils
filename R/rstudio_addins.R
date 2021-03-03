@@ -1,18 +1,29 @@
-#' Explore selected object:
-#'  for table, calls RStudio's View() function
-#'  for function, calls debugonce()
-#' @return dashes inside RStudio
-selectionView <- function(){
+
+
+getrsel <- function(){
   context <- rstudioapi::getActiveDocumentContext()
   sel_text <- context$selection[[1]]$text
-
-#  message('\nselectionView called. ')
 
   if (exists(sel_text)){
     sel_obj <- get(sel_text)
   } else {
     sel_obj <- eval(parse(text = sel_text))
   }
+  
+  return(sel_obj);
+}
+
+
+
+#' Explore selected object:
+#'  for table, calls RStudio's View() function
+#'  for function, calls debugonce()
+#' @return dashes inside RStudio
+selectionView <- function(){
+  sel_obj <- getrsel(); 
+
+  message('\nselectionView called. ')
+
 
   # print(sel_text)
 
@@ -25,7 +36,7 @@ selectionView <- function(){
     View(tmpF, title=paste0(sel_text,'$F'))
     View(tmpP, title=paste0(sel_text,'$P'))
   } else if (is.function(sel_obj)) {
-    message('Function ', sel_text, ' will be debugged once. ')
+    message('Function ', sel_text, '() will be debugged once. ')
     debugonce(sel_obj)
   } else {
 #    message('Table will be Viewed. ')
