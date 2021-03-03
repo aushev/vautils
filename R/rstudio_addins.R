@@ -1,18 +1,20 @@
 
 
-getrsel <- function(){
-  context <- rstudioapi::getActiveDocumentContext()
-  sel_text <- context$selection[[1]]$text
-
-  if (exists(sel_text)){
-    sel_obj <- get(sel_text)
+txt2obj <- function(txt){
+  if (exists(txt)){
+    sel_obj <- get(txt)
   } else {
-    sel_obj <- eval(parse(text = sel_text))
+    sel_obj <- eval(parse(text = txt))
   }
-  
   return(sel_obj);
 }
 
+getrselobj <- function(){
+  context <- rstudioapi::getActiveDocumentContext()
+  sel_text <- context$selection[[1]]$text
+
+  return(txt2obj(sel_text));
+}
 
 
 #' Explore selected object:
@@ -20,7 +22,8 @@ getrsel <- function(){
 #'  for function, calls debugonce()
 #' @return dashes inside RStudio
 selectionView <- function(){
-  sel_obj <- getrsel(); 
+  sel_txt <- rstudioapi::getActiveDocumentContext()$selection[[1]]$text;
+  sel_obj <- txt2obj(sel_txt);
 
   message('\nselectionView called. ')
 
