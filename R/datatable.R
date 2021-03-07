@@ -1222,6 +1222,7 @@ shrink.col <- function(inpDT, cols, sep=';'){
 
 shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';') {
   for (this.col in cols){ # this.col='Chr'
+    if (this.col %!in% names(inpDT)) {warning(' Column ',this.col, ' not found within names of input table. '); next;}
     inpDT[, c(this.col):=shrink_values(get(this.col)), by=c(col_by)]
   }
   invisible(inpDT)
@@ -1361,3 +1362,22 @@ dedup.colnames <- function(dtIn, sep='.'){
   }
   invisible(dtIn);
 }
+
+
+
+dt_del_columns <- function(inpDT, names=NULL, re=NULL){
+  if (!is.null(names)){
+    inpDT[, c(names):=NULL]
+  }
+
+    if (!is.null(re)){
+    inpDT[, grep(re,names(inpDT),value = T):=NULL]
+  }
+
+
+  invisible(inpDT)
+
+}
+
+
+

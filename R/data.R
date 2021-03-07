@@ -392,7 +392,7 @@ mtx.distance <- function(inpDist){
 na.allow <- function(input) return(is.na(input) | input);
 
 
-tryRdat <- function(fnRdat, FUN, nEnv=1L, ...){
+tryRdat <- function(fnRdat, FUN, nEnv=1L, resnames=NA,...){
 # This function tries to load data from the indicated Rdat file
 # if it doesn't exist, it will call indicated function, and save the results to the file
 # Function must return named objects in a list
@@ -406,8 +406,10 @@ tryRdat <- function(fnRdat, FUN, nEnv=1L, ...){
 
     names_to_save <- c()
     for(this_name in names(result)){
-      assign(value = result[[this_name]], x=this_name) # , envir = parent.frame()
-      names_to_save <- c(names_to_save,this_name)
+      new_name <- resnames[[this_name]];
+      if (is.na(new_name)) new_name <- this_name;
+      assign(x=new_name, value=result[[this_name]]) # , envir = parent.frame()
+      names_to_save <- c(names_to_save,new_name)
     }
 
     save(list = names_to_save, file = fnRdat);
