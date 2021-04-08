@@ -117,18 +117,14 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 }
 
 flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
-                     silent=T, keyby = NA, reqFile=T, char=NULL, num=NULL, filetype=NULL,
-                     clean.names = F, trimspaces=F,
+                     silent=T, keyby = NA, char=NULL, num=NULL, filetype=NULL,
+                     clean.names = F, trimspaces=F, deluseless=F,
                      ...){
   cat(' Open ' %+% fnRead);
 
   dots <- substitute(list(...));
 
-  if (!file.exists(fnRead)){
-    if (reqFile) stop('... File not found!\n')
-    else warning('... File not found!\n');
-    return(NULL);
-  }
+  if (!file.exists(fnRead)){stop('... File not found!\n');return(NULL);}
 
   if (is.null(filetype)){
     #cat('Trying to guess filetype... ');
@@ -196,6 +192,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
   } # e. if !is.null(char)
 
   if (clean.names == T) names(rez) <- cleannames(names(rez));
+  if (deluseless == T) rez <- deluselesscol(rez);
 
   if (trimspaces==T){
     for (i in seq_len(ncol(rez))){
@@ -210,7 +207,11 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
 
 
-
+# usage:
+# Diagnosis=get_data_long2wide(.SD, 'evValue', list(evType2=  'Overall'    ), multi='last', dbgI=pID),
+# Subtype  =get_data_long2wide(.SD, 'evValue', list(evType2=c('HR subtype')), multi='paste', dbgI=pID),
+# DOB      =get_data_long2wide(.SD, 'evDate',  list(evType='DOB'), dbgI=pID),
+# DoDiagn  =get_data_long2wide(.SD, 'evDate',  list(evType2='Overall'),    multi='first', dbgI=pID),
 get_data_long2wide <- function(inpDat, field, filters=NULL, multi='error', na.rm=T, dbgI=NULL){ # error, first, last
   inp.filtered <- inpDat
   if (!is.null(filters)) {
@@ -221,13 +222,14 @@ get_data_long2wide <- function(inpDat, field, filters=NULL, multi='error', na.rm
   } # e. if has filters
 
   output <- inp.filtered[[field]]
+  if ('paste' %in% multi | 'pasteunique' %in% multi) {output <- as.character(output);}
   if (na.rm) output <- na.omit(output);
   if (length(output)>1){
     if ('error' %in% multi) stop('Error! Non-unique output!\n', dbgI, '\n', (filters), '\n', paste(output, collapse = '\n'))
-    if ('paste' %in% multi) output <- paste(output, collapse='; ')
+    if ('paste' %in% multi)       output <- paste(output, collapse='; ')
     if ('pasteunique' %in% multi) output <- paste(unique(output), collapse='; ')
-    if ('first' %in% multi) output <- output[1]
-    if ('last' %in% multi) output <- output[length(output)]
+    if ('first' %in% multi)       output <- output[1]
+    if ('last' %in% multi)        output <- output[length(output)]
   }
 
   if (length(output)==0) output <- output[NA];
@@ -442,7 +444,7 @@ deldupflds <- function(dtIn, f1=names(dtIn), f2=NA, tolNA=FALSE) { # delete one 
 
 
 
-cleanXY <- function(dtIn, cols2check, rename=T, verbose=F){
+cleanXY <- function(dtIn, cols2check, rename=T, tryNA=F, verbose=F){
   for (this.col in cols2check){
     f1x <- paste0(this.col,'.x');
     f1y <- paste0(this.col,'.y');
@@ -455,6 +457,30 @@ cleanXY <- function(dtIn, cols2check, rename=T, verbose=F){
       if (verbose==T) {cat('Identical: ',this.col,'\n');}
       dtIn[, (f1y):=NULL];
       if (rename==T) setnames(dtIn,f1x,this.col)
+    } else {
+      if (verbose==T) {cat(this.col,' strict comparison: not equal. \n');}
+      if (tryNA==T){
+        notNAx <- !is.na(dtIn[[f1x]]);
+        notNAy <- !is.na(dtIn[[f1y]]);
+        notNAboth <- notNAx & notNAy;
+        if (!identical(dtIn[[f1x]][notNAboth],dtIn[[f1y]][notNAboth])) next;
+        if (sum(notNAx)>sum(notNAy)){
+          if (sum(!notNAx & notNAy)==0){
+            if (verbose==T) {cat(f1x, ' is more complete. \n');}
+            dtIn[, (f1y):=NULL];
+            if (rename==T) setnames(dtIn,f1x,this.col)
+          }
+        } # e. NAx > NAy
+
+        if (sum(notNAx)<sum(notNAy)){
+          if (sum(notNAx & !notNAy)==0){
+            if (verbose==T) {cat(f1y, ' is more complete. \n');}
+            dtIn[, (f1x):=NULL];
+            if (rename==T) setnames(dtIn,f1y,this.col)
+          }
+        } # e. NAx < NAy
+
+      } # e. tryNA
     }
   } # e. for
   invisible(dtIn)
@@ -1380,4 +1406,11 @@ dt_del_columns <- function(inpDT, names=NULL, re=NULL){
 }
 
 
-
+# used in 3=Cervantes.Rmd
+dt_datify <- function(dtInp, cols, tryFs=NA){
+  for (this.col in cols){
+    dtInp[, (this.col):=as.character(as.Date(get(this.col), tryFormats=tryFs)), by=get(this.col)]
+    dtInp[, (this.col):=as.Date(get(this.col))]
+  }
+  invisible(dtInp)
+}

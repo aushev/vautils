@@ -533,3 +533,51 @@ meanI <- function(inp){
   }
   return(mean(inp))
 }
+
+
+# takes vector consisting of NAs and unique non-NA
+# fills all NA with a non-NA value
+# c(NA,NA,2,2,2,NA) => c(2, 2,2,2,2,2)
+# c( 1,NA,2,2,2,NA) => c(1,NA,2,2,2,NA) # (no changes if non-unique)
+fill_with_one <- function(inpVals){
+  if (length(inpVals)<2) return(inpVals)
+  one <- unique(na.omit(inpVals))
+  if (length(one)!=1) return(inpVals)
+  inpVals[is.na(inpVals)] <- one
+  return(inpVals)
+}
+
+most_frequent <- function(inpVals){
+  count <- table(inpVals)
+  rez <- names(count)[count==max(count)]
+  return(rez[1])
+}
+
+topX <- function(x,thr){sort(unique(x))[1:thr]}
+firstX <- function(x,thr){unique(x)[1:thr]}
+is.empty <- function(x) length(x)==0; # remove!
+
+
+signlog <- function(x){
+  not0 <- x[x!=0]
+  rez <- x
+  rez[x!=0] <- sign(not0)*log10(abs(not0))
+  rez[x==0] <- 0
+
+  return(rez)
+
+}
+
+
+
+delist <- function(X){
+  if ('list' %in% class(X))
+  {
+    X[sapply(X, is.null)] <- NA;
+    return(unlist(X));
+  } else X;
+}
+
+
+
+gs_date <- function(input){as.Date(input/(3600*24), origin="1970-01-01")}

@@ -185,8 +185,10 @@ str_shrink <- function(inp_str, sep=';'){
 
 # shrink_values():
 # c(3,2,3,NA,4) => '3;2;4'
-shrink_values <- function(values, collapse=';'){
-  values2 <- na.omit(unique(values));
+shrink_values <- function(values, collapse=';', all=F){
+  values2 <- values;
+  if (all==F) values2 <- unique(values);
+  values2 <- na.omit(values2);
   if (length(values2)==0) return(values[1]);
   if (length(values2)<2) return(values2);
   paste(values2, collapse = collapse)
@@ -227,4 +229,11 @@ lettersX <- c(letters,
 
 LETTERSX <- toupper(lettersX)
 
+stage.roman <- function(inp.decStr){
+  part.num <- gsub('(\\d).*','\\1',inp.decStr)
+  part.let <- gsub('(\\d)(.*)','\\2',inp.decStr)
+  cs('I II III IV')[as.numeric(part.num)] %+% part.let
+}
 
+
+signChar <- function(x) unlist(sapply(x, function(x) switch (as.character(sign(x)),`-1` = '-',`1` = '+',`0` = '0')))
