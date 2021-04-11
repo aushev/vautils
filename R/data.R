@@ -547,10 +547,12 @@ fill_with_one <- function(inpVals){
   return(inpVals)
 }
 
-most_frequent <- function(inpVals){
+most_frequent <- function(inpVals, n=1){
   count <- table(inpVals)
-  rez <- names(count)[count==max(count)]
-  return(rez[1])
+  count <- sort(count, decreasing = T)
+  rez <- names(count)
+  if (n>length(rez)) n<-length(rez);
+  return(rez[1:n])
 }
 
 topX <- function(x,thr){sort(unique(x))[1:thr]}
