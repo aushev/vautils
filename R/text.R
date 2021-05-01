@@ -40,7 +40,7 @@ print_list <- function(inp) {
   for (i in seqlen(inp)){
     .member <- inp[i];
     cat(i,
-        str_pad(names(.member), max(nchar(names(inp)))),
+        stringr::str_pad(names(.member), max(nchar(names(inp)))),
         unlist(unname(.member)),
         #str_pad(unlist(unname(fn[i])), max(nchar(unlist(unname(fn))))),
         '\n')
@@ -196,7 +196,10 @@ shrink_values <- function(values, collapse=';', all=F){
 
 # cs('+ - - - + +') => '+-+'
 # cs('+ - - - ') => '+-'
-str_shrink_rle <- function(x, sep=''){paste(rle(x)$values, collapse = sep)}
+str_shrink_rle <- function(x, sep='', dropNA=T){
+  if (dropNA==T) x <- x[!is.na(x)]; # can't use na.omit() here because rle() requires a vector of an atomic type
+  paste(rle(x)$values, collapse = sep)
+}
 
 
 askfilename <- function(fnInput=NULL, allowEmpty=F, prompt=NULL){

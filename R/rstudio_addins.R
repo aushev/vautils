@@ -18,15 +18,15 @@ getrselobj <- function(){
 
 
 #' Explore selected object:
-#'  for table, calls RStudio's View() function
-#'  for function, calls debugonce()
+#'  for ExpressionSet, calls exprs(), fData(), and pData()
+#'  for table,         calls RStudio's View() function
+#'  for function,      calls debugonce()
 #' @return dashes inside RStudio
 selectionView <- function(){
   sel_text <- rstudioapi::getActiveDocumentContext()$selection[[1]]$text;
   sel_obj <- txt2obj(sel_text);
 
   message('\nselectionView called. ')
-
 
   # print(sel_text)
 
@@ -45,5 +45,15 @@ selectionView <- function(){
 #    message('Table will be Viewed. ')
     View(sel_obj, title=sel_text)
   }
-}
+} # e. selectionView
+
+#' Calls tab() for selected object
+selectionTab <- function(){
+  sel_text <- rstudioapi::getActiveDocumentContext()$selection[[1]]$text;
+  sel_obj <- txt2obj(sel_text);
+
+  message('\nselectionTab called. ')
+  tab(sel_obj)
+
+} # e. selectionView
 

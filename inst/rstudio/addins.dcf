@@ -2,3 +2,8 @@ Name: View Selection
 Description: Views Selection
 Binding: selectionView
 Interactive: false
+
+Name: Tab-stat Selection
+Description: calls tab() for selection
+Binding: selectionTab
+Interactive: false
