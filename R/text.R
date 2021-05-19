@@ -185,12 +185,17 @@ str_shrink <- function(inp_str, sep=';'){
 
 # shrink_values():
 # c(3,2,3,NA,4) => '3;2;4'
-shrink_values <- function(values, collapse=';', all=F){
+shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, fill=NULL){
   values2 <- values;
+
   if (all==F) values2 <- unique(values);
-  values2 <- na.omit(values2);
-  if (length(values2)==0) return(values[1]);
-  if (length(values2)<2) return(values2);
+  if (dropNA==T) values2 <- na.omit(values2);
+  if (length(exclude)>0) values2 <- values2[values2 %!in% exclude];
+
+  if (length(values2)==1) return(values2);
+  if (length(values2)==0) return(ifelse(is.null(fill),values[1],fill));
+
+
   paste(values2, collapse = collapse)
 }
 

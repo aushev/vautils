@@ -75,6 +75,28 @@ tabDT <- function(input, useNA='ifany', do.sort=T, ...){
 
 tab <- tabDF;
 
+dt4mosaic <- function(inpDT, byX, byY){
+  inpDT <- copy(inpDT)
+  inpDT <- inpDT[,c(byX,byY),with=F]
+  dt.stat <- as.data.table(tab(inpDT))
+  dt.stat[,rel:=Freq/sum(Freq),by=get(byX)]
+  dt.stat[,grpSize:=sum(Freq),by=get(byX)]
+  return(dt.stat)
+}
+
+plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL){
+  if (is.null(byX)) byX <- names(inpDTmosaic)[1]
+  if (is.null(byY)) byY <- names(inpDTmosaic)[2]
+  inpDTmosaic[,grpSize:=grpSize/del]
+  p <-
+    ggplot(inpDTmosaic,
+           aes_string(x=byX,y='rel',fill=byY,width='grpSize')) +
+    geom_bar(stat='identity') +
+    scale_x_discrete(expand = c(0, 0)) +
+    facet_grid(as.formula('~ ' %+% byX), scales = "free", space = "free")
+  if (!is.null(colors)) p <- p + scale_fill_manual(values = colors)
+  p
+}
 
 # test1 <- function(input){
 #   name1 <- deparse(substitute(input));
@@ -211,6 +233,66 @@ add_q <- function(inpDT, inpCols, q=10L, verbose=F){
     inpDT[, (name_q):=qvals]
   }
   return(inpDT)
+}
+
+
+contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
+  inpDT <- copy(inpDT)
+  valNegTest <- valNeg[[1]]
+  valNegReal <- valNeg[[2]]
+  valPosTest <- valPos[[1]]
+  valPosReal <- valPos[[2]]
+  valOther <-'<OTHER>'
+
+
+  inpDT[, .tmp.Test:=get(colTest)]
+  inpDT[, .tmp.Real:=get(colReal)]
+
+  inpDT[.tmp.Test==valNegTest & .tmp.Real==valNegReal, rez:='TrueNeg'];
+  inpDT[.tmp.Test==valPosTest & .tmp.Real==valPosReal, rez:='TruePos'];
+  inpDT[.tmp.Test==valNegTest & .tmp.Real==valPosReal, rez:='FalsNeg'];
+  inpDT[.tmp.Test==valPosTest & .tmp.Real==valNegReal, rez:='FalsPos'];
+
+  trueNeg <- sum(inpDT$rez=='TrueNeg', na.rm = T)
+  truePos <- sum(inpDT$rez=='TruePos', na.rm = T)
+  falsNeg <- sum(inpDT$rez=='FalsNeg', na.rm = T)
+  falsPos <- sum(inpDT$rez=='FalsPos', na.rm = T)
+  Sens <- truePos/(truePos+falsNeg)
+  Spec <- trueNeg/(trueNeg+falsPos)
+  PPV  <- truePos/(truePos+falsPos)
+  NPV  <- trueNeg/(trueNeg+falsNeg)
+
+
+  inpDT[.tmp.Test %!in% c(valNegTest, valPosTest), .tmp.Test:=valOther]
+  inpDT[.tmp.Real %!in% c(valNegReal, valPosReal), .tmp.Real:=valOther]
+
+  tab1 <- tab(inpDT[,.(Test=.tmp.Test,Real=.tmp.Real,class=rez)])
+  tab1$Test %<>% factor(levels = c(valNegTest, valPosTest, valOther))
+  tab1$Real %<>% factor(levels = c(valNegReal, valPosReal, valOther))
+  tab2 <- dcast(as.data.table(tab1),Test~Real,value.var = 'Freq')
+
+  tab3 <- rbind(
+    data.table(Metrics='Sensitivity', Calc=sprintf('%s / (%s + %s)', truePos, truePos, falsNeg), Value=percent(Sens,percDigits)),
+    data.table(Metrics='Specificity', Calc=sprintf('%s / (%s + %s)', trueNeg, trueNeg, falsPos), Value=percent(Spec,percDigits)),
+    data.table(Metrics='PPV', Calc=sprintf('%s / (%s + %s)', truePos, truePos, falsPos), Value=percent(PPV,percDigits)),
+    data.table(Metrics='NPV', Calc=sprintf('%s / (%s + %s)', trueNeg, trueNeg, falsNeg), Value=percent(NPV,percDigits))
+  )
+
+  tab3a <- rbind(
+    data.table(Metrics='Sensitivity', Calc=sprintf('%s / (%s + %s) = %s', truePos, truePos, falsNeg, percent(Sens,percDigits))),
+    data.table(Metrics='Specificity', Calc=sprintf('%s / (%s + %s) = %s', trueNeg, trueNeg, falsPos, percent(Spec,percDigits))),
+    data.table(Metrics='PPV',         Calc=sprintf('%s / (%s + %s) = %s', truePos, truePos, falsPos, percent(PPV,percDigits))),
+    data.table(Metrics='NPV',         Calc=sprintf('%s / (%s + %s) = %s', trueNeg, trueNeg, falsNeg, percent(NPV,percDigits)))
+  )
+
+  cat('\n')
+  print(tab1)
+  cat('\n')
+  print(tab2)
+  cat('\n')
+  print(tab3a)
+  cat('\n')
+  invisible(list(tab1,tab2,tab3))
 }
 
 

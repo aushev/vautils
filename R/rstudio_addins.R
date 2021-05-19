@@ -52,8 +52,9 @@ selectionTab <- function(){
   sel_text <- rstudioapi::getActiveDocumentContext()$selection[[1]]$text;
   sel_obj <- txt2obj(sel_text);
 
-  message('\nselectionTab called. ')
-  tab(sel_obj)
+  message('\nselectionTab v1 called. ')
+  this_tab <- tab(sel_obj)
+  View(this_tab, title=sel_text)
 
 } # e. selectionView
 
