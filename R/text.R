@@ -245,3 +245,17 @@ stage.roman <- function(inp.decStr){
 
 
 signChar <- function(x) unlist(sapply(x, function(x) switch (as.character(sign(x)),`-1` = '-',`1` = '+',`0` = '0')))
+
+
+# converts KB, MB, GB, etc to bytes
+size_bytes <- function(inpTxt){
+  sizes <- c(bytes=1, KB=1024, MB=1024^2, GB=1024^3, TB=1024^4)
+  num <- gsub('([-+0-9\\.]+).*','\\1',inpTxt)
+  suffix <- gsub('.*?([a-zA-Z]+)','\\1',inpTxt)
+  mult <- sizes[suffix]
+  mult[inpTxt==''] <- 0
+  result <- as.numeric(num)*mult
+  #tmp <- data.table(inp=inpTxt,num=num,suffix=suffix,mult=mult, result=result)
+  return(result)
+}
+

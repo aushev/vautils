@@ -564,6 +564,27 @@ cleandupflds <- function(dtIn, f1=names(dtIn), f2=NA, scanall=T, guess2=T, verbo
   invisible(diff);
 }
 
+
+dt_combinecomplete <- function(inpDT, colsFrom, colTo, delFrom=F){
+  colsNotFound <- colsFrom %-% names(inpDT)
+  if (length(colsNotFound)>0) cat('Columns not found: ', colsNotFound);
+  colsFrom <- colsFrom %&% names(inpDT)
+  if (length(colsFrom)==0) {return(invisible(inpDT));}
+  result <- inpDT[[colsFrom[1]]]
+  for (colFrom in colsFrom){
+    this.vals <- inpDT[[colFrom]]
+    notNAboth <- !is.na(result) & !is.na(this.vals)
+    if (!identical(result[notNAboth], this.vals[notNAboth])) stop('Discrepancy found!')
+    compl <- is.na(result) & !is.na(this.vals)
+    result[compl] <- this.vals[compl]
+  }
+  inpDT[[colTo]] <- result
+  if (delFrom) inpDT[,(colsFrom):=NULL]
+  invisible(inpDT)
+}
+
+
+
 reordcols <- function(dtIn, first=NULL, last=NULL) {
   nfirst <- nlast <- NULL;
   if (sum(duplicated(names(dtIn)))>0) warning('Duplicated names!');
@@ -958,6 +979,28 @@ mergefiletabs <- function(
 
   invisible(dt.all);
 } # e. mergefiletabs()
+
+# when last column(s) were not defined in the file,
+# fread() shifts column names adding V1 at the beginning
+# for example, file had header CHROM-POS-REF-ALT,
+# and real content was         CHROM-POS-REF-ALT-comment,
+# result of fread() will be    V1-CHROM-POS-REF-ALT,
+# result of mergefiletabs():   V1-CHROM-POS-REF-ALT-ffn,
+# so we run fixLastCol(dt1,colName='comment',addcols=0)
+# or        fixLastCol(dtMerged,colName='comment',addcols=1)
+fixLastCol <- function(inpDT, colName=NULL, addcols=0){
+  if (is.null(colName)) colName <- names(inpDT)[1]
+  lastcolnames <- tail(names(inpDT),addcols)
+  names(inpDT) <- c(
+    names(inpDT)[2:(length(names(inpDT))-addcols)],
+    colName,
+    lastcolnames
+  )
+  invisible(inpDT)
+}
+
+
+
 
 mergefiletabs.partial <- function(fnInput, mask='*.*', colsHeader=NULL, colValue=-1, separate=F){
   # merge files where part of the columns ("header" columns) are supposed to be the same across all files
