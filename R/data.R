@@ -327,6 +327,7 @@ seqlen <- function(obj){
 }
 
 replace.mult <- function(inpvec, from, to){
+
   stopifnot(length(from)>0 & (length(from)==length(to) | length(to)==1L));
   if (length(to)==1L){
     for (i in seq_along(from)) inpvec <- replace(inpvec, inpvec==from[i], to)
