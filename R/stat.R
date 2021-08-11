@@ -13,7 +13,7 @@ NA_get <- function(obj){
 }
 
 percent <- function(num1, ndig=2){
-  paste0(round(100*num1, digits=ndig),"%")
+  paste0(format(round(100*num1, digits=ndig), nsmall=ndig),"%")
 }
 
 tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, inpName=NA, ...){

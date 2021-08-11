@@ -61,10 +61,10 @@ save_DT <- function(dtIn, fnSaveTo=NULL, quote=F, sep="\t", header=T, row.names=
   cat("done.");
 }
 
-inexcel <- function(dtIn, row.names=F, ...){
+inexcel <- function(dtIn, row.names=F, na='', ...){
   fn_save <- tempfile(pattern=paste0(deparse(substitute(dtIn)),"_"), fileext = '.xls');
   if (row.names==T) dtIn <- cbind(rn=row.names(dtIn),dtIn)
-  save_DT(dtIn, fnSaveTo = fn_save, ...)
+  save_DT(dtIn, fnSaveTo = fn_save, na=na, ...)
   system(command = paste0('cmd /C ', fn_save));
   return(fn_save);
 }
@@ -213,6 +213,9 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 # DOB      =get_data_long2wide(.SD, 'evDate',  list(evType='DOB'), dbgI=pID),
 # DoDiagn  =get_data_long2wide(.SD, 'evDate',  list(evType2='Overall'),    multi='first', dbgI=pID),
 get_data_long2wide <- function(inpDat, field, filters=NULL, multi='error', na.rm=T, dbgI=NULL){ # error, first, last
+
+  if (length(field)!=1) stop('field argument must have a length 1')
+
   inp.filtered <- inpDat
   if (!is.null(filters)) {
     for (this.filter in names(filters)){
@@ -665,7 +668,7 @@ deluselesscol <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignN
       if (silent==F){
         col_print <- paste0("[", colname, "]");
         padded <- ifelse1(padON==F, col_print, strpad(col_print,padW+2L))
-        cat(padded,"is all equal to: ", refVal,'\n');
+        cat('\n',padded,"is all equal to: ", refVal);
       }# e. not silent
     } # e. identical
   } # e. for
@@ -1289,16 +1292,43 @@ shrink.col <- function(inpDT, cols, sep=';'){
 
 
 
-shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';') {
+shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';', ...) {
   for (this.col in cols){ # this.col='Chr'
     if (this.col %!in% names(inpDT)) {warning(' Column ',this.col, ' not found within names of input table. '); next;}
-    inpDT[, c(this.col):=shrink_values(get(this.col)), by=c(col_by)]
+    inpDT[, c(this.col):=shrink_values(get(this.col), ...), by=c(col_by)]
   }
   invisible(inpDT)
 }
 
 
+for (this.col in tmp2){
+  print(name(this.col))
+}
 
+
+dt_addcols <- function(inpDT, cols, defval=NA){
+# adding column if it is not in the table yet
+# dt_addcols(dt, cols = cs('colA colB colC')) - adds columns as NA
+# dt_addcols(dt, cols = c(colA=NA_integer, colB=NA_real, 'colC') )
+  if (is.null(names(cols))){ # cols = cs('colA colB colC')
+    colnamesA <- cols
+    colvalsA  <- ifelse(length(defval)==1, rep(defval,length(colnamesA)), defval)
+  } else {                   # cols = c(colA=NA_integer, colB=NA_real, 'colC')
+    colnamesA <- names(cols)
+    colvalsA  <- cols
+    empty <- (names(cols)=='')
+    colnamesA[empty] <- cols[empty]
+    colvalsA[empty]  <- defval
+  }
+
+  for (i in seq_along(colnamesA)){
+    this.colname <- colnamesA[i]
+    this.colval  <- colvalsA[i]
+    if (this.colname %in% names(inpDT)) next;
+    inpDT[[this.colname]] <- this.colval
+  }
+  invisible(inpDT)
+}
 
 # getfldFrom <- 'aaa; level 32; transcript_support_level "4";'
 

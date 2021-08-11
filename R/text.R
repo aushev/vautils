@@ -259,3 +259,27 @@ size_bytes <- function(inpTxt){
   return(result)
 }
 
+
+# compl_year('12/12/24') => '12/12/2024'
+# compl_year('12/12/26') => '12/12/1926'
+compl_year <- function(inpStr, regex='(.*)/(\\d+)', thr=25){
+  # more strict: '([01]?\\d/[0123]?\\d)/(\\d+)'
+  inpStr.1 <- gsub(regex,'\\1',inpStr)
+  inpStr.2 <- gsub(regex,'\\2',inpStr)
+
+  yr <- as.numeric(inpStr.2)
+  inpStr.2a <- ifelse(yr<=thr,'20','19') %+% inpStr.2
+
+  rez <- inpStr.1 %+% '/' %+% inpStr.2a
+
+  already.compl <- (nchar(inpStr.2)>2);
+  already.compl[is.na(already.compl)] <- TRUE;
+
+  rez[already.compl] <- inpStr[already.compl];
+
+  return(rez)
+
+}
+
+`%like%` <- function(hay, needle){grepl(needle,hay)}
+

@@ -327,10 +327,13 @@ seqlen <- function(obj){
 }
 
 replace.mult <- function(inpvec, from, to){
-  stopifnot(length(from)>0 & length(from)==length(to));
-  for (i in seqlen(from)){
-    inpvec <- replace(inpvec, inpvec==from[i], to[i])
-  }
+  stopifnot(length(from)>0 & (length(from)==length(to) | length(to)==1L));
+  if (length(to)==1L){
+    for (i in seq_along(from)) inpvec <- replace(inpvec, inpvec==from[i], to)
+  } else if (length(from)==length(to)){
+    for (i in seq_along(from)) inpvec <- replace(inpvec, inpvec==from[i], to[i])
+  } else stop('Length of [to] argument must be 1 or equal to length of [from]')
+
   return(inpvec)
 }
 
@@ -460,7 +463,7 @@ compare.lists <- function(list1,list2) {
   cat(length(common),'common names found.\n')
 
   for(i in common){
-    if (!identical(list1[i],list2[i])){
+    if (!identical(list1[[i]],list2[[i]])){
       cat(i,':\t Different\n')
     }
 
