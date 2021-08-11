@@ -1291,7 +1291,6 @@ shrink.col <- function(inpDT, cols, sep=';'){
 }
 
 
-
 shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';', ...) {
   for (this.col in cols){ # this.col='Chr'
     if (this.col %!in% names(inpDT)) {warning(' Column ',this.col, ' not found within names of input table. '); next;}
@@ -1299,12 +1298,6 @@ shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';
   }
   invisible(inpDT)
 }
-
-
-for (this.col in tmp2){
-  print(name(this.col))
-}
-
 
 dt_addcols <- function(inpDT, cols, defval=NA){
 # adding column if it is not in the table yet
