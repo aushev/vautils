@@ -22,6 +22,8 @@ file_findRecent <- function(pattern, dirs, orderstrict=T, recursive=F, include.d
     if (found==T & orderstrict==T) break;
   }
 
+  if (found==F) warning('File not found!')
+
   return(fn.latest)
 }
 

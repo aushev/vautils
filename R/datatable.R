@@ -184,7 +184,8 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
   if (!is.null(char)){
     for (.col in char){
-      if (.col %in% names(rez) & !class(rez[[.col]])=='character'){
+      if (! .col %in% names(rez)) {warning(.col,' asked to be converted to character but this column not found!'); next;}
+      if (!class(rez[[.col]])=='character'){
         #rez[[.col]] <- as.character(rez[[.col]])
         set(rez, j = .col, value = as.character(rez[[.col]]))
         }
@@ -1205,7 +1206,7 @@ setcolorderV <- function(dtIn, newcols, ellipsis='...'){
   }
 
   if (length(missingcols)>0){
-    warning('These columns are missing and will be ignored: ',missingcols);
+    warning('These columns are missing and will be ignored: ',paste(missingcols, collapse = ' '));
   }
 
   setcolorder(dtIn, c(firstcols, (names(dtIn) %-% newcols), lastcols))

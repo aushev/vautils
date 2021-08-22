@@ -84,18 +84,25 @@ dt4mosaic <- function(inpDT, byX, byY){
   return(dt.stat)
 }
 
-plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL){
+plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq'){
   if (is.null(byX)) byX <- names(inpDTmosaic)[1]
   if (is.null(byY)) byY <- names(inpDTmosaic)[2]
   inpDTmosaic[,grpSize:=grpSize/del]
+
+  inpDTmosaic[,grpN:=sum(get(colFreq)),by=get(byX)]
+  inpDTmosaic[, xN:=as.character(get(byX))]
+  inpDTmosaic[, xN:=sprintf('%s\nn=%s',xN,grpN), by=.(xN,grpN)]
+
+#  browser()
+
   p <-
     ggplot(inpDTmosaic,
-           aes_string(x=byX,y='rel',fill=byY,width='grpSize')) +
+           aes_string(x='xN',y='rel',fill=byY,width='grpSize')) +
     geom_bar(stat='identity') +
     scale_x_discrete(expand = c(0, 0)) +
     facet_grid(as.formula('~ ' %+% byX), scales = "free", space = "free")
   if (!is.null(colors)) p <- p + scale_fill_manual(values = colors)
-  p
+  p + xlab(byX)
 }
 
 # test1 <- function(input){
