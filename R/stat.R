@@ -6,7 +6,6 @@ se <- function(input, na.rm=T) {
 
 perc.ranks <- function(x) trunc(rank(x))/length(x)
 
-
 NA_get <- function(obj){
   #if (class(obj)=="numeric") return(NA_real_);
   #if (class(obj)=="logical") return(NA_);
