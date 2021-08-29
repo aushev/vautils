@@ -281,5 +281,6 @@ compl_year <- function(inpStr, regex='(.*)/(\\d+)', thr=25){
 
 }
 
-`%like%` <- function(hay, needle){grepl(needle,hay)}
+#`%like%` <- function(hay, needle){grepl(needle,hay)}
+`%~~%` <- function(hay, needle){grepl(needle,hay)}
 

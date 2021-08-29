@@ -101,7 +101,7 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
     scale_x_discrete(expand = c(0, 0)) +
     facet_grid(as.formula('~ ' %+% byX), scales = "free", space = "free")
   if (!is.null(colors)) p <- p + scale_fill_manual(values = colors)
-  p + xlab(byX)
+  p + xlab(byX) + ylab(NULL)
 }
 
 # test1 <- function(input){
