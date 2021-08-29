@@ -119,6 +119,7 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                      silent=T, keyby = NA, char=NULL, num=NULL, filetype=NULL,
                      clean.names = F, trimspaces=F, deluseless=F,
+                     rename.from=NULL,rename.to=NULL,
                      ...){
   cat(' Open ' %+% fnRead);
 
@@ -200,7 +201,15 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
       if (is.character(rez[[i]]))
         rez[[i]] <- trimws(rez[[i]])
     }
+  } # e. trimspaces
+
+  if (!is.null(rename.from) & !is.null(rename.to)){
+    stopifnot(length(rename.from)==length(rename.to));
+    cat('\n')
+    rez %<>% setnamessp(rename.from,rename.to, verbose=!silent);
   }
+
+
 
   cat('\n')
   return(rez);
