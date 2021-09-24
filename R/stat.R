@@ -275,7 +275,7 @@ contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
   tab1 <- tab(inpDT[,.(Test=.tmp.Test,Real=.tmp.Real,class=rez)])
   tab1$Test %<>% factor(levels = c(valNegTest, valPosTest, valOther))
   tab1$Real %<>% factor(levels = c(valNegReal, valPosReal, valOther))
-  tab2 <- dcast(as.data.table(tab1),Test~Real,value.var = 'Freq')
+  tab2 <- dcast(as.data.table(tab1),Test~Real,value.var = 'Freq', fill=0)
 
   tab3 <- rbind(
     data.table(Metrics='Sensitivity', Calc=sprintf('%s / (%s + %s)', truePos, truePos, falsNeg), Value=percent(Sens,percDigits)),
@@ -298,7 +298,8 @@ contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
   cat('\n')
   print(tab3a)
   cat('\n')
-  invisible(list(tab1,tab2,tab3))
+  print(fisher.test(as.matrix(tab2,rownames = 'Test')))
+  invisible(list(tab1=tab1,tab2=tab2,tab3=tab3))
 }
 
 

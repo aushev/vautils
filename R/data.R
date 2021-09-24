@@ -533,7 +533,7 @@ medianI <- function(inp){
 meanI <- function(inp){
   inp <- na.omit(inp)
   if (length(inp)==0) {
-    return(match.fun(paste0('as.', class(inp)))(NA)); # don't use return(`class<-`(NA, class(inp))) !!!
+    return(match.fun(paste0('as.', class(inp)[[1]]))(NA)); # don't use return(`class<-`(NA, class(inp))) !!!
     # if ('integer' %in% class(inp)) return(NA_integer_)
     # if ('Date' %in% class(inp)) return(as.Date(NA))
     # return(NA_real_)

@@ -62,7 +62,9 @@ save_DT <- function(dtIn, fnSaveTo=NULL, quote=F, sep="\t", header=T, row.names=
 }
 
 inexcel <- function(dtIn, row.names=F, na='', ...){
-  fn_save <- tempfile(pattern=paste0(deparse(substitute(dtIn)),"_"), fileext = '.xls');
+  name_dt <- deparse(substitute(dtIn))
+  name_date <- format(Sys.time(), '%Y%m%d_%Hh%Mm%Ss')
+  fn_save <- tempfile(pattern = name_date %+% '_' %+% name_dt %+% '_', fileext = '.xls');
   if (row.names==T) dtIn <- cbind(rn=row.names(dtIn),dtIn)
   save_DT(dtIn, fnSaveTo = fn_save, na=na, ...)
   system(command = paste0('cmd /C ', fn_save));
@@ -258,6 +260,7 @@ extract_event_data <- function(inpDat, lookupCol='evType', lookupVal, col2get, u
   if (!is.null(skip)){
     if (length(skip)>1) stop('Not implemented yet')
     field1 <- names(skip)[[1]]
+    if (field1 %!in% names(inpDat)) stop('Column [',field1,'] not found!');
     filt2.vals <- inpDat[[field1]]
     filt2 <- is.na(filt2.vals) | filt2.vals!=skip[[1]]
   }
@@ -990,6 +993,44 @@ mergefiletabs <- function(
 
     }
   }
+
+  invisible(dt.all);
+} # e. mergefiletabs()
+
+
+flexreadA <- function(fnRead,full.names=T,rn=NULL,colnames=NULL,fn.mask.remove='NULL',fn.mask.replace='', ...){
+# flexread() with modifications for mergefiletabs2()
+  dt.rez <- flexread(fnRead,...)
+  fn.this.show <- ifelse(full.names==T, fnRead, basename(fnRead))
+  if (!is.null(fn.mask.remove)) fn.this.show <- gsub(fn.mask.remove,fn.mask.replace,fn.this.show);
+  if (!is.null(colnames)) {setnames(dt.rez, colnames);}
+  dt.rez[, ffn:=fn.this.show]
+  if (!is.null(rn)) {dt.rez[, (rn):=seq_len(nrow(dt.rez))]}
+  invisible(dt.rez)
+}
+
+
+mergefiletabs2 <- function(
+  fn.inpdir,      # input directory
+  fn.mask='.*',   # files mask
+  recursive = T,  # recursive
+  fn.list=NULL,   # list of files => fn.inpdir, recursive and fn.mask will be ignored
+  full.names = T, # which form of filenames to put in the table
+  rn=NULL,        # if not NULL, add rn column with id
+  colnames = NULL, # rbind mode: if not NULL, each table names will be set to this
+                   # cbind mode: if not NULL, these columns are considered 'constant'
+  fn.mask.remove='NULL',
+  fn.mask.replace='',
+  mode = 'r', # default: rbind (long table), alternative: cbind (wide table)
+  ...
+  ){
+
+  if (is.null(fn.list))
+    fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE, recursive=recursive)
+
+  dt.all <- NULL;
+  dt.all <- rbindlist(lapply(fn.list, flexreadA,
+                             full.names=full.names,rn=rn,colnames=colnames,fn.mask.remove=fn.mask.remove,fn.mask.replace=fn.mask.replace,...))
 
   invisible(dt.all);
 } # e. mergefiletabs()
