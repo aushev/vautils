@@ -479,7 +479,14 @@ cleanXY <- function(dtIn, cols2check, rename=T, tryNA=F, verbose=F){
         notNAx <- !is.na(dtIn[[f1x]]);
         notNAy <- !is.na(dtIn[[f1y]]);
         notNAboth <- notNAx & notNAy;
-        if (!identical(dtIn[[f1x]][notNAboth],dtIn[[f1y]][notNAboth])) next;
+        if (!identical(dtIn[[f1x]][notNAboth],dtIn[[f1y]][notNAboth])) {
+          if (verbose==T) {cat('Different in non-NA.\n');}
+          notNAx.val <- dtIn[[f1x]][notNAboth];
+          notNAy.val <- dtIn[[f1y]][notNAboth];
+          # !!!
+          next;
+        }
+
         if (sum(notNAx)>sum(notNAy)){
           if (sum(!notNAx & notNAy)==0){
             if (verbose==T) {cat(f1x, ' is more complete. \n');}

@@ -35,3 +35,12 @@ pkgparent <- function (fun) {
 lsos <- function(..., n=10) {
     .ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n)
 }
+
+
+stopifnotunique <- function(x) {
+  if (anyDuplicated(x)==0) return(invisible());
+  dt.tab <- tab(x)
+  dt.show <- dt.tab[dt.tab$Freq>1,]
+  print(dt.show)
+  stop('\nNot unique!')
+}

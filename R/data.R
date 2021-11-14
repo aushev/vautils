@@ -590,3 +590,25 @@ delist <- function(X){
 
 
 gs_date <- function(input){as.Date(input/(3600*24), origin="1970-01-01")}
+
+
+
+# get1val(c(2,3)) => 2
+# get1val(c(2,3), mult='err') => ERROR
+# get1val(c(2,2), mult='err') => 2
+# get1val(c(2,2), lenAll=1)   => ERROR
+
+get1val <- function(input, lenAll=c(0,1,Inf), mult='first', sep=';'){
+  if (length(input)==1) return(input);
+  if (length(input)==0 & (0 %!in% lenAll)) stop('Empty input!');
+  if (length(input)>1 & (Inf %!in% lenAll)) stop('Input length >1 - not allowed by lenAll parameter: ', paste0(input, collapse = ', '));
+  input <- unique(input);
+  if (length(input)==1) return(input);
+  if (length(input)>1) {
+    if (mult=='err') stop('Input contains multiple different values - not allowed by mult parameter: ', paste0(input, collapse = ', '));
+    if (mult=='first') return(input[1]);
+    if (mult=='last')  return(input[length(input)]);
+    if (mult=='paste')  return(paste0(input,collapse = sep));
+    }
+
+}
