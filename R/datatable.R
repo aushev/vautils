@@ -460,10 +460,10 @@ deldupflds <- function(dtIn, f1=names(dtIn), f2=NA, tolNA=FALSE) { # delete one 
 
 
 
-cleanXY <- function(dtIn, cols2check, rename=T, tryNA=F, verbose=F){
+cleanXY <- function(dtIn, cols2check, rename=T, tryNA=F, verbose=F, suf.x='x', suf.y='.y'){
   for (this.col in cols2check){
-    f1x <- paste0(this.col,'.x');
-    f1y <- paste0(this.col,'.y');
+    f1x <- paste0(this.col,suf.x);
+    f1y <- paste0(this.col,suf.y);
     if (f1x %!in% names(dtIn) | f1y %!in% names(dtIn)){
       if (verbose==T) {cat('Column not found! ',this.col,'\n');}
       next;
