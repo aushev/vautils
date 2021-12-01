@@ -72,6 +72,36 @@ inexcel <- function(dtIn, row.names=F, na='', ...){
 }
 
 
+inexcel2 <- function(dtIn, row.names=F, na='', ...){
+
+  name_dt <- deparse(substitute(dtIn))
+  name_date <- format(Sys.time(), '%Y%m%d_%Hh%Mm%Ss')
+  name_fn <- name_date %+% '_' %+% name_dt %+% '_'
+  fn_save <- tempfile(pattern = name_fn, fileext = '.xlsx');
+  if (row.names==T) dtIn <- cbind(rn=row.names(dtIn),dtIn)
+  # save_DT(dtIn, fnSaveTo = fn_save, na=na, ...)
+  # system(command = paste0('cmd /C ', fn_save));
+  # return(fn_save);
+
+  wb <- createWorkbook()
+  #  style.bold <- createStyle(textDecoration = 'bold')
+
+  addWorksheet(wb, name_fn)
+  writeData(wb,name_fn,dtIn)
+
+
+  saveWorkbook(wb, file = fn_save,overwrite = T)
+  system('cmd /C ' %+% fn_save)
+
+  return(fn_save)
+
+}
+
+
+
+
+
+
 # tdt() - transpose a data.table ####
 tdt <- function(inpdt, newcolname=names(inpdt)[1]){
   transposed <- t(inpdt[,-1,with=F]);
@@ -460,7 +490,7 @@ deldupflds <- function(dtIn, f1=names(dtIn), f2=NA, tolNA=FALSE) { # delete one 
 
 
 
-cleanXY <- function(dtIn, cols2check, rename=T, tryNA=F, verbose=F, suf.x='x', suf.y='.y'){
+cleanXY <- function(dtIn, cols2check, rename=T, tryNA=F, verbose=F, suf.x='.x', suf.y='.y'){
   for (this.col in cols2check){
     f1x <- paste0(this.col,suf.x);
     f1y <- paste0(this.col,suf.y);
@@ -973,7 +1003,7 @@ mergefiletabs <- function(
   ){
 
   if (is.null(fn.list))
-    fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE, recursive=recursive)
+    fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE, recursive=recursive, ignore.case = TRUE)
 
   dt.all <- NULL;
 
