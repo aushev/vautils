@@ -54,7 +54,7 @@ selectionTab <- function(){
 
 #  message('\nselectionTab v2 called. ')
   #if ('data.frame' %in% class(sel_obj)) {
-  if (grepl('tab(',sel_text)) {
+  if (grepl('tab\\(',sel_text)) {
     this_tab <- sel_obj
   } else this_tab <- tab(sel_obj)
 

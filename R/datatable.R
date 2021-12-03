@@ -1569,3 +1569,27 @@ dt_datify <- function(dtInp, cols, tryFs=NA){
   }
   invisible(dtInp)
 }
+
+
+
+build_cum_table <- function(inp_dt_sum,colDate='earliestBlood',colType='Type'){
+  dt.work <- copy(inp_dt_sum)
+  dt.work %<>% setnames(c(colDate,colType), c('internal__Date','internal__Type'))
+  dt.work %<>% setorder(internal__Date,internal__Type)
+  dt.work[,n1:=seqlen(.N),by=internal__Type] # by=Type
+  dt.work[,n2:=.I,        by=internal__Type] # by=Type
+
+
+  dt1 <- dt.work[,.(internal__Date,internal__Type,n1)]
+
+  dt2 <- dcast(dt1, internal__Date ~ internal__Type, value.var='n1', fun.aggregate = max)
+
+  dt3 <- melt(dt2, id.vars = 'internal__Date', variable.name = 'internal__Type', value.name = 'xCases')
+  dt3[,Cases:=nafill(xCases,'locf'),by=internal__Type]
+  dt3[is.na(Cases),Cases:=0]
+
+  dt3 %<>% setnames(c('internal__Date','internal__Type'),c(colDate,colType))
+
+  invisible(dt3)
+}
+
