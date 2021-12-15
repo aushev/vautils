@@ -1006,8 +1006,11 @@ mergefiletabs <- function(
     fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE, recursive=recursive, ignore.case = TRUE)
 
   dt.all <- NULL;
-
+  N <- length(fn.list)
+  i <- 0L
   for (fn.this in fn.list){
+    i <- i+1L
+    cat(' ', i, '/', N,' ', sep = '')
     dt.this <- flexread(fn.this, ...)
     fn.this.show <- ifelse(full.names==T, fn.this, basename(fn.this))
     if (!is.null(fn.mask.remove)) fn.this.show <- gsub(fn.mask.remove,fn.mask.replace,fn.this.show);

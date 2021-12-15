@@ -23,10 +23,18 @@ getrselobj <- function(){
 #'  for function,      calls debugonce()
 #' @return dashes inside RStudio
 selectionView <- function(){
-  sel_text <- rstudioapi::getActiveDocumentContext()$selection[[1]]$text;
+  sel <- rstudioapi::getActiveDocumentContext()$selection[[1]];
+  sel_text <- sel$text;
+  # message('\nselectionView called. ')
+
+  if (sel_text=='') {
+    message('\nEmpty string. ')
+    sel_text <- trimws(sel$contents[sel$range$start[[1]]]);
+    message(' New string: ', sel_text)
+  }
+
   sel_obj <- txt2obj(sel_text);
 
-  message('\nselectionView called. ')
 
   # print(sel_text)
 
