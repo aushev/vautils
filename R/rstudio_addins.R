@@ -9,11 +9,18 @@ txt2obj <- function(txt){
   return(sel_obj);
 }
 
-getrselobj <- function(){
-  context <- rstudioapi::getActiveDocumentContext()
-  sel_text <- context$selection[[1]]$text
+getrseltxt <- function(){
+  adc <- rstudioapi::getActiveDocumentContext();
+  sel <- adc$selection[[1]];
+  sel_text <- sel$text;
 
-  return(txt2obj(sel_text));
+  if (sel_text=='') {
+    message('\nEmpty string. ')
+    sel_text <- trimws(adc$contents[sel$range$start[[1]]]);
+    message(' New string: ', sel_text)
+  }
+
+  return(sel_text);
 }
 
 
@@ -23,18 +30,8 @@ getrselobj <- function(){
 #'  for function,      calls debugonce()
 #' @return dashes inside RStudio
 selectionView <- function(){
-  sel <- rstudioapi::getActiveDocumentContext()$selection[[1]];
-  sel_text <- sel$text;
-  # message('\nselectionView called. ')
-
-  if (sel_text=='') {
-    message('\nEmpty string. ')
-    sel_text <- trimws(sel$contents[sel$range$start[[1]]]);
-    message(' New string: ', sel_text)
-  }
-
+  sel_text <- getrseltxt();
   sel_obj <- txt2obj(sel_text);
-
 
   # print(sel_text)
 
@@ -57,7 +54,7 @@ selectionView <- function(){
 
 #' Calls tab() for selected object
 selectionTab <- function(){
-  sel_text <- rstudioapi::getActiveDocumentContext()$selection[[1]]$text;
+  sel_text <- getrseltxt();
   sel_obj <- txt2obj(sel_text);
 
 #  message('\nselectionTab v2 called. ')
