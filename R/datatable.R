@@ -1585,7 +1585,7 @@ build_cum_table <- function(inp_dt_sum,colDate='earliestBlood',colType='Type'){
 
   dt1 <- dt.work[,.(internal__Date,internal__Type,n1)]
 
-  dt2 <- dcast(dt1, internal__Date ~ internal__Type, value.var='n1', fun.aggregate = max)
+  dt2 <- dcast(dt1, internal__Date ~ internal__Type, value.var='n1', fun.aggregate = maxI)
 
   dt3 <- melt(dt2, id.vars = 'internal__Date', variable.name = 'internal__Type', value.name = 'xCases')
   dt3[,Cases:=nafill(xCases,'locf'),by=internal__Type]
@@ -1595,4 +1595,48 @@ build_cum_table <- function(inp_dt_sum,colDate='earliestBlood',colType='Type'){
 
   invisible(dt3)
 }
+
+  # cat.N <- c(Gender='Gender',
+  #            Cancer.Stage='Overall pathologic stage',
+  #            hadNeoB='Neoadjuvant therapy given',
+  #            Resectability='Resectable status'
+  #            # stageT='Pathologic T stage',
+  #            #Location='Cancer location'
+  # )
+
+build_stat_table_N <- function(inpDT,categories){
+  dt.N <- NULL
+  for (this.cat in names(categories)){
+    this.label <- categories[[this.cat]]
+    this.vals  <- inpDT[[this.cat]]
+    if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
+    this.stat  <- tab(this.vals, do.sort = F)
+    this.title <- data.table(Category=this.label)
+    this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Freq, `%`=this.stat$FreqP), fill=T)
+    dt.N %<>% rbind(this.tab, fill=T)
+  }
+
+  dt.N[is.na(Value) & is.na(Category),Value:='N/A']
+  invisible(dt.N)
+}
+
+build_stat_table_med <- function(inpDT,categories){
+  dt.med <- NULL
+  for (this.cat in names(categories)){
+    this.label <- categories[[this.cat]]
+    this.vals  <- inpDT[[this.cat]]
+    if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
+    this.med <- median(this.vals, na.rm=T)
+    this.sd  <- sd(this.vals, na.rm = T)
+    this.rng <- range(this.vals, na.rm = T)
+
+#    this.title <- data.table(Category=this.label)
+#    this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Freq, `%`=this.stat$FreqP), fill=T)
+    dt.med %<>% rbind(data.table(Category=this.label, Median=round(this.med, 2), SD=round(this.sd,2), range=paste(round(this.rng,2),collapse = ' .. ')), fill=T)
+  }
+
+  invisible(dt.med)
+}
+
+
 

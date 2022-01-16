@@ -619,3 +619,18 @@ factors <- function(input,newlevels,...){
   other.levels <- cur.levels %-% newlevels
   return(factor(input, levels = c(newlevels,other.levels),...))
 }
+
+
+not.na <- function(...) !is.na(...)
+
+
+lazyBuild <- function(objName,object){
+  if (exists(objName)) {
+    message('Object ', objName,' already exists.');
+    return(get(objName));
+  } else {
+    message('Object ', objName,' not found. Rebuilding... ');
+    return(object);
+  }
+
+}

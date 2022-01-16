@@ -134,3 +134,8 @@ annotation_compass <- function(label,position='N',
 
 
 
+ggsaveopen <- function(fn, inpPlot=last_plot(), ...){
+  ggsave(fn, inpPlot, ...)
+  if (exists('OUT') & OUT==F) return(FALSE);
+  system(command = paste0('cmd /C ', fn));
+}

@@ -80,17 +80,21 @@ dt4mosaic <- function(inpDT, byX, byY){
   dt.stat <- as.data.table(tab(inpDT))
   dt.stat[,rel:=Freq/sum(Freq),by=get(byX)]
   dt.stat[,grpSize:=sum(Freq),by=get(byX)]
+  dt.stat[,grpN:=sum(Freq),by=get(byX)]
+  dt.stat[,nP:=Freq %+% '/' %+% grpN]
+  dt.stat[,relP:=percent(rel)]
+  dt.stat %<>% setorderv(c(byX,byY))
   return(dt.stat)
 }
 
-plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq'){
+plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F){
   if (is.null(byX)) byX <- names(inpDTmosaic)[1]
   if (is.null(byY)) byY <- names(inpDTmosaic)[2]
   inpDTmosaic[,grpSize:=grpSize/del]
 
   inpDTmosaic[,grpN:=sum(get(colFreq)),by=get(byX)]
   inpDTmosaic[, xN:=as.character(get(byX))]
-  inpDTmosaic[, xN:=sprintf('%s\nn=%s',xN,grpN), by=.(xN,grpN)]
+  inpDTmosaic[, xN:=sprintf('%s\n%s%s',xN,prefix,grpN), by=.(xN,grpN)]
 
 #  browser()
 
@@ -99,8 +103,10 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
            aes_string(x='xN',y='rel',fill=byY,width='grpSize')) +
     geom_bar(stat='identity') +
     scale_x_discrete(expand = c(0, 0)) +
+    theme(axis.text = element_text(face="bold") ) +
     facet_grid(as.formula('~ ' %+% byX), scales = "free", space = "free")
   if (!is.null(colors)) p <- p + scale_fill_manual(values = colors)
+  if (scaleY==F) p <- p + theme(axis.text.y = element_blank())
   p + xlab(byX) + ylab(NULL)
 }
 

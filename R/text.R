@@ -284,4 +284,8 @@ compl_year <- function(inpStr, regex='(.*)/(\\d+)', thr=25){
 #`%like%` <- function(hay, needle){grepl(needle,hay)}
 `%~~%` <- function(hay, needle){grepl(needle,hay)}
 `%~~i%` <- function(hay, needle){grepl(needle,hay,ignore.case = T)}
+`%!~~%` <- function(hay, needle){!grepl(needle,hay)}
+`%!~~i%` <- function(hay, needle){!grepl(needle,hay,ignore.case = T)}
 
+
+nicedate <- function(inpDate=Sys.time()) format(inpDate, '%Y%m%d_%Hh%Mm%Ss')
