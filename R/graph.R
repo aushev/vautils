@@ -135,7 +135,12 @@ annotation_compass <- function(label,position='N',
 
 
 ggsaveopen <- function(fn, inpPlot=last_plot(), ...){
-  ggsave(fn, inpPlot, ...)
   if (exists('OUT') & OUT==F) return(FALSE);
+  ext <- tools::file_ext(fn)
+  if ('list' %in% class(inpPlot)) {
+    ggpubr::ggexport(filename=fn,plot=inpPlot, device=ext, ...)
+  } else {
+    ggsave(fn, inpPlot, ...)
+  }
   system(command = paste0('cmd /C ', fn));
 }

@@ -691,7 +691,10 @@ deluselesscol0 <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, pa
 
 deluselesscol <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignNA=F, silent = F, padON=F, padW=NULL, padSide='right', verbose=F) {
   catV <- ifelse(verbose,cat,function(...){})
-  if (nrow(dtIn)==0) {warning("Table is empty (0 rows)."); return(dtIn)}
+  if (nrow(dtIn)==0) {
+    if (!silent) warning("Table is empty (0 rows).");
+    return(dtIn)
+    }
   icolnames <- setdiff(icolnames, ignoreColumns);
   if (!is.data.table(dtIn)){
     catV('Input is not data.table! ')

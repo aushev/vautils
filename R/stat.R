@@ -83,11 +83,12 @@ dt4mosaic <- function(inpDT, byX, byY){
   dt.stat[,grpN:=sum(Freq),by=get(byX)]
   dt.stat[,nP:=Freq %+% '/' %+% grpN]
   dt.stat[,relP:=percent(rel)]
-  dt.stat %<>% setorderv(c(byX,byY))
+  dt.stat %<>% setorderv(c(byX,byY),na.last=T)
+
   return(dt.stat)
 }
 
-plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F){
+plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F, showN=T){
   if (is.null(byX)) byX <- names(inpDTmosaic)[1]
   if (is.null(byY)) byY <- names(inpDTmosaic)[2]
   inpDTmosaic[,grpSize:=grpSize/del]
@@ -95,6 +96,18 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
   inpDTmosaic[,grpN:=sum(get(colFreq)),by=get(byX)]
   inpDTmosaic[, xN:=as.character(get(byX))]
   inpDTmosaic[, xN:=sprintf('%s\n%s%s',xN,prefix,grpN), by=.(xN,grpN)]
+
+
+
+  inpDTmosaic %<>% setorderv(c(byX,byY),na.last=T)
+  # dt.stat4mosaic %<>% setorderv(c('Location','Stage'),na.last=T)
+
+  inpDTmosaic[, yPrev:=shift(rel, fill=0),by=get(byX)]
+  inpDTmosaic[, y0:=cumsum(yPrev),by=get(byX)]
+  inpDTmosaic[, y1:=1-(y0+rel/2)]
+
+
+
 
 #  browser()
 
@@ -107,6 +120,7 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
     facet_grid(as.formula('~ ' %+% byX), scales = "free", space = "free")
   if (!is.null(colors)) p <- p + scale_fill_manual(values = colors)
   if (scaleY==F) p <- p + theme(axis.text.y = element_blank())
+  if (showN==T)  p <- p + geom_text(aes(label=Freq, y=y1))
   p + xlab(byX) + ylab(NULL)
 }
 
@@ -319,3 +333,25 @@ unqN <- function(x) length(unique(x))
 empty <- function(x) length(x)==0;
 topN <- function(x,thr){sort(unique(x), decreasing = T)[1:thr]}
 btmN <- function(x,thr){sort(unique(x), decreasing = F)[1:thr]}
+
+
+# `%bw%`   <- function(x,rng){return(x>rng[1]  & x<rng[2])}
+# `%bbw%`  <- function(x,rng){return(x>=rng[1] & x<rng[2])}
+# `%bww%`  <- function(x,rng){return(x>rng[1]  & x<=rng[2])}
+# `%bbww%` <- function(x,rng){return(x>=rng[1] & x<=rng[2])}
+
+mybetween <- function(x, rng, incbounds=F, NAbounds=NA){
+  n<-length(x);
+  lower <- ifelse(length(rng)>2, rng[1:n],         rng[1])
+  upper <- ifelse(length(rng)>2, rng[(n+1):(2*n)], rng[2])
+  between(x,lower,upper,incbounds=incbounds, NAbounds = NAbounds)
+}
+
+`%bw%`   <- function(x,rng){mybetween(x,rng, incbounds=F);}
+`%bbw%`  <- function(x,rng){mybetween(x,rng, incbounds=c(T,F));}
+`%bww%`  <- function(x,rng){mybetween(x,rng, incbounds=c(F,T));}
+`%bbww%` <- function(x,rng){mybetween(x,rng, incbounds=T);}
+
+
+
+

@@ -624,13 +624,36 @@ factors <- function(input,newlevels,...){
 not.na <- function(...) !is.na(...)
 
 
-lazyBuild <- function(objName,object){
+lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F){
+  obj.ret <- NULL
   if (exists(objName)) {
     message('Object ', objName,' already exists.');
     return(get(objName));
   } else {
-    message('Object ', objName,' not found. Rebuilding... ');
-    return(object);
+    message('Object ', objName,' not found. ');
+    if (!is.null(fnRdat)){
+      message(' Pulling from ', fnRdat,'. ');
+      if (!file.exists(fnRdat)) {
+        message(' Rdat file not found! ');
+      } else { # Rdat file exists
+        obj.names <- load(fnRdat, verbose=verbose)
+        if (length(obj.names)==0) {
+          message(' No objects loaded! ');
+        } else {
+          if (objName %in% obj.names) {
+            obj.ret <- get(obj.name)
+          } else obj.ret <- get(obj.names[1])
+        }
+      }
+    } # e. if (!is.null(fnRdat))
+
+    if (is.null(obj.ret)){
+      message(' Rebuilding... ');
+      obj.ret <- object
+      if (!is.null(fnRdat)) save(obj.ret,file = fnRdat)
+    }
+
+    return(obj.ret);
   }
 
 }
