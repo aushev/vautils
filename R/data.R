@@ -650,7 +650,10 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F){
     if (is.null(obj.ret)){
       message(' Rebuilding... ');
       obj.ret <- object
-      if (!is.null(fnRdat)) save(obj.ret,file = fnRdat)
+      if (!is.null(fnRdat)) {
+        message(' Saving to ',fnRdat,'...');
+        save(obj.ret,file = fnRdat)
+      }
     }
 
     return(obj.ret);

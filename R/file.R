@@ -7,12 +7,12 @@ file_renameR <- function(from, to) {
 `%path%` <- file.path
 
 
-file_findRecent <- function(pattern, dirs, orderstrict=T, recursive=F, include.dirs=F, ...){
+file_findRecent <- function(pattern, dirs, orderstrict=T, recursive=F, include.dirs=F, ignore.case=T,...){
   found <- FALSE
   time.latest <- NA
   fn.latest <- NA
   for (this.dir in dirs){
-    this.files <- list.files(path = this.dir, pattern = pattern, full.names = T, recursive=recursive, include.dirs = include.dirs, ...)
+    this.files <- list.files(path = this.dir, pattern = pattern, full.names = T, recursive=recursive, include.dirs = include.dirs, ignore.case=ignore.case, ...)
     if (length(this.files) > 0) {found <- TRUE} else next;
     this.times <- sapply(this.files, file.mtime)
     this.islatest <- (this.times==max(c(this.times,time.latest), na.rm = T))

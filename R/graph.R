@@ -144,3 +144,16 @@ ggsaveopen <- function(fn, inpPlot=last_plot(), ...){
   }
   system(command = paste0('cmd /C ', fn));
 }
+
+
+# https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+gg_vec2colors <- function(inpVec){
+ inpF <- factor(inpVec)
+ N <- length(levels(inpF))
+ gg_color_hue(N)[as.numeric(inpF)]
+}

@@ -107,18 +107,21 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
   inpDTmosaic[, y1:=1-(y0+rel/2)]
 
 
-
-
 #  browser()
 
+  #inpDTmosaic$byY.fill <- inpDTmosaic[[byY]]   #
+  inpDTmosaic[,byY.fill:=get(byY)]
   p <-
     ggplot(inpDTmosaic,
-           aes_string(x='xN',y='rel',fill=byY,width='grpSize')) +
+           aes(x=factor(xN),y=rel,fill=byY.fill,width=grpSize)  #aes_string(x='xN',y='rel',fill=byY,width='grpSize')
+           ) +
     geom_bar(stat='identity') +
     scale_x_discrete(expand = c(0, 0)) +
+    scale_y_continuous(labels = scales::percent_format(scale = 100))+
     theme(axis.text = element_text(face="bold") ) +
+    guides(fill=guide_legend(title=byY))+
     facet_grid(as.formula('~ ' %+% byX), scales = "free", space = "free")
-  if (!is.null(colors)) p <- p + scale_fill_manual(values = colors)
+  if (!is.null(colors)) p <- p + scale_fill_manual(values = colors, name=byY)
   if (scaleY==F) p <- p + theme(axis.text.y = element_blank())
   if (showN==T)  p <- p + geom_text(aes(label=Freq, y=y1))
   p + xlab(byX) + ylab(NULL)
@@ -318,7 +321,7 @@ contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
   cat('\n')
   print(tab3a)
   cat('\n')
-  print(fisher.test(as.matrix(tab2,rownames = 'Test')))
+  print(fisher.test(as.matrix(tab2[Test!=valOther,],rownames = 'Test')))
   invisible(list(tab1=tab1,tab2=tab2,tab3=tab3))
 }
 

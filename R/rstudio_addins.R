@@ -15,9 +15,8 @@ getrseltxt <- function(){
   sel_text <- sel$text;
 
   if (sel_text=='') {
-    message('\nEmpty string. ')
     sel_text <- trimws(adc$contents[sel$range$start[[1]]]);
-    message(' New string: ', sel_text)
+    message('Empty string. New string: ', sel_text)
   }
 
   return(sel_text);
