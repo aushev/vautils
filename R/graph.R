@@ -135,13 +135,14 @@ annotation_compass <- function(label,position='N',
 
 
 ggsaveopen <- function(fn, inpPlot=last_plot(), ...){
-  if (exists('OUT') & OUT==F) return(FALSE);
+  if (exists('OUT') & OUT==0) {message("Skipping. "); return(FALSE);}
   ext <- tools::file_ext(fn)
   if ('list' %in% class(inpPlot)) {
     ggpubr::ggexport(filename=fn,plot=inpPlot, device=ext, ...)
   } else {
     ggsave(fn, inpPlot, ...)
   }
+  if (exists('OUT') & OUT==1) {message("Saved but won't be open. "); return(FALSE);}
   system(command = paste0('cmd /C ', fn));
 }
 
@@ -157,3 +158,37 @@ gg_vec2colors <- function(inpVec){
  N <- length(levels(inpF))
  gg_color_hue(N)[as.numeric(inpF)]
 }
+
+
+gg_replace_geomlabel <- function(inpPlot){
+  outPlot <- copy(inpPlot)
+  for (this_layer in inpPlot$layers){
+    if ('GeomLabel' %in% class(this_layer$geom)){
+      # message('GeomLabel!')
+      this_map.fill.str <- as_label(this_layer$computed_mapping$fill)
+      if (this_map.fill.str=="NULL") this_map.fill.str <- as_label(this_layer$mapping$fill)
+      this_data <- this_layer$data
+      new_aes <- this_layer$mapping
+      new_aes$fill <- NULL
+      new_aes <- aes_add(new_aes, aes_string(color=this_map.fill.str))
+
+      for (this_param in names(this_layer$aes_params)){
+        this_param_val <- this_layer$aes_params[[this_param]]
+        tmp <- aes_string(this_param=this_param_val)
+        names(tmp) <- this_param
+        new_aes <- aes_add(new_aes, tmp)
+      }
+
+      outPlot <- outPlot + geom_text(data=this_data, mapping = new_aes)
+    } # e. if
+  } # e. for
+
+  for (i in rev(seq_along(outPlot$layers))){
+    this_layer <- outPlot$layers[[i]]
+    if ('GeomLabel' %in% class(this_layer$geom)){
+      outPlot$layers[[i]] <- NULL
+    } # e. if
+  } # e. for
+  outPlot
+}
+
