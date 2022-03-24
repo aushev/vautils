@@ -220,7 +220,7 @@ toBase <- function (inpN, base, alphabet="0123456789abcdefghijklmnopqrstuvwxyz",
 fromBase <- function(inpS, alphabet="0123456789abcdefghijklmnopqrstuvwxyz"){
   if (length(inpS)==1 && is.na(inpS)) return(NA);
   alphabetSS <- unlist(strsplit(alphabet,split = '',fixed = T));
-  base <- nchar(alphabet);
+  base <- length(alphabetSS); # nchar(alphabet);
   rezN <- 0;
 
   if (is.list(inpS)) return(lapply(inpS, fromBase, alphabet=alphabet));
@@ -660,3 +660,97 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F){
   }
 
 }
+
+
+
+is.someDate <- function(input){
+  return(sum(cs('Date POSIXct POSIXt') %in% class(input))>0)
+}
+
+
+
+NAorT <- function(x) (x | is.na(x))
+NAorF <- function(x) (!x | is.na(x))
+TorNA <- NAorT
+ForNA <- NAorF
+sumnotna <- function(x) sum(!is.na(x))
+
+
+
+
+
+
+
+forcedominant_dt <- function(inpDT, colName, colNew=colName %+% '.dom',  sep=';', ignore='', fast=F) {
+  list.amb <- dt.stat[thisCol %~~% sep, thisCol] %>% strsplit(sep) %>% unlist()
+
+#  dt.stat.dt <<- inpDT[,.(nPrev=.N), by=.(thisCol=get(colName))]
+  dt.stat <- tab(c(inpDT[[colName]],list.amb)) %>% setnames(cs('Freq'),cs('nPrev'))
+  setDT(dt.stat)
+  names(dt.stat)[1] <- 'thisCol'
+
+  dt.stat.single <- dt.stat[!thisCol %~~% ';' & thisCol!=ignore,][order(-nPrev),]
+  list.top <- dt.stat.single[thisCol %in% list.amb,thisCol] # [1:100]
+
+  inpDT[, domVal:=get(colName)]
+  for (this.val in rev(list.top)){
+    #inpDT[this.val get(colName) , domVal:=this.val]
+  }
+
+  #   if (fast==F){
+  #   for (this.val in rev(list.top)){
+  #     re1 <- '^' %+% this.val %+% sep
+  #     re2 <- sep %+% this.val %+% sep
+  #     re3 <- sep %+% this.val %+% '$'
+  #     inpDT[get(colName) %~~% re1 | get(colName) %~~% re2 | get(colName) %~~% re3, domVal:=this.val]
+  #   }
+  # } else {
+  #   for (this.val in rev(list.top)){
+  #     inpDT[get(colName) %~~% this.val, domVal:=this.val]
+  #   }
+  # }
+  inpDT %<>% setnames('domVal', colNew)
+
+}
+
+forcedominant <- function(input, sep=';', ignore='', fast=F) {
+  list.single <- input[!input %~~% sep & (input %!in% ignore)]
+  list.amb <- input[input %~~% sep & (input %!in% ignore)] %>% strsplit(sep) %>% unlist()
+
+  dt.stat <- data.table(tab(c(list.single,list.amb), inpName = 'statCol'))
+  dt.stat <- dt.stat[statCol %in% list.amb,]
+  list.top <- dt.stat$statCol
+  output <- input
+
+  list.top %<>% gsub('(','\\(',., fixed = T)
+
+  for (this.val in rev(list.top)){
+    output[sapply(X = strsplit(input,sep), FUN = function(x) this.val %in% x)] <- this.val
+  }
+
+  # if (fast==F){
+  #   for (this.val in rev(list.top)){
+  #     #cat('\n',this.val)
+  #     re1 <- '^' %+% this.val %+% sep
+  #     re2 <- sep %+% this.val %+% sep
+  #     re3 <- sep %+% this.val %+% '$'
+  #     output[input %~~% re1 | input %~~% re2 | input %~~% re3 ] <- this.val
+  #   }
+  # } else {
+  #   for (this.val in rev(list.top)){
+  #     output[input %~~% this.val] <- this.val
+  #   }
+  # }
+
+  (output)
+}
+
+# time1()
+# dt.our.crc %<>% forcedominant_dt('Physician.Name', ignore = '-')
+# time2()
+#
+# time1()
+# dt.our.crc[, Phys2:=forcedominant(Physician.Name, ignore = '-')]
+# time2()
+# #
+# View(dt.our.crc[Phys2!=Physician.Name.dom,.(Physician.Name,Phys2,Physician.Name.dom)])

@@ -134,7 +134,7 @@ annotation_compass <- function(label,position='N',
 
 
 
-ggsaveopen <- function(fn, inpPlot=last_plot(), ...){
+ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, ...){
   if (exists('OUT') & OUT==0) {message("Skipping. "); return(FALSE);}
   ext <- tools::file_ext(fn)
   if ('list' %in% class(inpPlot)) {
@@ -153,8 +153,8 @@ gg_color_hue <- function(n) {
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
-gg_vec2colors <- function(inpVec){
- inpF <- factor(inpVec)
+gg_vec2colors <- function(inpVec, levs=unique(inpVec)){
+ inpF <- factor(inpVec, levels=levs)
  N <- length(levels(inpF))
  gg_color_hue(N)[as.numeric(inpF)]
 }
@@ -192,3 +192,23 @@ gg_replace_geomlabel <- function(inpPlot){
   outPlot
 }
 
+
+
+pmod1 <- function(inp, coefs, lab.x=NA, lab.y=0.4){
+  lab.s <- sprintf('HR = %.1f [%.1f - %.1f]', coefs[,2], coefs$CIl, coefs$CIh)
+  lab.s <- lab.s %+% ifelse(coefs$p<1e-3, sprintf('\np = %.2e',coefs$p), sprintf('\np = %.3f',coefs$p))
+
+  n.risk <- inp$plot$data[inp$plot$data$time==0,]$n.risk
+  lab.n <- 'N = ' %+% paste(n.risk, collapse='+') %+% ' = ' %+% sum(n.risk)
+  #lab.s <- lab.s %+% '\n' %+% lab.n
+
+  if (is.na(lab.x)){
+    #message('Redefining lab.x')
+    lab.x <- max(inp$data.survplot$time)*0.4
+    #message('909: ',lab.x)
+    if (!is.null(inp$data.survtable)) lab.x <- max(inp$data.survtable$time)*0.4
+  }
+  #message(lab.x)
+  inp$plot <- inp$plot + annotate('text', x=lab.x, y=lab.y, label=lab.s, hjust=0, size=5)
+  return(inp)
+}

@@ -153,7 +153,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                      clean.names = F, trimspaces=F, deluseless=F,
                      rename.from=NULL,rename.to=NULL,
                      ...){
-  cat(' Open ' %+% fnRead);
+  message(' Opening ' %+% fnRead);
 
   dots <- substitute(list(...));
 
@@ -169,6 +169,9 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     }
     else if (substrRight(fnRead,3) == 'sav') {
       filetype <- 'spss';
+    }
+    else if (substrRight(fnRead,3) == 'zip') {
+      filetype <- 'zip';
     }
     else {filetype <- 'auto';}
     cat(' as ', filetype);
@@ -1036,7 +1039,7 @@ mergefiletabs <- function(
 
     }
   }
-
+  if (is.null(dt.all)) warning('No data to return!')
   invisible(dt.all);
 } # e. mergefiletabs()
 
@@ -1319,26 +1322,26 @@ findnamesrange <- function(inpDT,name1,name2, values=F){
 
 
 
-cast.fun <- function(inp.dt, cols2cast, FUN, ...){
+cast.fun <- function(inp.dt, cols2cast=names(inp.dt), FUN, ...){
   cols2castY <- intersect(cols2cast,names(inp.dt))
   if (!identical(cols2castY,cols2cast)) warning('Columns not found: ', paste0(setdiff(cols2cast,names(inp.dt)), collapse = ' '),'\n')
   inp.dt[, (cols2castY) := lapply(.SD, FUN, ...), .SDcols = cols2castY]
   return(inp.dt);
 }
 
-cast.char <- function(inp.dt, cols2cast){
+cast.char <- function(inp.dt, cols2cast=names(inp.dt)){
   return(cast.fun(inp.dt,cols2cast,as.character));
 }
 
-cast.num <- function(inp.dt, cols2cast){
+cast.num <- function(inp.dt, cols2cast=names(inp.dt)){
   return(cast.fun(inp.dt,cols2cast,all2num));
 }
 
-cast.factor <- function(inp.dt, cols2cast, ...){
+cast.factor <- function(inp.dt, cols2cast=names(inp.dt), ...){
   return(cast.fun(inp.dt,cols2cast,as.factor, ...));
 }
 
-cast.date <- function(inp.dt, cols2cast, ...){
+cast.date <- function(inp.dt, cols2cast=names(inp.dt), ...){
   return(cast.fun(inp.dt,cols2cast,as.Date, ...));
 }
 
@@ -1641,5 +1644,86 @@ build_stat_table_med <- function(inpDT,categories){
   invisible(dt.med)
 }
 
+# usage:
+# relabel(dt.mosaic,
+# list(cs('postMRD,postMRD_ctDNA_positivity,Negative,Positive'),
+#                cs('Relapsed,Recurred,Not recurred,Recurred') ) )
+relabel <- function(inpDT,inpList){
+  for (item in inpList){
+    colFrom <- item[1]
+    colTo   <- item[2]
+    newLevels <- item[-(1:2)]
+    message('Renaming ',colFrom,' to ',colTo,' with levels: ',newLevels)
+    #inpDT[, newCol:=get(colFrom)]
+    inpDT$newCol <- inpDT[[colFrom]]
+    setnames(inpDT,colFrom, colTo)
+    setnames(inpDT,'newCol',colFrom)
+    if (length(newLevels)>0) levels(inpDT[[colTo]]) <- newLevels
+  }
+  return(inpDT)
+}
 
 
+
+merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, all=T){
+  dups <- names(dt1) %&% names(dt2)
+
+  dt.bad.wide <- data.table(keycol='')[0]  %>% setnames('keycol',key.x)
+  dt.bad.long <- data.table(keycol='')[0]  %>% setnames('keycol',key.x)
+
+  dt.merged <- merge(dt1, dt2, by.x=key.x, by.y=key.y, all=all)
+
+  for (.dup in (dups %-% c(key.x,key.y))){
+    .dupX <- .dup %+% '.x'
+    .dupY <- .dup %+% '.y'
+    cat('\n',.dup)
+    this.dt <- dt.merged[,c(key.x,.dupX,.dupY),with=F]
+    this.dt[, isNA.x:=is.na(get(.dupX))]
+    this.dt[, isNA.y:=is.na(get(.dupY))]
+    this.dt[, equal:=(get(.dupX)==get(.dupY))]
+    this.tab <- tab(this.dt[,.(isNA.x,isNA.y,equal)])
+    this.bad <- this.dt[equal==F,]
+    this.bad[, cs('isNA.x isNA.y equal'):=NULL]
+    if (nrow(this.bad)>0) {
+      dt.bad.wide %<>% merge(this.bad, by=key.x, all=T)
+
+      this.bad.long <- copy(this.bad)
+      this.bad.long[,field:=.dup]
+      names(this.bad.long) %<>% gsub(.dup,'',.)
+      this.bad.long %<>% cast.char(cs('.x .y'))
+      dt.bad.long %<>% rbind(this.bad.long, fill=T)
+
+      cat('\t', nrow(this.bad))
+
+    } # e. if (nrow(this.bad)>0)
+
+    dt.merged[,c(.dup):=get(.dupY)]
+    dt.merged[is.na(get(.dupY)),c(.dup):=get(.dupX)]
+    dt.merged[,c(.dupX,.dupY):=NULL]
+
+    names(this.tab) %<>% gsub('isNA',.dup,.)
+    #  print(this.tab[])
+  } # e. for
+
+
+  # print(dim(dt.bad.wide))
+  # print(dim(dt.bad.long))
+
+  dt.bad.wide <<- dt.bad.wide
+  dt.bad.long <<- dt.bad.long
+
+  invisible(dt.merged)
+}
+
+
+mergeR <- function(dt1, dt2, ...){
+  warning('Function not tested thoroughly!')
+  warning('resulting table is re-keyed!')
+  argsList <- list(...)
+  names.ovl <- names(dt1) %&% names(dt2) %-% c(argsList$byX, argsList$by)
+  if (length(names.ovl)>0){
+    message('Columns to delete and replace: ', paste(names.ovl, collapse = ', '))
+    dt1[,c(names.ovl):=NULL]
+  }
+  return(merge(dt1,dt2,...))
+}

@@ -66,3 +66,13 @@ selectionTab <- function(){
 
 } # e. selectionView
 
+
+
+expFun <- function(){
+  message('Debugging!!!')
+  tmp.ADC <<- rstudioapi::getActiveDocumentContext()
+  tmp.prj <<- rstudioapi::getActiveProject()
+  tmp.SEC <<- rstudioapi::getSourceEditorContext()
+  tmp.CEC <<- rstudioapi::getConsoleEditorContext()
+  message(tmp.ADC$id)
+}

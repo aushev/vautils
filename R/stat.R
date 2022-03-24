@@ -273,6 +273,10 @@ contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
   valPosReal <- valPos[[2]]
   valOther <-'<OTHER>'
 
+  if (valNegTest %in% cs('FALSE TRUE')) valNegTest %<>% as.logical()
+  if (valNegReal %in% cs('FALSE TRUE')) valNegReal %<>% as.logical()
+  if (valPosTest %in% cs('FALSE TRUE')) valPosTest %<>% as.logical()
+  if (valPosReal %in% cs('FALSE TRUE')) valPosReal %<>% as.logical()
 
   inpDT[, .tmp.Test:=get(colTest)]
   inpDT[, .tmp.Real:=get(colReal)]
@@ -295,7 +299,7 @@ contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
   inpDT[.tmp.Test %!in% c(valNegTest, valPosTest), .tmp.Test:=valOther]
   inpDT[.tmp.Real %!in% c(valNegReal, valPosReal), .tmp.Real:=valOther]
 
-  tab1 <- tab(inpDT[,.(Test=.tmp.Test,Real=.tmp.Real,class=rez)])
+  tab1 <- data.table(tab(inpDT[,.(Test=.tmp.Test,Real=.tmp.Real,class=rez)]))
   tab1$Test %<>% factor(levels = c(valNegTest, valPosTest, valOther))
   tab1$Real %<>% factor(levels = c(valNegReal, valPosReal, valOther))
   tab2 <- dcast(as.data.table(tab1),Test~Real,value.var = 'Freq', fill=0)
@@ -314,6 +318,8 @@ contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
     data.table(Metrics='NPV',         Calc=sprintf('%s / (%s + %s) = %s', trueNeg, trueNeg, falsNeg, percent(NPV,percDigits)))
   )
 
+  tab0 <- inpDT[,c(key(inpDT), colTest, colReal, '.tmp.Test', '.tmp.Real', 'rez'), with=F]
+
   cat('\n')
   print(tab1)
   cat('\n')
@@ -322,7 +328,7 @@ contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
   print(tab3a)
   cat('\n')
   print(fisher.test(as.matrix(tab2[Test!=valOther,],rownames = 'Test')))
-  invisible(list(tab1=tab1,tab2=tab2,tab3=tab3))
+  invisible(list(tab0=tab0,tab1=tab1,tab2=tab2,tab3=tab3))
 }
 
 
@@ -345,16 +351,26 @@ btmN <- function(x,thr){sort(unique(x), decreasing = F)[1:thr]}
 
 mybetween <- function(x, rng, incbounds=F, NAbounds=NA){
   n<-length(x);
-  lower <- ifelse(length(rng)>2, rng[1:n],         rng[1])
-  upper <- ifelse(length(rng)>2, rng[(n+1):(2*n)], rng[2])
+  lower <- ifelse1(length(rng)>2, rng[1:n],         rng[1]) # WTF!!! ifelse doesn't work!
+  upper <- ifelse1(length(rng)>2, rng[(n+1):(2*n)], rng[2]) # WTF!!! ifelse doesn't work!
   between(x,lower,upper,incbounds=incbounds, NAbounds = NAbounds)
 }
 
 `%bw%`   <- function(x,rng){mybetween(x,rng, incbounds=F);}
-`%bbw%`  <- function(x,rng){mybetween(x,rng, incbounds=c(T,F));}
-`%bww%`  <- function(x,rng){mybetween(x,rng, incbounds=c(F,T));}
+#`%bbw%`  <- function(x,rng){mybetween(x,rng, incbounds=c(T,F));} # NOT IMPLEMENTED IN between()
+#`%bww%`  <- function(x,rng){mybetween(x,rng, incbounds=c(F,T));} # NOT IMPLEMENTED IN between()
 `%bbww%` <- function(x,rng){mybetween(x,rng, incbounds=T);}
 
 
+# usual duplicated() returns all but first, this one returns all:
+#    duplicated(c(1,2,3,2,2,4)) == F F F T T F
+# allduplicated(c(1,2,3,2,2,4)) == F T F T T F
+allduplicated <- function(x, ...) {duplicated(x,...) | duplicated(x, fromLast=T,...)}
 
 
+fitsum <- function(inpFit){
+  sumcox <- summarize.cox(coxph(as.formula(inpFit$call$formula), data = eval(inpFit$call$data)))
+  lab.s <- sprintf('HR=%.1f, 95%% CI: %.1f-%.1f, p=%.2e', sumcox$`exp(coef)`, sumcox$CIl, sumcox$CIh, sumcox$p)
+  sumcox$label <- lab.s
+  return(sumcox)
+}

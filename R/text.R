@@ -73,6 +73,7 @@ print_list <- function(inp) {
 `%+%` <- function(...) UseMethod("%+%")
 `%+%.character` <- paste0
 `%+%.numeric` <- paste0
+`%+%.NULL` <- paste0
 `%+%.default` <- function (arg1, arg2){
   e <- parent.env(getEnvByName(.GlobalEnv,'package:vautils'));
   if (exists('%+%', envir = e)) get('%+%',envir = e)(arg1,arg2);
@@ -135,13 +136,60 @@ chopRight <- function(inpstr,n=1L){
 }
 
 
-xls_date <- function(input, strict=F){
-  if ('Date' %in% class(input)) return(input);
+xls_date <- function(input, strict=F, quiet=T){
+  messageA <- warning;
+  tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
+  if (quiet==T) messageA <- function(x) invisible(x);
+  if (is.someDate(input)) return(input);
+  if (length(input)==0)      {warning(' Input of zero length in xls_date(). '); return(input)}
+  if (sum(!is.na(input))==0) {warning(' Input of NA only in xls_date(). ');     return(as.Date(NA))}
+
+  inputNotNA <- na.omit(input)
   inputNum <- suppressWarnings(as.numeric(input));
+  inputNumOnly <- na.omit(inputNum)
+  inputNumOnlyInt <- as.integer(inputNumOnly)
   notNums <- is.na(inputNum)
 
-  output <- as.Date(inputNum, origin="1899-12-30", optional=T);
+  # browser()
 
+  if (length(inputNumOnly)>0){
+    messageA(" Numeric!")
+    if (all(inputNumOnly == inputNumOnlyInt)){
+      messageA(" Integer!")
+      output <- as.Date(inputNum, origin="1899-12-30", optional=T);
+      return(output)
+    } else {
+      messageA(" Not integer!")
+      messageA(inputNum)
+      output.posix <- as.POSIXct(inputNum*(60*60*24), origin="1899-12-30", optional=T);
+      messageA(as.character(output.posix))
+      return(output.posix)
+    }
+  } else {
+    messageA(" Not numeric!")
+    if (all(nchar(inputNotNA)==10 | nchar(inputNotNA)==9)){
+      messageA("Text date, 10!");
+      inputNotNA %<>% gsub('[\\\ /-]+','/',.)
+      if (inputNotNA %~~% '^\\d{4}') tryformats <- cs('%Y/%m/%d')
+      if (inputNotNA %~~% '\\d{4}$') tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
+      return(as.Date(inputNotNA, tryFormats=tryformats, optional=T))
+    } else if (all(nchar(inputNotNA) %in% c(6,7,8))){
+      messageA("Text date, 8!");
+      inputNotNA %<>% gsub('[\\\ /-]+','/',.)
+      tryformats <- cs('%m/%d/%y,%d/%m/%y')
+      if (inputNotNA %~~% '^\\d{4}')  tryformats <- cs('%Y/%m/%d')
+      if (inputNotNA %~~%  '\\d{4}$') tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
+      return(as.Date(input, tryFormats=tryformats, optional=T))
+    } else {
+      messageA(" Maybe date and time?");
+      return(as.POSIXct(input, optional=T))
+    }
+  }
+
+  messageA("Something else!")
+
+  output <- as.Date(inputNum, origin="1899-12-30", optional=T);
+  # output <- as.Date(output.posix)
   vec4date <- notNums & (nchar(input)>7)
   vec4date[is.na(vec4date)] <- FALSE
 
@@ -185,7 +233,7 @@ str_shrink <- function(inp_str, sep=';'){
 
 # shrink_values():
 # c(3,2,3,NA,4) => '3;2;4'
-shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, fill=NULL){
+shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, fillempty=NULL){
   values2 <- values;
 
   if (all==F) values2 <- unique(values);
@@ -193,11 +241,17 @@ shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, f
   if (length(exclude)>0) values2 <- values2[values2 %!in% exclude];
 
   if (length(values2)==1) return(values2);
-  if (length(values2)==0) return(ifelse(is.null(fill),values[1],fill));
-
+  #if (length(values2)==0) return(ifelse(is.null(fill),values[1],fill));
+  if (length(values2)==0){
+    if (!is.null(fillempty)) values2 <- fillempty;
+    #if (is.na(fillempty)) values2 <- fillempty;
+    return(values2);
+  }
 
   paste(values2, collapse = collapse)
 }
+
+shrink_values1 <- shrink_values
 
 # cs('+ - - - + +') => '+-+'
 # cs('+ - - - ') => '+-'
@@ -289,3 +343,13 @@ compl_year <- function(inpStr, regex='(.*)/(\\d+)', thr=25){
 
 
 nicedate <- function(inpDate=Sys.time()) format(inpDate, '%Y%m%d_%Hh%Mm%Ss')
+
+
+wrap_add <- function(inpStr, width=100){
+  outStr <-
+    inpStr %>%
+    strsplit(split = '[\r\n]') %>%
+    unlist() %>%
+    stringi::stri_wrap(width = width) %>%
+    paste(collapse = '\n')
+}

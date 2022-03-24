@@ -7,3 +7,8 @@ Name: Tab-stat Selection
 Description: calls tab() for selection
 Binding: selectionTab
 Interactive: false
+
+Name: Experimental
+Description: calls experimental function
+Binding: expFun
+Interactive: false
