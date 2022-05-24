@@ -92,6 +92,9 @@ show.envs.plus <- function(){
     dims <- c(nrow(vec1),ncol(vec1))
   }
 
+  if (length(vec1)==0 & length(vec2)==0) return(TRUE);
+  if (length(vec1)==0 & length(vec2)>0)  return(FALSE);
+  if (length(vec1)>0  & length(vec2)==0) return(FALSE);
   if (!is.vector(vec1)) vec1 <- unlist(vec1, use.names = F);
   if (!is.vector(vec2)) vec2 <- unlist(vec2, use.names = F);
   if (is.factor(vec1)) vec1 <- as.character(vec1);
@@ -330,9 +333,9 @@ replace.mult <- function(inpvec, from, to){
 
   stopifnot(length(from)>0 & (length(from)==length(to) | length(to)==1L));
   if (length(to)==1L){
-    for (i in seq_along(from)) inpvec <- replace(inpvec, inpvec==from[i], to)
+    for (i in seq_along(from)) inpvec <- replace(inpvec, inpvec %==% from[i], to)
   } else if (length(from)==length(to)){
-    for (i in seq_along(from)) inpvec <- replace(inpvec, inpvec==from[i], to[i])
+    for (i in seq_along(from)) inpvec <- replace(inpvec, inpvec %==% from[i], to[i])
   } else stop('Length of [to] argument must be 1 or equal to length of [from]')
 
   return(inpvec)
@@ -541,6 +544,7 @@ meanI <- function(inp){
   return(mean(inp))
 }
 
+sumI <- function(...) sum(..., na.rm=T)
 
 # takes vector consisting of NAs and unique non-NA
 # fills all NA with a non-NA value

@@ -136,6 +136,7 @@ annotation_compass <- function(label,position='N',
 
 ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, ...){
   if (exists('OUT') & OUT==0) {message("Skipping. "); return(FALSE);}
+  fn <- fs::path_sanitize(trimws(fn))
   ext <- tools::file_ext(fn)
   if ('list' %in% class(inpPlot)) {
     ggpubr::ggexport(filename=fn,plot=inpPlot, device=ext, ...)
@@ -154,9 +155,9 @@ gg_color_hue <- function(n) {
 }
 
 gg_vec2colors <- function(inpVec, levs=unique(inpVec)){
- inpF <- factor(inpVec, levels=levs)
- N <- length(levels(inpF))
- gg_color_hue(N)[as.numeric(inpF)]
+  inpF <- factor(inpVec, levels=levs)
+  N <- length(levels(inpF))
+  gg_color_hue(N)[as.numeric(inpF)]
 }
 
 
@@ -212,3 +213,29 @@ pmod1 <- function(inp, coefs, lab.x=NA, lab.y=0.4){
   inp$plot <- inp$plot + annotate('text', x=lab.x, y=lab.y, label=lab.s, hjust=0, size=5)
   return(inp)
 }
+
+
+
+gg_labN <- function(inpPlot, yPos=NULL, ...){
+  grpX <- as_label(inpPlot$mapping$x)
+  if (is.null(yPos)) yPos <- 1.1 * suppressWarnings(ggplot_build(inpPlot)$layout$panel_params[[1]]$y.range[2])
+  data1 <- inpPlot$data[, .(lblN='N='%+%.N), by=get(grpX)]
+  setnames(data1,'get',grpX)
+  inpPlot + geom_text(aes(label=lblN,y=yPos), data = data1, ...)
+}
+
+gg_pie <- function(inp, colTitle='Var', colNum='Freq'){
+  if (! 'data.frame' %in% class(inp)){
+    inp <- tab(inp, inpName=colTitle)
+    setnames(inp,'Freq',colNum)
+    # inp[[colTitle]] %<>% factor(levels = inp[[colTitle]])
+  }
+  setnames(inp, c(colNum,colTitle), cs('tmp.Freq tmp.Fill'))
+  ggplot(inp, aes(x="", y=tmp.Freq, fill=tmp.Fill)) +
+    geom_bar(stat="identity", width=1, color="white") +
+    coord_polar("y", start=0) +
+    theme_void()
+}
+
+# gg_pie(dt1, colTitle = 'Study.ID')
+# gg_pie(dt.qlik.summary$Study.ID) + leg.no

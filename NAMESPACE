@@ -6,6 +6,11 @@ S3method(`%+%`, default)
 S3method(`%+%`, character)
 S3method(`%+%`, numeric)
 
+export(`%++%`)
+S3method(`%++%`, default)
+S3method(`%++%`, character)
+S3method(`%++%`, numeric)
+
 export(`%<<%`)
 S3method(`%<<%`, leftbunch)
 

@@ -72,11 +72,60 @@ print_list <- function(inp) {
 
 `%+%` <- function(...) UseMethod("%+%")
 `%+%.character` <- paste0
-`%+%.numeric` <- paste0
-`%+%.NULL` <- paste0
+`%+%.numeric`   <- paste0
+`%+%.NULL`      <- paste0
 `%+%.default` <- function (arg1, arg2){
+  if (is.character(arg2)) {return(paste0(arg1,arg2));}
+
+  message('\n Running %+%.default! \n ');
   e <- parent.env(getEnvByName(.GlobalEnv,'package:vautils'));
   if (exists('%+%', envir = e)) get('%+%',envir = e)(arg1,arg2);
+}
+
+paste0notNA <- function(arg1, arg2){
+  if (length(arg1)>1 & length(arg2)>1) return(mapply(paste0notNA, arg1, arg2, USE.NAMES=F))
+  if (length(arg1)>1 & length(arg2)<2) return(sapply(arg1, paste0notNA, arg2=arg2, USE.NAMES=F))
+  if (length(arg2)>1 & length(arg1)<2) return(sapply(arg2, paste0notNA, arg1=arg1, USE.NAMES=F))
+
+#  if (length(arg1)==0 | length(arg2)==0) browser()
+
+  if (any(length(arg1)==0, is.na(arg1)) & any(length(arg2)==0, is.na(arg2)) )  return('');
+  if (any(length(arg1)==0, is.na(arg1)) ) return(arg2);
+  if (any(length(arg2)==0, is.na(arg2)) ) return(arg1);
+  return(paste0(arg1,arg2));
+}
+
+`%++%` <- function(...) UseMethod("%++%")
+`%++%.character` <- paste0notNA
+`%++%.numeric`   <- paste0notNA
+`%++%.NULL`      <- paste0notNA
+`%++%.default` <- function (arg1, arg2){
+  if (is.na(arg1) & is.character(arg2)) return(paste0notNA(arg1,arg2));
+  e <- parent.env(getEnvByName(.GlobalEnv,'package:vautils'));
+  if (exists('%++%', envir = e)) get('%++%',envir = e)(arg1,arg2);
+}
+
+
+myfun <- function(...){
+  arglist <- list(...);
+  arglens <- sapply(arglist, length)
+  browser()
+
+}
+
+pasteNotNA <- function(...,collapse=', '){
+  arglist <- list(...);
+  arglens <- sapply(arglist, length)
+#  browser()
+  if (all(arglens<2)) return(paste(na.omit(unlist(arglist)),collapse=collapse))
+  maxlen <- max(arglens)
+
+#  browser()
+  # for (i in seq_len(maxlen)) {
+  # }
+
+  ans <- do.call("mapply", c(pasteNotNA, arglist, collapse=collapse, USE.NAMES = FALSE))
+  ans
 }
 
 # %+%: strings concatenation
@@ -136,7 +185,7 @@ chopRight <- function(inpstr,n=1L){
 }
 
 
-xls_date <- function(input, strict=F, quiet=T){
+xls_date <- function(input, strict=F, quiet=T, split=F){
   messageA <- warning;
   tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
   if (quiet==T) messageA <- function(x) invisible(x);
@@ -150,7 +199,13 @@ xls_date <- function(input, strict=F, quiet=T){
   inputNumOnlyInt <- as.integer(inputNumOnly)
   notNums <- is.na(inputNum)
 
-  # browser()
+#  browser()
+
+  if (split==T) {
+    ret <- sapply(input, xls_date, strict=strict, quiet=quiet, split=F, USE.NAMES = F)
+    class(ret) <- 'Date'
+    return(ret)
+  }
 
   if (length(inputNumOnly)>0){
     messageA(" Numeric!")
@@ -233,7 +288,8 @@ str_shrink <- function(inp_str, sep=';'){
 
 # shrink_values():
 # c(3,2,3,NA,4) => '3;2;4'
-shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, fillempty=NULL){
+shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, fillempty=NULL, force.char=F){
+  if (force.char) values <- as.character(values)
   values2 <- values;
 
   if (all==F) values2 <- unique(values);
@@ -335,14 +391,20 @@ compl_year <- function(inpStr, regex='(.*)/(\\d+)', thr=25){
 
 }
 
-#`%like%` <- function(hay, needle){grepl(needle,hay)}
-`%~~%` <- function(hay, needle){grepl(needle,hay)}
-`%~~i%` <- function(hay, needle){grepl(needle,hay,ignore.case = T)}
-`%!~~%` <- function(hay, needle){!grepl(needle,hay)}
-`%!~~i%` <- function(hay, needle){!grepl(needle,hay,ignore.case = T)}
+#`%like%` <- function(x, pattern){grepl(pattern,x)}
+ `%~~%`  <- function(x, pattern){ grepl(pattern,x)}
+ `%~~i%` <- function(x, pattern){ grepl(pattern,x,ignore.case = T)}
+`%!~~%`  <- function(x, pattern){!grepl(pattern,x)}
+`%!~~i%` <- function(x, pattern){!grepl(pattern,x,ignore.case=T)}
 
+ `%~~~%`  <- function(x, patterns){ apply(sapply(patterns, function(pattern) grepl(pattern,x), USE.NAMES=F), 1,any) }
+`%!~~~%`  <- function(x, patterns){!apply(sapply(patterns, function(pattern) grepl(pattern,x), USE.NAMES=F), 1,any) }
+ `%~~~i%` <- function(x, patterns){ apply(sapply(patterns, function(pattern) grepl(pattern,x,ignore.case=T), USE.NAMES=F), 1,any) }
+`%!~~~i%` <- function(x, patterns){!apply(sapply(patterns, function(pattern) grepl(pattern,x,ignore.case=T), USE.NAMES=F), 1,any) }
 
-nicedate <- function(inpDate=Sys.time()) format(inpDate, '%Y%m%d_%Hh%Mm%Ss')
+`%=u=%` <- function(x,y) toupper(x)==toupper(y)
+
+nicedate <- function(inpDate=Sys.time()) format(inpDate, '%Y%m%d_%Hh%Mm%Ss_')
 
 
 wrap_add <- function(inpStr, width=100){
@@ -353,3 +415,13 @@ wrap_add <- function(inpStr, width=100){
     stringi::stri_wrap(width = width) %>%
     paste(collapse = '\n')
 }
+
+
+strsplitS <- function(input,split=';',...){
+  if (input %===% NA) return(NA)
+  unlist(strsplit(input,split=split,...))
+}
+strsplitMin <- function(x,split=';',...) sapply(strsplit(x,split=split,...), min)
+
+toClip <- function(...){writeClipboard(as.character(...))}
+fromClip <- function(...){readClipboard()}

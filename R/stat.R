@@ -21,6 +21,7 @@ tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, inpName=NA, ...){
 
   name1 <- deparse(substitute(input));
   df <- data.frame(table(input, useNA = useNA, ...));
+  if (nrow(df)==0) {warning(' Empty!'); return(NULL);}
   df <- df[df$Freq!=0,]
   sum1 <- sum(df$Freq);
   df$FreqP <- percent(df$Freq/sum1);
@@ -33,12 +34,14 @@ tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, inpName=NA, ...){
   return(df);
 }
 
-tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, inpName=NA, ...){
+tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, inpName=NA, thr=0L, thrLabel='Other',...){
   if (useNA==F | na.rm==T) useNA <- 'no';
   if (useNA==T | na.rm==F) useNA <- 'ifany';
 
   name1 <- deparse(substitute(input));
   df1 <- data.frame(table(input, useNA = useNA, ...));
+  if (nrow(df1)==0) return(NULL);
+
   df1 <- df1[df1$Freq!=0,]
   sum1 <- sum(df1$Freq);
   if (keepP) {df1$FreqP <- percent(df1$Freq/sum1);}
@@ -51,7 +54,17 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
   if (do.sort) df1 <- df1[order(-df1$Freq),];
 #  print(names(df));
   if (!keepN) {row.names(df1) <- NULL;}
-  return(df1);
+  #return(df1);
+
+  ret <- data.table(df1);
+  colVal <- names(ret)[1];
+  ret[Freq<thr, c(colVal):=thrLabel]
+  sum2 <- sumI(ret[Freq<thr,Freq])
+  ret[Freq<thr, Freq:=sum2]
+  ret[, FreqP:=percent(Freq/sum(Freq))]
+  ret <- unique(ret)
+
+  return(ret);
 }
 
 tabDT <- function(input, useNA='ifany', do.sort=T, ...){
@@ -365,7 +378,11 @@ mybetween <- function(x, rng, incbounds=F, NAbounds=NA){
 # usual duplicated() returns all but first, this one returns all:
 #    duplicated(c(1,2,3,2,2,4)) == F F F T T F
 # allduplicated(c(1,2,3,2,2,4)) == F T F T T F
-allduplicated <- function(x, ...) {duplicated(x,...) | duplicated(x, fromLast=T,...)}
+allDuplicated <- function(x, values=F, ...) {
+  ret <- duplicated(x,...) | duplicated(x, fromLast=T,...)
+  if (values==T) ret <- x[ret];
+  return(ret);
+}
 
 
 fitsum <- function(inpFit){
@@ -373,4 +390,18 @@ fitsum <- function(inpFit){
   lab.s <- sprintf('HR=%.1f, 95%% CI: %.1f-%.1f, p=%.2e', sumcox$`exp(coef)`, sumcox$CIl, sumcox$CIh, sumcox$p)
   sumcox$label <- lab.s
   return(sumcox)
+}
+
+
+
+prop.test.str <- function(inpStr,...){
+  inpStr <- cs(inpStr)
+  if (length(inpStr)!=2) stop("Couldn't split the string. ")
+  inpStr2 <- cs(inpStr, sep = '/')
+  if (length(inpStr2)!=4) stop("Expected 4 substrings, found ",length(inpStr2))
+  inpNum <- as.numeric(inpStr2)
+  if (sum(is.na(inpNum))>0) stop("Couldn't convert to numeric.")
+  inpMtx <- matrix(inpNum, nrow=2)
+  message('Values: ',paste(percent(inpMtx[1,]/inpMtx[2,]),collapse = ', ' ))
+  prop.test(inpMtx, ...)
 }

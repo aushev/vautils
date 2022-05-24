@@ -150,9 +150,15 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 
 flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                      silent=T, keyby = NA, char=NULL, num=NULL, filetype=NULL,
-                     clean.names = F, trimspaces=F, deluseless=F,
-                     rename.from=NULL,rename.to=NULL,
+                     clean.names = T, trimspaces=F, deluseless=F,
+                     rename.from=NULL,rename.to=NULL, fcounter=F,
                      ...){
+  if (fcounter==T){
+    if (!exists('flexread.counter')) flexread.counter <- 0L
+    flexread.counter <- flexread.counter + 1L
+    flexread.counter <<- flexread.counter
+    cat('  ',flexread.counter,'   ')
+  }
   message(' Opening ' %+% fnRead);
 
   dots <- substitute(list(...));
@@ -470,13 +476,32 @@ del2dupflds <- function(dtIn, f1, f2){
 
 }
 
+dt_delNamesakes <- function(dtIn, cols2scan=NULL){
+  if (is.null(cols2scan)) cols2scan <- allDuplicated(names(dtIn));
+  cols2scan %<>% unique()
+  for (this.col in cols2scan){
+    cat('\n Column ',this.col, ': ')
+    this.pos <- which(names(dtIn)==this.col)
+    if (length(this.pos)==0) {cat(' not found!'); next;}
+    if (length(this.pos)==1) {cat(' only one! '); next;}
+    cat(length(this.pos));
+    for (this.pos.last in rev(this.pos[-1])){
+      cat('\n   ', this.pos[1], 'vs', this.pos.last)
+      dtIn %<>% del2dupflds(this.pos[1],this.pos.last)
+    }
+  }
+  invisible(dtIn)
+}
 
-deldupflds <- function(dtIn, f1=names(dtIn), f2=NA, tolNA=FALSE) { # delete one of 2 fields if they are "identical"
+deldupflds <- function(dtIn, f1=NULL, f2=NULL, tolNA=FALSE) { # delete one of 2 fields if they are "identical"
+  if (is.null(f1)) f1 <- allDuplicated(names(dtIn));
   #dtOut <- dtIn;
   lf1 <- length(f1);
   lf2 <- length(f2);
   diff <- rep(F, nrow(dtIn));
+
   if      (lf1==1 & lf2==1) {diff <- diff | del2dupflds(dtIn, f1, f2, tolNA);}
+
   else if (lf1>0 & is.na(f2[1])) {
     for (i in f1) {diff <- diff | del2dupflds(dtIn, i, NA, tolNA);}
   }
@@ -997,6 +1022,7 @@ mergefiletabs <- function(
   fn.inpdir,      # input directory
   fn.mask='.*',   # files mask
   recursive = T,  # recursive
+  fill=T,
   fn.list=NULL,   # list of files => fn.inpdir, recursive and fn.mask will be ignored
   full.names = T, # which form of filenames to put in the table
   rn=NULL,        # if not NULL, add rn column with id
@@ -1005,11 +1031,19 @@ mergefiletabs <- function(
   fn.mask.remove='NULL',
   fn.mask.replace='',
   mode = 'r', # default: rbind (long table), alternative: cbind (wide table)
+  limitN=Inf,
   ...
   ){
 
   if (is.null(fn.list))
     fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE, recursive=recursive, ignore.case = TRUE)
+  message(' Processing list of ', length(fn.list),' filenames. ')
+  limitNmin <- min(limitN, length(fn.list))
+  if (limitNmin<length(fn.list)){
+    message(' Selecting a random subset of ', limitNmin, ' filenames.')
+    fn.list <- sample(fn.list,limitNmin)
+  }
+
 
   dt.all <- NULL;
   N <- length(fn.list)
@@ -1025,7 +1059,7 @@ mergefiletabs <- function(
       if (!is.null(colnames)) {setnames(dt.this, colnames);}
       dt.this[, ffn:=fn.this.show]
       if (!is.null(rn)) {dt.this[, (rn):=seq_len(nrow(dt.this))]}
-      dt.all <- rbind(dt.all, dt.this, fill=T)
+      dt.all <- rbind(dt.all, dt.this, fill=fill)
     } else { # mode == 'c'
       dt.left <- dt.this[,(colnames), with=F]
       dt.right <- dt.this[,-(colnames), with=F]
@@ -1060,6 +1094,7 @@ mergefiletabs2 <- function(
   fn.inpdir,      # input directory
   fn.mask='.*',   # files mask
   recursive = T,  # recursive
+  fill=T,
   fn.list=NULL,   # list of files => fn.inpdir, recursive and fn.mask will be ignored
   full.names = T, # which form of filenames to put in the table
   rn=NULL,        # if not NULL, add rn column with id
@@ -1067,17 +1102,26 @@ mergefiletabs2 <- function(
                    # cbind mode: if not NULL, these columns are considered 'constant'
   fn.mask.remove='NULL',
   fn.mask.replace='',
+  fcounter=F,
   mode = 'r', # default: rbind (long table), alternative: cbind (wide table)
+  limitN=Inf,
   ...
   ){
 
   if (is.null(fn.list))
     fn.list <- list.files(fn.inpdir, fn.mask, include.dirs = FALSE, full.names = TRUE, recursive=recursive)
+  message(' Processing list of ', length(fn.list),' filenames. ')
+  limitNmin <- min(limitN, length(fn.list))
+  if (limitNmin<length(fn.list)){
+    message(' Selecting a random subset of ', limitNmin, ' filenames.')
+    fn.list <- sample(fn.list,limitNmin)
+  }
+
 
   dt.all <- NULL;
   dt.all <- rbindlist(lapply(fn.list, flexreadA,
-                             full.names=full.names,rn=rn,colnames=colnames,fn.mask.remove=fn.mask.remove,fn.mask.replace=fn.mask.replace,...))
-
+                             full.names=full.names,rn=rn,colnames=colnames,fn.mask.remove=fn.mask.remove,fn.mask.replace=fn.mask.replace,fill=fill,fcounter=fcounter,...))
+  if (fcounter==T) flexread.counter <<- 0L;
   invisible(dt.all);
 } # e. mergefiletabs()
 
@@ -1244,7 +1288,8 @@ setnamessp <- function(dtIn, old, new, verbose=T){
   if (sum(newDups)>0) warning('Warning! those column already existed: ', new[newDups]);
   if (sum(foundOld)>0){
     setnames(dtIn, old[foundOld], new[foundOld]);
-    if (verbose) {cat(sum(foundOld), ' names changed:\nFrom:', old[foundOld], '\n  to:', new[foundOld], '\n');}
+    #if (verbose) {cat(sum(foundOld), ' names changed:\nFrom:', old[foundOld], '\n  to:', new[foundOld], '\n');}
+    if (verbose) {cat(sum(foundOld), ' names changed:\n', paste(old[foundOld],new[foundOld], sep = '\t=> ', collapse = '\n'), '\n');}
   }
   invisible(dtIn);
 }
@@ -1630,8 +1675,9 @@ build_stat_table_med <- function(inpDT,categories){
   dt.med <- NULL
   for (this.cat in names(categories)){
     this.label <- categories[[this.cat]]
-    this.vals  <- inpDT[[this.cat]]
+    this.vals  <- as.numeric(inpDT[[this.cat]])
     if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
+    this.vals %<>% as.numeric()
     this.med <- median(this.vals, na.rm=T)
     this.sd  <- sd(this.vals, na.rm = T)
     this.rng <- range(this.vals, na.rm = T)
@@ -1665,13 +1711,14 @@ relabel <- function(inpDT,inpList){
 
 
 
-merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, all=T){
+merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL, all=T){
   dups <- names(dt1) %&% names(dt2)
 
   dt.bad.wide <- data.table(keycol='')[0]  %>% setnames('keycol',key.x)
   dt.bad.long <- data.table(keycol='')[0]  %>% setnames('keycol',key.x)
 
   dt.merged <- merge(dt1, dt2, by.x=key.x, by.y=key.y, all=all)
+  dt.bad.notbad <<- copy(dt.merged)
 
   for (.dup in (dups %-% c(key.x,key.y))){
     .dupX <- .dup %+% '.x'
@@ -1684,7 +1731,7 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, all=T){
     this.tab <- tab(this.dt[,.(isNA.x,isNA.y,equal)])
     this.bad <- this.dt[equal==F,]
     this.bad[, cs('isNA.x isNA.y equal'):=NULL]
-    if (nrow(this.bad)>0) {
+    if (nrow(this.bad)>0 & .dup %!in% cols_silent) {
       dt.bad.wide %<>% merge(this.bad, by=key.x, all=T)
 
       this.bad.long <- copy(this.bad)
@@ -1720,10 +1767,27 @@ mergeR <- function(dt1, dt2, ...){
   warning('Function not tested thoroughly!')
   warning('resulting table is re-keyed!')
   argsList <- list(...)
-  names.ovl <- names(dt1) %&% names(dt2) %-% c(argsList$byX, argsList$by)
+  names.ovl <- names(dt1) %&% names(dt2) %-% c(argsList$by.x,  argsList$by) # argsList$byX,
   if (length(names.ovl)>0){
     message('Columns to delete and replace: ', paste(names.ovl, collapse = ', '))
     dt1[,c(names.ovl):=NULL]
   }
   return(merge(dt1,dt2,...))
 }
+
+dtshift <- data.table::shift
+
+
+dt_dict <- function(inpDT, keys=names(inpDT)[1], vals=names(inpDT)[2], check=T){
+  error <- FALSE
+  dict <- inpDT[[vals]]
+  names(dict) <- inpDT[[keys]]
+
+  if (anyDuplicated(names(dict))) {warning('Duplicated keys!'); error=T;}
+
+  if (check==T & error==T){
+    stop('Invalid dictionary.')
+  }
+  return(dict)
+}
+

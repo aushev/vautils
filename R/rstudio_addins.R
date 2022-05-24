@@ -1,6 +1,7 @@
 
 
 txt2obj <- function(txt){
+  if (txt=='') {message(' Empty input! '); return(NULL);}
   if (exists(txt)){
     sel_obj <- get(txt)
   } else {
@@ -15,8 +16,9 @@ getrseltxt <- function(){
   sel_text <- sel$text;
 
   if (sel_text=='') {
+    message('Empty string. ')
     sel_text <- trimws(adc$contents[sel$range$start[[1]]]);
-    message('Empty string. New string: ', sel_text)
+    if (sel_text!='') message(' New string: ', sel_text)
   }
 
   return(sel_text);
@@ -30,6 +32,7 @@ getrseltxt <- function(){
 #' @return dashes inside RStudio
 selectionView <- function(){
   sel_text <- getrseltxt();
+  if (getrseltxt=='') {message(' Nothing selected! '); return(NULL);}
   sel_obj <- txt2obj(sel_text);
 
   # print(sel_text)
@@ -76,3 +79,11 @@ expFun <- function(){
   tmp.CEC <<- rstudioapi::getConsoleEditorContext()
   message(tmp.ADC$id)
 }
+
+clipboard2selected <- function(){
+  execute <- TRUE;
+  sel_text <- getrseltxt();
+  if (sel_text=='') {sel_text <- 'list1'; if (exists('list1')) execute <- FALSE;}
+  rstudioapi::sendToConsole(sel_text %+% ' <- readClipboard()', execute = execute)
+}
+
