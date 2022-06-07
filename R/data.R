@@ -111,7 +111,6 @@ show.envs.plus <- function(){
 } # e. %==%:
 
 
-
 # %inw% - returns positions of any of needles in hay ####
 # ex.:  c(2,2,3) %inw% c(1,1,2,2,3,3,4,4)
 # will return:               3 4 5 6

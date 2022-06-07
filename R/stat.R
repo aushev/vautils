@@ -34,7 +34,7 @@ tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, inpName=NA, ...){
   return(df);
 }
 
-tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, inpName=NA, thr=0L, thrLabel='Other',...){
+tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, inpName=NA, thrRank=NA, thrNum=NA, thrLabel='Other',...){
   if (useNA==F | na.rm==T) useNA <- 'no';
   if (useNA==T | na.rm==F) useNA <- 'ifany';
 
@@ -43,28 +43,34 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
   if (nrow(df1)==0) return(NULL);
 
   df1 <- df1[df1$Freq!=0,]
-  sum1 <- sum(df1$Freq);
-  if (keepP) {df1$FreqP <- percent(df1$Freq/sum1);}
-#  print(names(df));
-  if (is.na(inpName)) {
-    names(df1)[names(df1)=='input'] <- name1
-  } else names(df1)[names(df1)=='input'] <- inpName;
 
-#  print(order(-df$Freq));
   if (do.sort) df1 <- df1[order(-df1$Freq),];
-#  print(names(df));
   if (!keepN) {row.names(df1) <- NULL;}
-  #return(df1);
 
-  ret <- data.table(df1);
-  colVal <- names(ret)[1];
-  ret[Freq<thr, c(colVal):=thrLabel]
-  sum2 <- sumI(ret[Freq<thr,Freq])
-  ret[Freq<thr, Freq:=sum2]
-  ret[, FreqP:=percent(Freq/sum(Freq))]
-  ret <- unique(ret)
+  dt.ret <- data.table(df1);
+  colVal <- names(dt.ret)[1];
 
-  return(ret);
+  if (not.na(thrRank)){
+    dt.ret[seqlen(dt.ret)>thrRank & not.na(get(colVal)), `:=`(tmp_cat_Other=T,Freq=sumI(Freq) )]
+    dt.ret[tmp_cat_Other==T, c(colVal):=thrLabel]
+    dt.ret <- unique(dt.ret)
+    dt.ret[,tmp_cat_Other:=NULL]
+  }
+
+  if (not.na(thrNum)){
+    dt.ret[as.numeric(as.character(get(colVal)))>thrNum, `:=`(tmp_cat_Other=T,Freq=sumI(Freq) )]
+    dt.ret[tmp_cat_Other==T, c(colVal):=thrLabel]
+    dt.ret <- unique(dt.ret)
+    dt.ret[,tmp_cat_Other:=NULL]
+  }
+
+  if (keepP) dt.ret[,FreqP := percent(Freq/sum(Freq))];
+
+  if (is.na(inpName)) {
+    names(dt.ret)[1] <- name1
+  } else names(dt.ret)[1] <- inpName;
+
+  return(dt.ret);
 }
 
 tabDT <- function(input, useNA='ifany', do.sort=T, ...){
@@ -97,6 +103,9 @@ dt4mosaic <- function(inpDT, byX, byY){
   dt.stat[,nP:=Freq %+% '/' %+% grpN]
   dt.stat[,relP:=percent(rel)]
   dt.stat %<>% setorderv(c(byX,byY),na.last=T)
+
+  if (!is.null(names(byX))) dt.stat %<>% setnames(byX,names(byX))
+  if (!is.null(names(byY))) dt.stat %<>% setnames(byY,names(byY))
 
   return(dt.stat)
 }
@@ -402,6 +411,7 @@ prop.test.str <- function(inpStr,...){
   inpNum <- as.numeric(inpStr2)
   if (sum(is.na(inpNum))>0) stop("Couldn't convert to numeric.")
   inpMtx <- matrix(inpNum, nrow=2)
+  inpMtx[2,] <- inpMtx[2,] - inpMtx[1,]
   message('Values: ',paste(percent(inpMtx[1,]/inpMtx[2,]),collapse = ', ' ))
   prop.test(inpMtx, ...)
 }

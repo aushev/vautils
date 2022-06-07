@@ -187,8 +187,9 @@ chopRight <- function(inpstr,n=1L){
 
 xls_date <- function(input, strict=F, quiet=T, split=F){
   messageA <- warning;
-  tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
   if (quiet==T) messageA <- function(x) invisible(x);
+
+  tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
   if (is.someDate(input)) return(input);
   if (length(input)==0)      {warning(' Input of zero length in xls_date(). '); return(input)}
   if (sum(!is.na(input))==0) {warning(' Input of NA only in xls_date(). ');     return(as.Date(NA))}
@@ -225,8 +226,8 @@ xls_date <- function(input, strict=F, quiet=T, split=F){
     if (all(nchar(inputNotNA)==10 | nchar(inputNotNA)==9)){
       messageA("Text date, 10!");
       inputNotNA %<>% gsub('[\\\ /-]+','/',.)
-      if (inputNotNA %~~% '^\\d{4}') tryformats <- cs('%Y/%m/%d')
-      if (inputNotNA %~~% '\\d{4}$') tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
+      if (all(inputNotNA %~~% '^\\d{4}')) tryformats <- cs('%Y/%m/%d')
+      if (all(inputNotNA %~~% '\\d{4}$')) tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
       return(as.Date(inputNotNA, tryFormats=tryformats, optional=T))
     } else if (all(nchar(inputNotNA) %in% c(6,7,8))){
       messageA("Text date, 8!");

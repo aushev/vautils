@@ -32,7 +32,7 @@ getrseltxt <- function(){
 #' @return dashes inside RStudio
 selectionView <- function(){
   sel_text <- getrseltxt();
-  if (getrseltxt=='') {message(' Nothing selected! '); return(NULL);}
+  if (sel_text=='') {message(' Nothing selected! '); return(NULL);}
   sel_obj <- txt2obj(sel_text);
 
   # print(sel_text)

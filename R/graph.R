@@ -136,15 +136,19 @@ annotation_compass <- function(label,position='N',
 
 ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, ...){
   if (exists('OUT') & OUT==0) {message("Skipping. "); return(FALSE);}
-  fn <- fs::path_sanitize(trimws(fn))
-  ext <- tools::file_ext(fn)
+  fn <- trimws(fn)
+  fn_dir  <- fs::path_dir(fn)
+  fn_name <- fs::path_sanitize(fs::path_file(fn))
+
+  fn <- ifelse(fn_dir=='.',fn_name,fs::path(fn_dir,fn_name))
+  ext <- tools::file_ext(fn_name)
   if ('list' %in% class(inpPlot)) {
     ggpubr::ggexport(filename=fn,plot=inpPlot, device=ext, ...)
   } else {
     ggsave(fn, inpPlot, ...)
   }
   if (exists('OUT') & OUT==1) {message("Saved but won't be open. "); return(FALSE);}
-  system(command = paste0('cmd /C ', fn));
+  system(command = paste0('cmd /C "', fn, '"'));
 }
 
 
@@ -154,7 +158,7 @@ gg_color_hue <- function(n) {
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
-gg_vec2colors <- function(inpVec, levs=unique(inpVec)){
+gg_vec2colors <- function(inpVec, levs=sort(unique(inpVec))){
   inpF <- factor(inpVec, levels=levs)
   N <- length(levels(inpF))
   gg_color_hue(N)[as.numeric(inpF)]
@@ -219,8 +223,8 @@ pmod1 <- function(inp, coefs, lab.x=NA, lab.y=0.4){
 gg_labN <- function(inpPlot, yPos=NULL, ...){
   grpX <- as_label(inpPlot$mapping$x)
   if (is.null(yPos)) yPos <- 1.1 * suppressWarnings(ggplot_build(inpPlot)$layout$panel_params[[1]]$y.range[2])
-  data1 <- inpPlot$data[, .(lblN='N='%+%.N), by=get(grpX)]
-  setnames(data1,'get',grpX)
+  data1 <- inpPlot$data[, .(lblN='N='%+%.N), by=c(grpX)]
+  #setnames(data1,'get',grpX)
   inpPlot + geom_text(aes(label=lblN,y=yPos), data = data1, ...)
 }
 
