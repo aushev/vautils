@@ -66,8 +66,8 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
 
   if (keepP) dt.ret[,FreqP := percent(Freq/sum(Freq))];
 
-  if (is.na(inpName)) {
-    names(dt.ret)[1] <- name1
+  if (is.na(inpName) & !isTRUE(dim(input)[2]>0)) {
+#    names(dt.ret)[1] <- name1
   } else names(dt.ret)[1] <- inpName;
 
   return(dt.ret);
@@ -98,8 +98,8 @@ dt4mosaic <- function(inpDT, byX, byY){
   inpDT <- inpDT[,c(byX,byY),with=F]
   dt.stat <- as.data.table(tab(inpDT))
   dt.stat[,rel:=Freq/sum(Freq),by=get(byX)]
-  dt.stat[,grpSize:=sum(Freq),by=get(byX)]
-  dt.stat[,grpN:=sum(Freq),by=get(byX)]
+  dt.stat[,grpSize:=sum(Freq), by=get(byX)]
+  dt.stat[,grpN:=sum(Freq),    by=get(byX)]
   dt.stat[,nP:=Freq %+% '/' %+% grpN]
   dt.stat[,relP:=percent(rel)]
   dt.stat %<>% setorderv(c(byX,byY),na.last=T)

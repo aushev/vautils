@@ -158,10 +158,10 @@ gg_color_hue <- function(n) {
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
-gg_vec2colors <- function(inpVec, levs=sort(unique(inpVec))){
+gg_vec2colors <- function(inpVec, levs=sort(unique(inpVec)), shift=0L){
   inpF <- factor(inpVec, levels=levs)
   N <- length(levels(inpF))
-  gg_color_hue(N)[as.numeric(inpF)]
+  gg_color_hue(N+shift)[as.numeric(inpF)+shift]
 }
 
 
