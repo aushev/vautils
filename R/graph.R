@@ -179,6 +179,7 @@ gg_replace_geomlabel <- function(inpPlot){
 
       for (this_param in names(this_layer$aes_params)){
         this_param_val <- this_layer$aes_params[[this_param]]
+        if (this_param_val=='bold') next; # temporary clutch !!!
         tmp <- aes_string(this_param=this_param_val)
         names(tmp) <- this_param
         new_aes <- aes_add(new_aes, tmp)

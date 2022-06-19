@@ -67,7 +67,7 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
   if (keepP) dt.ret[,FreqP := percent(Freq/sum(Freq))];
 
   if (is.na(inpName) & !isTRUE(dim(input)[2]>0)) {
-#    names(dt.ret)[1] <- name1
+    names(dt.ret)[1] <- name1
   } else names(dt.ret)[1] <- inpName;
 
   return(dt.ret);
