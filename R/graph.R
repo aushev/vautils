@@ -226,7 +226,7 @@ gg_labN <- function(inpPlot, yPos=NULL, ...){
   if (is.null(yPos)) yPos <- 1.1 * suppressWarnings(ggplot_build(inpPlot)$layout$panel_params[[1]]$y.range[2])
   data1 <- inpPlot$data[, .(lblN='N='%+%.N), by=c(grpX)]
   #setnames(data1,'get',grpX)
-  inpPlot + geom_text(aes(label=lblN,y=yPos), data = data1, ...)
+  inpPlot + geom_text(aes(label=lblN,y=yPos, fill='black'), data = data1, ...)
 }
 
 gg_pie <- function(inp, colTitle='Var', colNum='Freq'){

@@ -182,9 +182,10 @@ trylocs <- function(..., req=F, all=F){
   return(NULL);
 }
 
-loadv <- function(file=NULL, ...){
+loadv <- function(file=NULL, envir = parent.frame(n=1L),...){
   if (is.null(file)) {file <- askfilename();}
-  load(file, verbose=T, envir = parent.frame(n=1L), ...)
+  #load(file, verbose=T, envir = parent.frame(n=1L), ...)
+  load(file, verbose=T, envir = envir, ...)
 }
 
 

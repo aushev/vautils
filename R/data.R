@@ -639,12 +639,13 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F){
       if (!file.exists(fnRdat)) {
         message(' Rdat file not found! ');
       } else { # Rdat file exists
-        obj.names <- load(fnRdat, verbose=verbose)
+        #obj.names <- load(fnRdat, verbose=verbose)
+        obj.names <- loadv(fnRdat, envir = parent.frame(n=1L))
         if (length(obj.names)==0) {
           message(' No objects loaded! ');
         } else {
           if (objName %in% obj.names) {
-            obj.ret <- get(obj.name)
+            obj.ret <- get(objName)
           } else obj.ret <- get(obj.names[1])
         }
       }
@@ -757,3 +758,38 @@ forcedominant <- function(input, sep=';', ignore='', fast=F) {
 # time2()
 # #
 # View(dt.our.crc[Phys2!=Physician.Name.dom,.(Physician.Name,Phys2,Physician.Name.dom)])
+
+
+
+
+list_from_S4 <- function(S4obj){
+  ret.list <- list()
+  for (this.field in slotNames(S4obj)){
+    ret.list[[this.field]] <- slot(S4obj,this.field)
+  }
+  ret.list
+}
+
+
+
+
+dt_from_S4 <- function(inpobj, N=NULL){
+  obj.as.list <- list_from_S4(inpobj)
+
+  if (is.null(N)){
+    lengths <- lapply(obj.as.list, function(x) length(x[[1]]))
+    N <- median(unlist(lengths))
+    cat('\nLength chosen: ',N,'\n')
+  }
+
+  dt_rez <- data.table(id=seq_len(N))
+  for (this.field in slotNames(inpobj)){
+    cat('\n',this.field)
+    this.slot <- slot(inpobj,this.field)
+    this.slot.val <- this.slot[[1]]
+    cat(' ',length(this.slot.val))
+
+    if (length(this.slot.val) == N) {dt_rez[[this.field]] <- this.slot.val}
+  }
+  return(dt_rez)
+}
