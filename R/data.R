@@ -628,39 +628,40 @@ not.na <- function(...) !is.na(...)
 
 
 lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F){
-  obj.ret <- NULL
+  obj.return <- NULL
   if (exists(objName)) {
     message('Object ', objName,' already exists.');
     return(get(objName));
   } else {
-    message('Object ', objName,' not found. ');
+    message('Object ', objName,' not found in the current environment. ');
     if (!is.null(fnRdat)){
-      message(' Pulling from ', fnRdat,'. ');
+      message(' Trying to pull it from Rdat file ', fnRdat,'. ');
       if (!file.exists(fnRdat)) {
-        message(' Rdat file not found! ');
+        message(' Rdat file not found! Will try to rebuild.');
       } else { # Rdat file exists
         #obj.names <- load(fnRdat, verbose=verbose)
         obj.names <- loadv(fnRdat, envir = parent.frame(n=1L))
         if (length(obj.names)==0) {
           message(' No objects loaded! ');
         } else {
+          message(length(obj.names) %+% ' objects loaded! ' %+% paste(obj.names, collapse = ', '));
           if (objName %in% obj.names) {
-            obj.ret <- get(objName)
-          } else obj.ret <- get(obj.names[1])
+            obj.return <- get(objName)
+          } else obj.return <- get(obj.names[1])
         }
       }
     } # e. if (!is.null(fnRdat))
 
-    if (is.null(obj.ret)){
+    if (is.null(obj.return)){
       message(' Rebuilding... ');
-      obj.ret <- object
+      obj.return <- object
       if (!is.null(fnRdat)) {
         message(' Saving to ',fnRdat,'...');
-        save(obj.ret,file = fnRdat)
+        save(obj.return,file = fnRdat)
       }
     }
 
-    return(obj.ret);
+    return(obj.return);
   }
 
 }

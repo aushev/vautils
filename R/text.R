@@ -426,3 +426,40 @@ strsplitMin <- function(x,split=';',...) sapply(strsplit(x,split=split,...), min
 
 toClip <- function(...){writeClipboard(as.character(...))}
 fromClip <- function(...){readClipboard()}
+
+
+# this doesn't work in data.table, see https://stackoverflow.com/questions/72926127/
+paste_clean <- function(...){
+  arglistS <- as.list(substitute(list(...)))
+  ret <- ''
+
+  for (arg in arglistS){
+    argVal <- tryCatch(eval(arg), error = function(cond) {warning(cond); return(NULL);})
+    if (isTRUE(attr(argVal, 'class')=='result') & class(arg)=='name') next;
+    if (is.null(argVal)) return('')
+    argVal[is.na(argVal)] <- '';
+    ret <- paste0(ret,argVal);
+    ret[is.na(argVal)] <- '';
+  }
+
+  return(ret)
+}
+
+
+paste_clean <- function(a1,a2='',a3='',a4=''){
+  a1 <- tryCatch(a1, error = function(cond) {warning(cond); return(NULL);})
+  a2 <- tryCatch(a2, error = function(cond) {warning(cond); return(NULL);})
+  a3 <- tryCatch(a3, error = function(cond) {warning(cond); return(NULL);})
+  a4 <- tryCatch(a4, error = function(cond) {warning(cond); return(NULL);})
+  if (is.null(a1) | is.null(a2) | is.null(a3) | is.null(a4)) return('');
+  a1[is.na(a1)] <- '';
+  a2[is.na(a2)] <- '';
+  a3[is.na(a3)] <- '';
+  a4[is.na(a4)] <- '';
+  ret <- paste0(a1,a2,a3,a4);
+  ret[is.na(a1) | is.na(a2) | is.na(a3) | is.na(a4)] <- ''
+  return(ret)
+}
+
+
+
