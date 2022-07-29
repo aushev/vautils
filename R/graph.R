@@ -142,6 +142,7 @@ ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, ...){
 
   fn <- ifelse(fn_dir=='.',fn_name,fs::path(fn_dir,fn_name))
   ext <- tools::file_ext(fn_name)
+  if (exists(fn)) {warning('File already exists! Will try to save under different name. '); fn <- gsub(fn_name,nicedate() %+% fn_name,fn, fixed = T)}
   if ('list' %in% class(inpPlot)) {
     ggpubr::ggexport(filename=fn,plot=inpPlot, device=ext, ...)
   } else {
@@ -201,7 +202,7 @@ gg_replace_geomlabel <- function(inpPlot){
 
 
 pmod1 <- function(inp, coefs, lab.x=NA, lab.y=0.4){
-  lab.s <- sprintf('HR = %.1f [%.1f - %.1f]', coefs[,2], coefs$CIl, coefs$CIh)
+  lab.s <- sprintf('HR = %.1f [%.1f - %.1f]', coefs$`exp(coef)`, coefs$CIl, coefs$CIh) # coefs[,2] === coefs$`exp(coef)`
   lab.s <- lab.s %+% ifelse(coefs$p<1e-3, sprintf('\np = %.2e',coefs$p), sprintf('\np = %.3f',coefs$p))
 
   n.risk <- inp$plot$data[inp$plot$data$time==0,]$n.risk
@@ -233,9 +234,11 @@ gg_pie <- function(inp, colTitle='Var', colNum='Freq'){
   if (! 'data.frame' %in% class(inp)){
     inp <- tab(inp, inpName=colTitle)
     setnames(inp,'Freq',colNum)
+#    DT::datatable(inp)
     # inp[[colTitle]] %<>% factor(levels = inp[[colTitle]])
   }
   setnames(inp, c(colNum,colTitle), cs('tmp.Freq tmp.Fill'))
+  print(inp)
   ggplot(inp, aes(x="", y=tmp.Freq, fill=tmp.Fill)) +
     geom_bar(stat="identity", width=1, color="white") +
     coord_polar("y", start=0) +

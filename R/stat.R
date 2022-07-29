@@ -394,16 +394,10 @@ allDuplicated <- function(x, values=F, ...) {
 }
 
 
-fitsum <- function(inpFit){
-  sumcox <- summarize.cox(coxph(as.formula(inpFit$call$formula), data = eval(inpFit$call$data)))
-  lab.s <- sprintf('HR=%.1f, 95%% CI: %.1f-%.1f, p=%.2e', sumcox$`exp(coef)`, sumcox$CIl, sumcox$CIh, sumcox$p)
-  sumcox$label <- lab.s
-  return(sumcox)
-}
 
-
-
+# prop.test.str('46/395,237/2100')
 prop.test.str <- function(inpStr,...){
+#  browser()
   inpStr <- cs(inpStr)
   if (length(inpStr)!=2) stop("Couldn't split the string. ")
   inpStr2 <- cs(inpStr, sep = '/')
@@ -412,6 +406,7 @@ prop.test.str <- function(inpStr,...){
   if (sum(is.na(inpNum))>0) stop("Couldn't convert to numeric.")
   inpMtx <- matrix(inpNum, nrow=2)
   inpMtx[2,] <- inpMtx[2,] - inpMtx[1,]
-  message('Values: ',paste(percent(inpMtx[1,]/inpMtx[2,]),collapse = ', ' ))
+  print(inpMtx)
+  message('Values: ',paste(percent(inpMtx[1,]/(inpMtx[1,]+inpMtx[2,])),collapse = ', ' ))
   prop.test(inpMtx, ...)
 }

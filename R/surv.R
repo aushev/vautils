@@ -24,12 +24,25 @@ getsurvtrends <- function(surv.input, survFormS, cols){
 
 
 summarize.cox <- function(inp.cox, filtS){
-  coefs <- as.data.frame(summary(inp.cox)$coefficients)
-  confInts <- as.data.frame(summary(inp.cox)$conf.int)
+  # browser()
+  inp.cox.summary <- summary(inp.cox)
+  coefs    <- as.data.frame(inp.cox.summary$coefficients)
+  if ('matrix' %!in% class(inp.cox.summary$coefficients)) coefs <- data.frame(coef=inp.cox.summary$coefficients)
+
+  confInts <- as.data.frame(inp.cox.summary$conf.int)
   if (nrow(coefs)>1) {
     coefs <- coefs[filtS,]
     confInts <- confInts[filtS,]
   }
+
+
+  if (ncol(confInts)==0){
+    confInts <- data.frame(col1=NA_real_,col2=NA_real_,low95=inp.cox.summary$ci.lower,hi95=inp.cox.summary$ci.upper)
+  }
+
+  if ('Pr(>|z|)'  %!in% names(coefs)) coefs$`Pr(>|z|)` <- inp.cox.summary$prob
+  if ('exp(coef)' %!in% names(coefs)) coefs$`exp(coef)` <- exp(coefs$coef)
+
   coefs$CIl <- confInts[,3];
   coefs$CIh <- confInts[,4];
   setnames(coefs, 'Pr(>|z|)', 'p')
@@ -37,6 +50,24 @@ summarize.cox <- function(inp.cox, filtS){
   return(coefs);
 }
 
+fitsum <- function(inpFit, cox.fun=coxph){
+#   browser()
+  cox.obj <- cox.fun(as.formula(inpFit$call$formula), data = eval(inpFit$call$data))
+
+  cox.obj.sum <- summary(cox.obj)
+  # cox.obj.sum.coefs <- as.data.frame(cox.obj.sum$coefficients)
+
+  sumcox <- summarize.cox(cox.obj)
+
+  # if (identical(cox.fun,coxph)){
+  #   sumcox <- cox.obj.sum
+  # }
+
+
+  lab.s <- sprintf('HR=%.1f, 95%% CI: %.1f-%.1f, p=%.2e', sumcox$`exp(coef)`, sumcox$CIl, sumcox$CIh, sumcox$p)
+  sumcox$label <- lab.s
+  return(sumcox)
+}
 
 
 surv.formulaS <- function(inp.time, inp.event, inp.factors=NULL){
@@ -130,3 +161,6 @@ build_surv_plot <- function(surv.input,inp.field,threshold,form.time,form.evnt,f
   #p$plot <- p$plot + annotate('text', x=0, y=0.00, label='n.lo = ' %+% sum(this.isHigh), hjust=0)
   return(p)
 }
+
+
+

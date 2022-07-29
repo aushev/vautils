@@ -464,50 +464,50 @@ cmp2dupflds.strict <- function(dtIn, f1, f2){
 }
 
 
-del2dupflds <- function(dtIn, f1, f2){
+dt_del2dupflds <- function(dtIn, f1, f2){
   if (is.numeric(f1) & is.numeric(f2)) diff <- cmp2fldsbynum(dtIn, f1, f2)
   else diff <- cmp2flds(dtIn, f1, f2);
   if (all(!is.na(diff) & diff==F)){
-    cat('\nEqual, deleting: ', f2)
+    cat(' Equal, deleting: ', f2)
     dtIn[,c(f2):=NULL]
-  } else cat('Not equal, skipping.');
+  } else cat(' Not equal, skipping.');
 
   invisible(dtIn)
 
 }
 
 dt_delNamesakes <- function(dtIn, cols2scan=NULL){
+  # browser()
   if (is.null(cols2scan)) cols2scan <- allDuplicated(names(dtIn));
-  cols2scan %<>% unique()
-  for (this.col in cols2scan){
-    cat('\n Column ',this.col, ': ')
+  for (this.col in unique(names(dtIn)[cols2scan])){
+    cat('\n Column ',crayon::bold(this.col), ': ')
     this.pos <- which(names(dtIn)==this.col)
     if (length(this.pos)==0) {cat(' not found!'); next;}
     if (length(this.pos)==1) {cat(' only one! '); next;}
     cat(length(this.pos));
     for (this.pos.last in rev(this.pos[-1])){
       cat('\n   ', this.pos[1], 'vs', this.pos.last)
-      dtIn %<>% del2dupflds(this.pos[1],this.pos.last)
+      dtIn %<>% dt_del2dupflds(this.pos[1],this.pos.last)
     }
   }
   invisible(dtIn)
 }
 
-deldupflds <- function(dtIn, f1=NULL, f2=NULL, tolNA=FALSE) { # delete one of 2 fields if they are "identical"
+dt_deldupflds <- function(dtIn, f1=NULL, f2=NULL, tolNA=FALSE) { # delete one of 2 fields if they are "identical"
   if (is.null(f1)) f1 <- allDuplicated(names(dtIn));
   #dtOut <- dtIn;
   lf1 <- length(f1);
   lf2 <- length(f2);
   diff <- rep(F, nrow(dtIn));
 
-  if      (lf1==1 & lf2==1) {diff <- diff | del2dupflds(dtIn, f1, f2, tolNA);}
+  if      (lf1==1 & lf2==1) {diff <- diff | dt_del2dupflds(dtIn, f1, f2, tolNA);}
 
   else if (lf1>0 & is.na(f2[1])) {
-    for (i in f1) {diff <- diff | del2dupflds(dtIn, i, NA, tolNA);}
+    for (i in f1) {diff <- diff | dt_del2dupflds(dtIn, i, NA, tolNA);}
   }
   else if (lf1>1 & lf2>1 & lf1==lf2) {
     for (i in 1:lf1) {
-      diff <- diff | del2dupflds(dtIn, f1[i], f2[i], tolNA);
+      diff <- diff | dt_del2dupflds(dtIn, f1[i], f2[i], tolNA);
     }
   }
   else stop('Unexpected number of arguments!');
@@ -748,9 +748,10 @@ deluselesscol <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignN
       cols2del <- c(cols2del, colname);
       colNs2del <- c(colNs2del, colN);
       if (silent==F){
-        col_print <- paste0("[", colname, "]");
+        col_print <- paste0("[", crayon::bold(colname), "]\t");
         padded <- ifelse1(padON==F, col_print, strpad(col_print,padW+2L))
-        cat('\n',padded,"is all equal to: ", refVal);
+        refValStr <- ifelse(is.na(refVal), crayon::silver$italic(refVal), crayon::bold(refVal))
+        cat('\n',padded,"is all equal to: \t", refValStr);
       }# e. not silent
     } # e. identical
   } # e. for
@@ -1461,6 +1462,7 @@ dt_addcols <- function(inpDT, cols, defval=NA){
     this.colname <- colnamesA[i]
     this.colval  <- colvalsA[i]
     if (this.colname %in% names(inpDT)) next;
+    if (nrow(inpDT)==0) this.colval <- this.colval[0]
     inpDT[[this.colname]] <- this.colval
   }
   invisible(inpDT)
@@ -1606,7 +1608,7 @@ dt_del_columns <- function(inpDT, names=NULL, re=NULL){
   }
 
     if (!is.null(re)){
-    inpDT[, grep(re,names(inpDT),value = T):=NULL]
+    inpDT[, grep(re,names(inpDT)):=NULL]
   }
 
 
@@ -1763,16 +1765,25 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 }
 
 
-mergeR <- function(dt1, dt2, ...){
-  warning('Function not tested thoroughly!')
+mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), all.x=T, by=NULL, ...){
+ # browser()
+  # warning('Function not tested thoroughly!')
   warning('resulting table is re-keyed!')
   argsList <- list(...)
-  names.ovl <- names(dt1) %&% names(dt2) %-% c(argsList$by.x,  argsList$by) # argsList$byX,
+  names.ovl <- names(dt1) %&% names(dt2) %-% c(argsList$by.x,  argsList$by, by.x, by) # argsList$byX,
   if (length(names.ovl)>0){
     message('Columns to delete and replace: ', paste(names.ovl, collapse = ', '))
+    dt1 <- copy(dt1)
     dt1[,c(names.ovl):=NULL]
   }
-  return(merge(dt1,dt2,...))
+
+  ret <- ifelse1(
+    is.null(by),
+    merge(dt1,dt2,by.x=by.x,by.y=by.y,all.x=all.x,...),
+    merge(dt1,dt2,by=by,all.x=all.x,...)
+  )
+
+  return(ret)
 }
 
 dtshift <- data.table::shift

@@ -39,11 +39,11 @@ strpad <- function(inpstr,padW,padSide='right'){
 print_list <- function(inp) {
   for (i in seqlen(inp)){
     .member <- inp[i];
-    cat(i,
+    cat('\n',i,
         stringr::str_pad(names(.member), max(nchar(names(inp)))),
         unlist(unname(.member)),
         #str_pad(unlist(unname(fn[i])), max(nchar(unlist(unname(fn))))),
-        '\n')
+        '')
   } # e. for
 } # e. fun
 
@@ -83,6 +83,7 @@ print_list <- function(inp) {
 }
 
 paste0notNA <- function(arg1, arg2){
+  # browser()
   if (length(arg1)>1 & length(arg2)>1) return(mapply(paste0notNA, arg1, arg2, USE.NAMES=F))
   if (length(arg1)>1 & length(arg2)<2) return(sapply(arg1, paste0notNA, arg2=arg2, USE.NAMES=F))
   if (length(arg2)>1 & length(arg1)<2) return(sapply(arg2, paste0notNA, arg1=arg1, USE.NAMES=F))
@@ -100,7 +101,7 @@ paste0notNA <- function(arg1, arg2){
 `%++%.numeric`   <- paste0notNA
 `%++%.NULL`      <- paste0notNA
 `%++%.default` <- function (arg1, arg2){
-  if (is.na(arg1) & is.character(arg2)) return(paste0notNA(arg1,arg2));
+  if (all(is.na(arg1)) & is.character(arg2)) return(paste0notNA(arg1,arg2));
   e <- parent.env(getEnvByName(.GlobalEnv,'package:vautils'));
   if (exists('%++%', envir = e)) get('%++%',envir = e)(arg1,arg2);
 }
@@ -192,6 +193,12 @@ xls_date <- function(input, strict=F, quiet=T, split=F){
   tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
   if (is.someDate(input)) return(input);
   if (length(input)==0)      {warning(' Input of zero length in xls_date(). '); return(input)}
+
+  if ('character' %in% class(input)){
+    input %<>% trimws()
+    input[nchar(input)==0] <- NA_character_
+  }
+
   if (sum(!is.na(input))==0) {warning(' Input of NA only in xls_date(). ');     return(as.Date(NA))}
 
   inputNotNA <- na.omit(input)
@@ -200,7 +207,7 @@ xls_date <- function(input, strict=F, quiet=T, split=F){
   inputNumOnlyInt <- as.integer(inputNumOnly)
   notNums <- is.na(inputNum)
 
-#  browser()
+  # browser()
 
   if (split==T) {
     ret <- sapply(input, xls_date, strict=strict, quiet=quiet, split=F, USE.NAMES = F)
@@ -435,7 +442,8 @@ paste_clean <- function(...){
 
   for (arg in arglistS){
     argVal <- tryCatch(eval(arg), error = function(cond) {warning(cond); return(NULL);})
-    if (isTRUE(attr(argVal, 'class')=='result') & class(arg)=='name') next;
+    if (isTRUE(attr(argVal, 'class')=='result') & class(arg)=='name') next; # R v 4.1
+    if (identical(argVal, .Primitive('list'))) next; # R v 4.2+
     if (is.null(argVal)) return('')
     argVal[is.na(argVal)] <- '';
     ret <- paste0(ret,argVal);

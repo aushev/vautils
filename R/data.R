@@ -626,8 +626,14 @@ factors <- function(input,newlevels,...){
 
 not.na <- function(...) !is.na(...)
 
+saveas <- function(..., names2save=NULL, file) {
+  x <- list(...)
+  if (!is.null(names2save)) names(x) <- names2save;
+  save(list=names(x), file=file, envir=list2env(x))
+}
 
-lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F){
+lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
+  #browser()
   obj.return <- NULL
   if (exists(objName)) {
     message('Object ', objName,' already exists.');
@@ -639,8 +645,8 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F){
       if (!file.exists(fnRdat)) {
         message(' Rdat file not found! Will try to rebuild.');
       } else { # Rdat file exists
-        #obj.names <- load(fnRdat, verbose=verbose)
-        obj.names <- loadv(fnRdat, envir = parent.frame(n=1L))
+        obj.names <- load(fnRdat, verbose=verbose)
+        #obj.names <- loadv(fnRdat, envir = parent.frame(n=1L))
         if (length(obj.names)==0) {
           message(' No objects loaded! ');
         } else {
@@ -657,14 +663,18 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F){
       obj.return <- object
       if (!is.null(fnRdat)) {
         message(' Saving to ',fnRdat,'...');
-        save(obj.return,file = fnRdat)
+        saveas(obj.return, names2save = objName, file = fnRdat)
       }
     }
 
-    return(obj.return);
+    if (unlist==T) {
+      message(' Unfolding list.')
+      list2env(obj.return, envir = parent.frame(n=1L))
+      return(obj.return[[1]]);
+    } else return(obj.return);
   }
 
-}
+} # e. lazyBuild()
 
 
 
@@ -793,4 +803,16 @@ dt_from_S4 <- function(inpobj, N=NULL){
     if (length(this.slot.val) == N) {dt_rez[[this.field]] <- this.slot.val}
   }
   return(dt_rez)
+}
+
+
+
+
+copy_members <- function(toList, fromList){
+  for (i in names(fromList)){
+    cat('\n[' %+% bold(i) %+%']:\t')
+    if (i %in% names(toList)) {cat(red(' Overriding'))} else {cat(green(' Copying'))}
+    toList[[i]] <- fromList[[i]];
+  }
+  return(toList)
 }
