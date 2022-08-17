@@ -330,7 +330,8 @@ seqlen <- function(obj){
 
 replace.mult <- function(inpvec, from, to){
 
-  stopifnot(length(from)>0 & (length(from)==length(to) | length(to)==1L));
+  stopifnot(length(from)>0)
+  stopifnot((length(from)==length(to) | length(to)==1L));
   if (length(to)==1L){
     for (i in seq_along(from)) inpvec <- replace(inpvec, inpvec %==% from[i], to)
   } else if (length(from)==length(to)){
@@ -424,6 +425,49 @@ tryRdat <- function(fnRdat, FUN, nEnv=1L, resnames=NA,...){
 
 } # e. try_rdat
 
+lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
+  #browser()
+  obj.return <- NULL
+  if (exists(objName)) {
+    message('Object ', objName,' already exists in the current environment.');
+    return(get(objName));
+  } else {
+    message('Object ', objName,' not found in the current environment. ');
+    if (!is.null(fnRdat)){
+      message(' Trying to pull it from Rdat file ', fnRdat,'. ');
+      if (!file.exists(fnRdat)) {
+        message(' Rdat file not found! Will try to rebuild.');
+      } else { # Rdat file exists
+        obj.names <- load(fnRdat, verbose=verbose)
+        #obj.names <- loadv(fnRdat, envir = parent.frame(n=1L))
+        if (length(obj.names)==0) {
+          message(' No objects loaded! ');
+        } else {
+          message(length(obj.names) %+% ' objects loaded! ' %+% paste(obj.names, collapse = ', '));
+          if (objName %in% obj.names) {
+            obj.return <- get(objName)
+          } else obj.return <- get(obj.names[1])
+        }
+      }
+    } # e. if (!is.null(fnRdat))
+
+    if (is.null(obj.return)){
+      message(' Rebuilding... ');
+      obj.return <- object
+      if (!is.null(fnRdat)) {
+        message(' Saving to ',fnRdat,'...');
+        saveas(obj.return, names2save = objName, file = fnRdat)
+      }
+    }
+
+    if (unlist==T) {
+      message(' Unfolding list.')
+      list2env(obj.return, envir = parent.frame(n=1L))
+      return(obj.return[[1]]);
+    } else return(obj.return);
+  }
+
+} # e. lazyBuild()
 
 tryRdat1 <- function(fnRdat, lazyobj, objname='result', saveResult=TRUE){
 # This function tries to load data from the indicated Rdat file
@@ -511,16 +555,26 @@ minDate <- function(inpX, na.rm=T) {
 maxI <- function(inp){
   inp <- na.omit(inp)
   if (length(inp)==0) {
-     return(ifelse('integer' %in% class(inp), NA_integer_, NA_real_))
-    }
+     if ('integer' %in% class(inp)) {
+       return(NA_integer_);
+     } else if ('Date' %in% class(inp)) {
+       return(as.Date(NA))
+     } else return(NA_real_);
+  } # e. if length 0
+
   return(max(inp))
 }
 
 minI <- function(inp){
   inp <- na.omit(inp)
   if (length(inp)==0) {
-    return(ifelse('integer' %in% class(inp), NA_integer_, NA_real_))
-  }
+    if ('integer' %in% class(inp)) {
+      return(NA_integer_);
+    } else if ('Date' %in% class(inp)) {
+      return(as.Date(NA))
+    } else return(NA_real_);
+  } # e. if length 0
+
   return(min(inp))
 }
 
@@ -632,49 +686,7 @@ saveas <- function(..., names2save=NULL, file) {
   save(list=names(x), file=file, envir=list2env(x))
 }
 
-lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
-  #browser()
-  obj.return <- NULL
-  if (exists(objName)) {
-    message('Object ', objName,' already exists.');
-    return(get(objName));
-  } else {
-    message('Object ', objName,' not found in the current environment. ');
-    if (!is.null(fnRdat)){
-      message(' Trying to pull it from Rdat file ', fnRdat,'. ');
-      if (!file.exists(fnRdat)) {
-        message(' Rdat file not found! Will try to rebuild.');
-      } else { # Rdat file exists
-        obj.names <- load(fnRdat, verbose=verbose)
-        #obj.names <- loadv(fnRdat, envir = parent.frame(n=1L))
-        if (length(obj.names)==0) {
-          message(' No objects loaded! ');
-        } else {
-          message(length(obj.names) %+% ' objects loaded! ' %+% paste(obj.names, collapse = ', '));
-          if (objName %in% obj.names) {
-            obj.return <- get(objName)
-          } else obj.return <- get(obj.names[1])
-        }
-      }
-    } # e. if (!is.null(fnRdat))
 
-    if (is.null(obj.return)){
-      message(' Rebuilding... ');
-      obj.return <- object
-      if (!is.null(fnRdat)) {
-        message(' Saving to ',fnRdat,'...');
-        saveas(obj.return, names2save = objName, file = fnRdat)
-      }
-    }
-
-    if (unlist==T) {
-      message(' Unfolding list.')
-      list2env(obj.return, envir = parent.frame(n=1L))
-      return(obj.return[[1]]);
-    } else return(obj.return);
-  }
-
-} # e. lazyBuild()
 
 
 
@@ -815,4 +827,13 @@ copy_members <- function(toList, fromList){
     toList[[i]] <- fromList[[i]];
   }
   return(toList)
+}
+
+
+
+
+sourcermd <- function(fn_rmd){
+  fn_r_out <- fn_rmd %+% '.compiled.R'
+  knitr::purl(fn_rmd, output=fn_r_out);
+  source(fn_r_out)
 }

@@ -212,7 +212,7 @@ getvloc <- function(){
 }
 
 
-reqq('data.table magrittr');
+reqq('data.table magrittr crayon');
 
 vai <- function(){
   reqq('data.table magrittr');

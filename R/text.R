@@ -232,16 +232,16 @@ xls_date <- function(input, strict=F, quiet=T, split=F){
     messageA(" Not numeric!")
     if (all(nchar(inputNotNA)==10 | nchar(inputNotNA)==9)){
       messageA("Text date, 10!");
-      inputNotNA %<>% gsub('[\\\ /-]+','/',.)
-      if (all(inputNotNA %~~% '^\\d{4}')) tryformats <- cs('%Y/%m/%d')
-      if (all(inputNotNA %~~% '\\d{4}$')) tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
-      return(as.Date(inputNotNA, tryFormats=tryformats, optional=T))
+      if (all(inputNotNA %~~% '^\\d{4}'))  tryformats <- cs('%Y/%m/%d')
+      if (all(inputNotNA %~~%  '\\d{4}$')) tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
+      input %<>% gsub('[\\\ /-]+','/',.)
+      return(as.Date(input, tryFormats=tryformats, optional=T))
     } else if (all(nchar(inputNotNA) %in% c(6,7,8))){
       messageA("Text date, 8!");
-      inputNotNA %<>% gsub('[\\\ /-]+','/',.)
       tryformats <- cs('%m/%d/%y,%d/%m/%y')
       if (inputNotNA %~~% '^\\d{4}')  tryformats <- cs('%Y/%m/%d')
       if (inputNotNA %~~%  '\\d{4}$') tryformats <- cs('%m/%d/%Y,%d/%m/%Y')
+      input %<>% gsub('[\\\ /-]+','/',.)
       return(as.Date(input, tryFormats=tryformats, optional=T))
     } else {
       messageA(" Maybe date and time?");
