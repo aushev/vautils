@@ -67,7 +67,7 @@ inexcel <- function(dtIn, row.names=F, na='', ...){
   fn_save <- tempfile(pattern = name_date %+% '_' %+% name_dt %+% '_', fileext = '.xls');
   if (row.names==T) dtIn <- cbind(rn=row.names(dtIn),dtIn)
   save_DT(dtIn, fnSaveTo = fn_save, na=na, ...)
-  system(command = paste0('cmd /C ', fn_save));
+  system(command = paste0('cmd /C ', fn_save), wait = FALSE);
   return(fn_save);
 }
 
@@ -1765,10 +1765,11 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 }
 
 
+# browser()
+# warning('Function not tested thoroughly!')
+# warning('resulting table is re-keyed!')
 mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), all.x=T, by=NULL, ...){
- # browser()
-  # warning('Function not tested thoroughly!')
-  warning('resulting table is re-keyed!')
+  if (exists('by')) {by.x <- by.y <- by; }
   argsList <- list(...)
   names.ovl <- names(dt1) %&% names(dt2) %-% c(argsList$by.x,  argsList$by, by.x, by) # argsList$byX,
   if (length(names.ovl)>0){

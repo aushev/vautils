@@ -328,14 +328,15 @@ seqlen <- function(obj){
   return(seq_len(length(obj)));
 }
 
-replace.mult <- function(inpvec, from, to){
+replace.mult <- function(inpvec, from, to, case.sensitive=T){
+  fun.compare <- ifelse(case.sensitive==T, `%==%`, function(a,b){toupper(a) %==% toupper(b)})
 
   stopifnot(length(from)>0)
   stopifnot((length(from)==length(to) | length(to)==1L));
   if (length(to)==1L){
-    for (i in seq_along(from)) inpvec <- replace(inpvec, inpvec %==% from[i], to)
+    for (i in seq_along(from)) inpvec <- replace(inpvec, fun.compare(inpvec, from[i]), to)
   } else if (length(from)==length(to)){
-    for (i in seq_along(from)) inpvec <- replace(inpvec, inpvec %==% from[i], to[i])
+    for (i in seq_along(from)) inpvec <- replace(inpvec, fun.compare(inpvec, from[i]), to[i])
   } else stop('Length of [to] argument must be 1 or equal to length of [from]')
 
   return(inpvec)
@@ -708,7 +709,7 @@ sumnotna <- function(x) sum(!is.na(x))
 
 
 
-forcedominant_dt <- function(inpDT, colName, colNew=colName %+% '.dom',  sep=';', ignore='', fast=F) {
+dt_forcedominant <- function(inpDT, colName, colNew=colName %+% '.dom',  sep=';', ignore='', fast=F) {
   list.amb <- dt.stat[thisCol %~~% sep, thisCol] %>% strsplit(sep) %>% unlist()
 
 #  dt.stat.dt <<- inpDT[,.(nPrev=.N), by=.(thisCol=get(colName))]

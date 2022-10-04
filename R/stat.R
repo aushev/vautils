@@ -300,6 +300,10 @@ contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
   if (valPosTest %in% cs('FALSE TRUE')) valPosTest %<>% as.logical()
   if (valPosReal %in% cs('FALSE TRUE')) valPosReal %<>% as.logical()
 
+  message('Test column: ' %+% bold(colTest) %+% '; negative value: ' %+% bold(valNegTest)%+% '; positive value: ' %+% bold(valPosTest));
+  message('Real column: ' %+% bold(colReal) %+% '; negative value: ' %+% bold(valNegReal)%+% '; positive value: ' %+% bold(valPosReal));
+
+
   inpDT[, .tmp.Test:=get(colTest)]
   inpDT[, .tmp.Real:=get(colReal)]
 
@@ -349,7 +353,8 @@ contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
   cat('\n')
   print(tab3a)
   cat('\n')
-  print(fisher.test(as.matrix(tab2[Test!=valOther,],rownames = 'Test')))
+  mtx4fisher <- as.matrix(tab2[Test!=valOther,],rownames = 'Test')
+  print(fisher.test(mtx4fisher))
   invisible(list(tab0=tab0,tab1=tab1,tab2=tab2,tab3=tab3))
 }
 
