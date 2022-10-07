@@ -655,7 +655,7 @@ dt_combinecomplete <- function(inpDT, colsFrom, colTo, delFrom=F){
   for (colFrom in colsFrom){
     this.vals <- inpDT[[colFrom]]
     notNAboth <- !is.na(result) & !is.na(this.vals)
-    if (!identical(result[notNAboth], this.vals[notNAboth])) stop('Discrepancy found!')
+    if (!identical(result[notNAboth], this.vals[notNAboth])) stop(colFrom %+% ': Discrepancy found!')
     compl <- is.na(result) & !is.na(this.vals)
     result[compl] <- this.vals[compl]
   }
@@ -1769,7 +1769,7 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 # warning('Function not tested thoroughly!')
 # warning('resulting table is re-keyed!')
 mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), all.x=T, by=NULL, ...){
-  if (exists('by')) {by.x <- by.y <- by; }
+  if (exists('by') & !is.null(by)) {by.x <- by.y <- by; }
   argsList <- list(...)
   names.ovl <- names(dt1) %&% names(dt2) %-% c(argsList$by.x,  argsList$by, by.x, by) # argsList$byX,
   if (length(names.ovl)>0){

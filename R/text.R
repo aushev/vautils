@@ -186,7 +186,7 @@ chopRight <- function(inpstr,n=1L){
 }
 
 
-xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y,%d/%m/%Y')){
+xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y,%d/%m/%Y,%Y/%m/%d')){
   messageA <- warning;
   if (quiet==T) messageA <- function(x) invisible(x);
 
@@ -207,7 +207,7 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
   inputNumOnlyInt <- as.integer(inputNumOnly)
   notNums <- is.na(inputNum)
 
-  # browser()
+ # browser()
 
   if (split==T) {
     ret <- sapply(input, xls_date, strict=strict, quiet=quiet, split=F, USE.NAMES = F)
