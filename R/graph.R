@@ -232,7 +232,8 @@ gg_labN <- function(inpPlot, yPos=NULL, ...){
   if (is.null(yPos)) yPos <- 1.1 * suppressWarnings(ggplot_build(inpPlot)$layout$panel_params[[1]]$y.range[2])
   data1 <- inpPlot$data[, .(lblN='N='%+%.N), by=c(grpX)]
   #setnames(data1,'get',grpX)
-  inpPlot + geom_text(aes(label=lblN,y=yPos, fill='black'), data = data1, ...)
+  inpPlot + geom_text(aes(label=lblN,y=yPos, fill='blue', color='blue'), data = data1, ...)
+#  inpPlot + geom_text(aes(label=lblN,y=yPos), data = data1, ...)
 }
 
 gg_pie <- function(inp, colTitle='Var', colNum='Freq'){
@@ -252,3 +253,40 @@ gg_pie <- function(inp, colTitle='Var', colNum='Freq'){
 
 # gg_pie(dt1, colTitle = 'Study.ID')
 # gg_pie(dt.qlik.summary$Study.ID) + leg.no
+
+
+stat_build_barplot <- function(inp, threshold=2, inp.label=NA){
+  dt.stat <- tab(inp)
+  dt.stat[, inpS:=as.character(inp)]
+  dt.stat[as.numeric(inpS)>=threshold, inpS:=threshold %+% '+']
+
+  if (F){
+    dt.stat %<>% setnames('inpS', inp.label)
+  }
+
+  pRet <-
+    dt.stat %>%
+    ggplot(aes(x=inpS, y=Freq, fill=inpS)) +
+    geom_bar(stat = 'identity')
+
+  if (not.na(inp.label)){
+    pRet <- pRet + xlab(inp.label) + guides(fill=guide_legend(title=inp.label))
+  }
+  pRet
+}
+
+
+layer_if <- function(inpDT, geom,...){
+  # browser()
+  catch_ret <- tryCatch(
+    inpDT,
+    error = function(cond) {
+      warning(cond);
+      return(NULL);
+    }
+  )
+
+  if (is.null(catch_ret)) return(NULL);
+  if (nrow(inpDT)==0) return(NULL);
+  return(geom(data=inpDT,...))
+}

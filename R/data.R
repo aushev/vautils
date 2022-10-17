@@ -834,7 +834,9 @@ copy_members <- function(toList, fromList){
 
 
 sourcermd <- function(fn_rmd){
+  if (is.null(fn_rmd) | is.na(fn_rmd)) stop('Filename not provided!');
   fn_r_out <- fn_rmd %+% '.compiled.R'
+  message('\nRunning ', bold(fn_rmd))
   knitr::purl(fn_rmd, output=fn_r_out);
   source(fn_r_out)
 }

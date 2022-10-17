@@ -403,15 +403,23 @@ allDuplicated <- function(x, values=F, ...) {
 # prop.test.str('46/395,237/2100')
 prop.test.str <- function(inpStr,...){
 #  browser()
-  inpStr <- cs(inpStr)
-  if (length(inpStr)!=2) stop("Couldn't split the string. ")
+  inpStr  <- cs(inpStr)
   inpStr2 <- cs(inpStr, sep = '/')
-  if (length(inpStr2)!=4) stop("Expected 4 substrings, found ",length(inpStr2))
-  inpNum <- as.numeric(inpStr2)
-  if (sum(is.na(inpNum))>0) stop("Couldn't convert to numeric.")
-  inpMtx <- matrix(inpNum, nrow=2)
-  inpMtx[2,] <- inpMtx[2,] - inpMtx[1,]
+  if (length(inpStr)<2) stop("Couldn't split the string. ")
+  if (length(inpStr2)==2*length(inpStr)){      # with '/'
+    inpNum <- as.numeric(inpStr2)
+    vec.succ <- inpNum[c(T,F)]
+    vec.tot  <- inpNum[c(F,T)]
+    vec.fail <- vec.tot-vec.succ
+  } else if (length(inpStr2)==length(inpStr)){ # no '/'
+    inpNum <- as.numeric(inpStr)
+    vec.succ <- inpNum[c(T,F)]
+    vec.fail <- inpNum[c(F,T)]
+  } else stop("Couldn't split the string. ")
+
+  inpMtx <- matrix(c(vec.succ,vec.fail), ncol=2)
+
   print(inpMtx)
-  message('Values: ',paste(percent(inpMtx[1,]/(inpMtx[1,]+inpMtx[2,])),collapse = ', ' ))
+  message('Values: ',paste(percent(inpMtx[,1]/(inpMtx[,1]+inpMtx[,2])),collapse = ', ' ))
   prop.test(inpMtx, ...)
 }

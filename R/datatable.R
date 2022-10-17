@@ -1768,9 +1768,21 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 # browser()
 # warning('Function not tested thoroughly!')
 # warning('resulting table is re-keyed!')
-mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), all.x=T, by=NULL, ...){
-  if (exists('by') & !is.null(by)) {by.x <- by.y <- by; }
+mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all.x=NULL, columns=NULL,...){
+ # browser()
+
+  mc <- match.call(expand.dots = TRUE)
   argsList <- list(...)
+
+  # if ('all.x' %!in% names(mc) & 'all.y' %!in% names(mc) & 'all' %!in% names(mc)) {all.x <- TRUE;}
+  # if ('all.x' %!in% names(mc) & ('all.y' %in% names(mc) | 'all' %in% names(mc))) {all.x <- FALSE;} # UGLY!!! MAYBE WRONG!!!
+  # if ('all.x' %in% names(mc) ) {all.x <- list(...)[['all.x']];} # UGLY!!! MAYBE WRONG!!!
+
+  if (is.null(all.x) & 'all.y' %!in% names(mc) & 'all' %!in% names(mc)) {all.x <- TRUE;}
+  if (is.null(all.x) &  ('all.y' %in% names(mc) | 'all' %in% names(mc))) {all.x <- FALSE;}
+
+  if (!is.null(by)) {by.x <- by.y <- by; }
+  if (!is.null(columns)) {columns <- c(columns,by,by.y) %&% names(dt2); dt2 <- dt2[,c(columns),with=F]}
   names.ovl <- names(dt1) %&% names(dt2) %-% c(argsList$by.x,  argsList$by, by.x, by) # argsList$byX,
   if (length(names.ovl)>0){
     message('Columns to delete and replace: ', paste(names.ovl, collapse = ', '))
