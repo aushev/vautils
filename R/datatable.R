@@ -61,8 +61,8 @@ save_DT <- function(dtIn, fnSaveTo=NULL, quote=F, sep="\t", header=T, row.names=
   cat("done.");
 }
 
-inexcel <- function(dtIn, row.names=F, na='', ...){
-  name_dt <- deparse(substitute(dtIn))
+inexcel <- function(dtIn, row.names=F, na='', name_dt=NA, ...){
+  if (is.na(name_dt)) name_dt <- deparse(substitute(dtIn))
   name_date <- format(Sys.time(), '%Y%m%d_%Hh%Mm%Ss')
   fn_save <- tempfile(pattern = name_date %+% '_' %+% name_dt %+% '_', fileext = '.xls');
   if (row.names==T) dtIn <- cbind(rn=row.names(dtIn),dtIn)
@@ -72,11 +72,11 @@ inexcel <- function(dtIn, row.names=F, na='', ...){
 }
 
 
-inexcel2 <- function(dtIn, row.names=F, na='', ...){
-
-  name_dt <- deparse(substitute(dtIn))
+inexcel2 <- function(dtIn, row.names=F, na='', name_dt=NA, ...){
+  if (is.na(name_dt)) name_dt <- deparse(substitute(dtIn))
   name_date <- format(Sys.time(), '%Y%m%d_%Hh%Mm%Ss')
   name_fn <- name_date %+% '_' %+% name_dt %+% '_'
+  name_sheet <- substr(name_fn,1,31)
   fn_save <- tempfile(pattern = name_fn, fileext = '.xlsx');
   if (row.names==T) dtIn <- cbind(rn=row.names(dtIn),dtIn)
   # save_DT(dtIn, fnSaveTo = fn_save, na=na, ...)
@@ -86,9 +86,8 @@ inexcel2 <- function(dtIn, row.names=F, na='', ...){
   wb <- createWorkbook()
   #  style.bold <- createStyle(textDecoration = 'bold')
 
-  addWorksheet(wb, name_fn)
-  writeData(wb,name_fn,dtIn)
-
+  addWorksheet(wb, name_sheet)
+  writeData(wb,name_sheet,dtIn)
 
   saveWorkbook(wb, file = fn_save,overwrite = T)
   system('cmd /C ' %+% fn_save)
@@ -1437,6 +1436,7 @@ shrink.col <- function(inpDT, cols, sep=';'){
 
 shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';', ...) {
   for (this.col in cols){ # this.col='Chr'
+    cat('\n', bold(this.col))
     if (this.col %!in% names(inpDT)) {warning(' Column ',this.col, ' not found within names of input table. '); next;}
     inpDT[, c(this.col):=shrink_values(get(this.col), ...), by=c(col_by)]
   }
@@ -1815,3 +1815,36 @@ dt_dict <- function(inpDT, keys=names(inpDT)[1], vals=names(inpDT)[2], check=T){
   return(dict)
 }
 
+
+
+
+rbindV <- function(dt1,dt2,...){
+  re.attr <- 'Class attribute on column (.*) of item 2 does not match with column (.*) of item 1.'
+  catch_ret <- tryCatch(
+    rbind(dt1,dt2,...),
+    error = function(errmsg) {
+      warning(errmsg);
+      #      browser()
+
+      if (errmsg$message %~~% re.attr){
+        col1 <- gsub(re.attr,'\\2',errmsg$message)
+        col2 <- gsub(re.attr,'\\1',errmsg$message)
+        name1 <- names(dt1)[as.numeric(col1)]
+        name2 <- names(dt2)[as.numeric(col2)]
+        class1 <- class(dt1[[name1]])
+        class2 <- class(dt2[[name2]])
+        message('Item 1: column ' %+% bold(col1) %+% ' (' %+% bold(name1) %+% '): ' %+% bold(class1))
+        message('Item 2: column ' %+% bold(col2) %+% ' (' %+% bold(name2) %+% '): ' %+% bold(class2))
+      }
+
+      return(NULL);
+    }
+  )
+}
+
+
+dt_ttest <- function(inpDT,grpCol,grpLevels,valCol){
+  values1 <- inpDT[get(grpCol)==grpLevels[1],][[valCol]]
+  values2 <- inpDT[get(grpCol)==grpLevels[2],][[valCol]]
+  t.test(values1, values2)
+}
