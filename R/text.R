@@ -239,8 +239,9 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
     } else if (all(nchar(inputNotNA) %in% c(6,7,8))){
       messageA("Text date, 8!");
       tryformats <- cs('%m/%d/%y,%d/%m/%y')
-      if (inputNotNA %~~% '^\\d{4}')  tryformats <- cs('%Y/%m/%d')
-      if (inputNotNA %~~%  '\\d{4}$') tryformats <- formats2try
+      #browser()
+      if (any(inputNotNA %~~% '^\\d{4}'))  tryformats <- cs('%Y/%m/%d') # ??? !!! should be all() instead of any()!!!
+      if (any(inputNotNA %~~%  '\\d{4}$')) tryformats <- formats2try
       input %<>% gsub('[\\\ /-]+','/',.)
       return(as.Date(input, tryFormats=tryformats, optional=T))
     } else {
