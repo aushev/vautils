@@ -281,10 +281,6 @@ flexread_vcf <- function(fnInp, skip='CHROM', replID=NA, addLastCol=NA, ...) {
 }
 
 
-
-dt1 %>% dt_split_col_vals('INFO.x')
-
-
 # usage:
 # Diagnosis=get_data_long2wide(.SD, 'evValue', list(evType2=  'Overall'    ), multi='last', dbgI=pID),
 # Subtype  =get_data_long2wide(.SD, 'evValue', list(evType2=c('HR subtype')), multi='paste', dbgI=pID),
