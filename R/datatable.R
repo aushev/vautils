@@ -253,8 +253,36 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
   cat('\n')
   return(rez);
+} # e. flexread()
+
+
+vec2namedlist <- function(inpVec, split2='='){
+  inp_split <- strsplit(inpVec,split = split2)
+  inp_values <- sapply(inp_split, '[[', 2)
+  names(inp_values) <- sapply(inp_split, '[[', 1)
+  ret <- as.list(inp_values)
 }
 
+dt_split_col_vals <- function(dtIn,col2split,split1=';',split2='='){
+  values <- dtIn[[col2split]]
+  values_split <- strsplit(values, split = split1)
+  dt.insert <- rbindlist(lapply(values_split,vec2namedlist), fill=T)
+  dtIn[,names(dt.insert):=dt.insert]
+}
+
+flexread_vcf <- function(fnInp, skip='CHROM', replID=NA, addLastCol=NA, ...) {
+  dt.ret <- flexread(fnInp, skip, ...)
+  if (not.na(addLastCol)) dt.ret %<>% fixLastCol(colName = addLastCol)
+  if (not.na(replID)){
+    dt.ret[, eval(replID):=paste(CHROM,POS,REF,ALT, sep = '_')]
+    #  setnames(dt.ret, '_tmp_ID', replID)
+  }
+
+}
+
+
+
+dt1 %>% dt_split_col_vals('INFO.x')
 
 
 # usage:
@@ -1127,6 +1155,10 @@ mergefiletabs2 <- function(
 
 # when last column(s) were not defined in the file,
 # fread() shifts column names adding V1 at the beginning
+# with warning like this:
+#                Detected 11 column names but the data has 12 columns (i.e. invalid file).
+#                Added 1 extra default column name for the first column which is guessed to be row names or an index.
+#                Use setnames() afterwards if this guess is not correct, or fix the file write command that created the file to create a valid file.
 # for example, file had header CHROM-POS-REF-ALT,
 # and real content was         CHROM-POS-REF-ALT-comment,
 # result of fread() will be    V1-CHROM-POS-REF-ALT,
@@ -1289,7 +1321,10 @@ setnamessp <- function(dtIn, old, new, verbose=T){
   if (sum(foundOld)>0){
     setnames(dtIn, old[foundOld], new[foundOld]);
     #if (verbose) {cat(sum(foundOld), ' names changed:\nFrom:', old[foundOld], '\n  to:', new[foundOld], '\n');}
-    if (verbose) {cat(sum(foundOld), ' names changed:\n', paste(old[foundOld],new[foundOld], sep = '\t=> ', collapse = '\n'), '\n');}
+    if (verbose) {
+      cat(sum(foundOld), ' names changed:\n');
+      cat(paste(bold(old[foundOld]),bold(new[foundOld]), sep = '\t=> ', collapse = '\n'), '\n');
+    }
   }
   invisible(dtIn);
 }
@@ -1768,7 +1803,7 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 # browser()
 # warning('Function not tested thoroughly!')
 # warning('resulting table is re-keyed!')
-mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all.x=NULL, columns=NULL,...){
+mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all.x=NULL, columns=NULL, columns.ignore=NULL,...){
  # browser()
 
   mc <- match.call(expand.dots = TRUE)
@@ -1783,7 +1818,13 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all.x=NULL, 
 
   if (!is.null(by)) {by.x <- by.y <- by; }
   if (!is.null(columns)) {columns <- c(columns,by,by.y) %&% names(dt2); dt2 <- dt2[,c(columns),with=F]}
-  names.ovl <- names(dt1) %&% names(dt2) %-% c(argsList$by.x,  argsList$by, by.x, by) # argsList$byX,
+  if (!is.null(columns.ignore)) {
+    #browser()
+    columns <- columns %-% columns.ignore;
+    dt2 <- dt2[,c(names(dt2) %-% columns.ignore),with=F]
+  }
+
+  names.ovl <- names(dt1) %&% columns %-% c(argsList$by.x,  argsList$by, by.x, by) # argsList$byX,
   if (length(names.ovl)>0){
     message('Columns to delete and replace: ', paste(names.ovl, collapse = ', '))
     dt1 <- copy(dt1)
@@ -1793,7 +1834,7 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all.x=NULL, 
   ret <- ifelse1(
     is.null(by),
     merge(dt1,dt2,by.x=by.x,by.y=by.y,all.x=all.x,...),
-    merge(dt1,dt2,by=by,all.x=all.x,...)
+    merge(dt1,dt2,    by=by,          all.x=all.x,...)
   )
 
   return(ret)
@@ -1818,23 +1859,28 @@ dt_dict <- function(inpDT, keys=names(inpDT)[1], vals=names(inpDT)[2], check=T){
 
 
 
-rbindV <- function(dt1,dt2,...){
-  re.attr <- 'Class attribute on column (.*) of item 2 does not match with column (.*) of item 1.'
+rbindV <- function(...){
+  arglist <- list(...)
+  re.attr <- 'Class attribute on column (.*) of item (.*) does not match with column (.*) of item (.*).'
   catch_ret <- tryCatch(
-    rbind(dt1,dt2,...),
+    rbind(...),
     error = function(errmsg) {
       warning(errmsg);
-      #      browser()
+          #browser()
 
       if (errmsg$message %~~% re.attr){
-        col1 <- gsub(re.attr,'\\2',errmsg$message)
+        itemN1 <- gsub(re.attr,'\\4',errmsg$message)
+        itemN2 <- gsub(re.attr,'\\2',errmsg$message)
+        col1 <- gsub(re.attr,'\\3',errmsg$message)
         col2 <- gsub(re.attr,'\\1',errmsg$message)
+        dt1 <- arglist[[as.numeric(itemN1)]]
+        dt2 <- arglist[[as.numeric(itemN2)]]
         name1 <- names(dt1)[as.numeric(col1)]
         name2 <- names(dt2)[as.numeric(col2)]
-        class1 <- class(dt1[[name1]])
-        class2 <- class(dt2[[name2]])
-        message('Item 1: column ' %+% bold(col1) %+% ' (' %+% bold(name1) %+% '): ' %+% bold(class1))
-        message('Item 2: column ' %+% bold(col2) %+% ' (' %+% bold(name2) %+% '): ' %+% bold(class2))
+        class1 <- paste(class(dt1[[name1]]), collapse = ',')
+        class2 <- paste(class(dt2[[name2]]), collapse = ',')
+        message(sprintf('Item %s: column %s (%s): %s', itemN1, bold(col1), bold(name1), bold(class1)))
+        message(sprintf('Item %s: column %s (%s): %s', itemN2, bold(col2), bold(name2), bold(class2)))
       }
 
       return(NULL);
@@ -1848,3 +1894,18 @@ dt_ttest <- function(inpDT,grpCol,grpLevels,valCol){
   values2 <- inpDT[get(grpCol)==grpLevels[2],][[valCol]]
   t.test(values1, values2)
 }
+
+
+# dt_multiply():
+# "multiplies" template table N times,
+# where N is the length of provided list of IDs
+# dt1 <- dt_multiply(dt.template,'pID',list.IDs)
+dt_multiply <- function(inpDT,colname,listIDs) {
+  N <- length(listIDs)
+  stopifnot(N>0)
+  dt.multiplied <- inpDT[rep(seq_len(nrow(inpDT)), N)]
+  dt.multiplied[[colname]] <- rep(listIDs, each=nrow(inpDT))
+  invisible(dt.multiplied)
+}
+
+

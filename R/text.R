@@ -9,7 +9,11 @@ testab2 <- function(inpA, inpB){
 
 
 cs <- function(inputstr, sep=",", fix=T, nonewlines=T){
-  if (missing(sep) & grepl(',', inputstr[[1]])==F & grepl(' ', inputstr[[1]])==T) {sep=" ";}
+  if (missing(sep)){
+    sep <- ' '
+    if (inputstr[[1]] %~~% ',')  {sep=",";}
+    if (inputstr[[1]] %~~% '\t') {sep="\t";}
+  }
   if (nonewlines) inputstr <- gsub("[\n\r]+", sep, inputstr);
   rez <- unlist(strsplit(inputstr, sep, fixed=fix));
   return(rez[rez!=""]);
