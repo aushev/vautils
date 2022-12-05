@@ -61,11 +61,15 @@ save_DT <- function(dtIn, fnSaveTo=NULL, quote=F, sep="\t", header=T, row.names=
   cat("done.");
 }
 
-inexcel <- function(dtIn, row.names=F, na='', name_dt=NA, ...){
+inexcel <- function(dtIn, row.names=F, na='', name_dt=NA, quotize=c(), ...){
   if (is.na(name_dt)) name_dt <- deparse(substitute(dtIn))
   name_date <- format(Sys.time(), '%Y%m%d_%Hh%Mm%Ss')
   fn_save <- tempfile(pattern = name_date %+% '_' %+% name_dt %+% '_', fileext = '.xls');
   if (row.names==T) dtIn <- cbind(rn=row.names(dtIn),dtIn)
+  for (q.col in (quotize %&% names(dtIn))){
+    if (dtIn[not.na(get(q.col)), all(substr1(get(q.col))=="'")]) {next;}
+    dtIn[not.na(get(q.col)), c(q.col):="'" %+% get(q.col)]
+  }
   save_DT(dtIn, fnSaveTo = fn_save, na=na, ...)
   system(command = paste0('cmd /C ', fn_save), wait = FALSE);
   return(fn_save);
@@ -147,11 +151,15 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 
 }
 
+
+#######################################################################################################################################
 flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                      silent=T, keyby = NA, char=NULL, num=NULL, filetype=NULL,
                      clean.names = T, trimspaces=F, deluseless=F,
                      rename.from=NULL,rename.to=NULL, fcounter=F,
+                     fixV1=NA,
                      ...){
+  flags <- c()
   if (fcounter==T){
     if (!exists('flexread.counter')) flexread.counter <- 0L
     flexread.counter <- flexread.counter + 1L
@@ -182,6 +190,8 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     cat(' as ', filetype);
   }
 
+  flag1 <- 0
+
   if (filetype=='xls'){
     cat(' with openxlsx/read.xlsx... ');
     sheet <- sheetIndex;
@@ -203,9 +213,24 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     rez <- as.data.table(rez);
   }
   else {
-    cat(' with fread... ');
-    rez <- fread(fnRead, ...);
-  }
+    cat(' with fread... '); #########################################################################################################################
+    flag1 <- 1
+    rez <- withCallingHandlers(
+      fread(fnRead, ...),
+      warning = function(w){
+        message(green(bold(w)));
+        if (w %~~% 'Added 1 extra default column name for the first column') flags <<- c(flags, 'V1added')
+        invokeRestart("muffleWarning");
+      } # e. warning function
+    )# e. withCallingHandlers()
+    if (not.na(fixV1) & 'V1added' %in% flags) {
+      message('Fixing V1 column')
+      rez %<>% fixLastCol(colName = fixV1)
+    }
+  }# e. fread
+
+
+#  browser()
 
   if (!is.null(dots$skip) & filetype!='auto'){
     skip <- as.numeric(dots$skip);
@@ -249,13 +274,11 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     rez %<>% setnamessp(rename.from,rename.to, verbose=!silent);
   }
 
-
-
   cat('\n')
   return(rez);
 } # e. flexread()
 
-
+#########################################################################################################################
 vec2namedlist <- function(inpVec, split2='='){
   inp_split <- strsplit(inpVec,split = split2)
   inp_values <- sapply(inp_split, '[[', 2)
@@ -774,7 +797,7 @@ deluselesscol <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignN
         col_print <- paste0("[", crayon::bold(colname), "]\t");
         padded <- ifelse1(padON==F, col_print, strpad(col_print,padW+2L))
         refValStr <- ifelse(is.na(refVal), crayon::silver$italic(refVal), crayon::bold(refVal))
-        cat('\n',padded,"is all equal to: \t", refValStr);
+        cat(padded,"is all equal to: \t", refValStr, '\n');
       }# e. not silent
     } # e. identical
   } # e. for
@@ -1056,6 +1079,7 @@ mergefiletabs <- function(
   fn.mask.replace='',
   mode = 'r', # default: rbind (long table), alternative: cbind (wide table)
   limitN=Inf,
+  readFUN=flexread,
   ...
   ){
 
@@ -1075,15 +1099,18 @@ mergefiletabs <- function(
   for (fn.this in fn.list){
     i <- i+1L
     cat(' ', i, '/', N,' ', sep = '')
-    dt.this <- flexread(fn.this, ...)
+    dt.this <- readFUN(fn.this, ...)
+    if (! 'data.frame' %in% class(dt.this)) stop('Not a data.frame returned')
+    if (! 'data.table' %in% class(dt.this)) setDT(dt.this)
     fn.this.show <- ifelse(full.names==T, fn.this, basename(fn.this))
     if (!is.null(fn.mask.remove)) fn.this.show <- gsub(fn.mask.remove,fn.mask.replace,fn.this.show);
+    # browser()
 
     if (mode=='r'){
       if (!is.null(colnames)) {setnames(dt.this, colnames);}
       dt.this[, ffn:=fn.this.show]
       if (!is.null(rn)) {dt.this[, (rn):=seq_len(nrow(dt.this))]}
-      dt.all <- rbind(dt.all, dt.this, fill=fill)
+      dt.all <- rbindV(dt.all, dt.this, fill=fill)
     } else { # mode == 'c'
       dt.left <- dt.this[,(colnames), with=F]
       dt.right <- dt.this[,-(colnames), with=F]
@@ -1095,8 +1122,9 @@ mergefiletabs <- function(
         dt.all <- cbind(dt.all, dt.right)
       }
 
-    }
-  }
+    } # e. else
+  } # e. for ()
+#  browser()
   if (is.null(dt.all)) warning('No data to return!')
   invisible(dt.all);
 } # e. mergefiletabs()
@@ -1312,14 +1340,18 @@ loadDTlazy <- function(dtVar, fnVar=NULL, fnDef, refresh=T, colsExcl=NULL, ...) 
 # setnamessp() tolerates missing names
 setnamessp <- function(dtIn, old, new, verbose=T){
   foundOld <- old %in% names(dtIn);
-  newDups <- new[foundOld] %in% names(dtIn); # if old_col is supposed to be renamed to new_col while new_col already exists in dtIn
-  if (sum(newDups)>0) warning('Warning! those column already existed: ', new[newDups]);
+
+  old <- old[foundOld]
+  new <- new[foundOld]
+
+  newDups <- new %in% names(dtIn); # if old_col is supposed to be renamed to new_col while new_col already exists in dtIn
+  if (sum(newDups)>0) warning('Warning! those column already existed: ', paste(bold(new[newDups]),collapse = ', '));
   if (sum(foundOld)>0){
-    setnames(dtIn, old[foundOld], new[foundOld]);
+    setnames(dtIn, old, new);
     #if (verbose) {cat(sum(foundOld), ' names changed:\nFrom:', old[foundOld], '\n  to:', new[foundOld], '\n');}
     if (verbose) {
       cat(sum(foundOld), ' names changed:\n');
-      cat(paste(bold(old[foundOld]),bold(new[foundOld]), sep = '\t=> ', collapse = '\n'), '\n');
+      cat(paste(bold(old),bold(new), sep = '\t=> ', collapse = '\n'), '\n');
     }
   }
   invisible(dtIn);
@@ -1477,25 +1509,21 @@ shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';
 dt_addcols <- function(inpDT, cols, defval=NA){
 # adding column if it is not in the table yet
 # dt_addcols(dt, cols = cs('colA colB colC')) - adds columns as NA
-# dt_addcols(dt, cols = c(colA=NA_integer, colB=NA_real, 'colC') )
-  if (is.null(names(cols))){ # cols = cs('colA colB colC')
-    colnamesA <- cols
-    colvalsA  <- ifelse(length(defval)==1, rep(defval,length(colnamesA)), defval)
-  } else {                   # cols = c(colA=NA_integer, colB=NA_real, 'colC')
-    colnamesA <- names(cols)
-    colvalsA  <- cols
-    empty <- (names(cols)=='')
-    colnamesA[empty] <- cols[empty]
-    colvalsA[empty]  <- defval
-  }
-
-  for (i in seq_along(colnamesA)){
-    this.colname <- colnamesA[i]
-    this.colval  <- colvalsA[i]
-    if (this.colname %in% names(inpDT)) next;
+# dt_addcols(dt, cols = list(colA=NA_integer_, colB=NA_real_, 'colC') )
+  vals <- cols
+# browser()
+  if (!is.list(cols)) {cols <- as.list(rep(defval,length(cols))); names(cols) <- vals}
+  if (is.null(names(cols))){names(cols) <- unlist(cols);} # cols = cs('colA colB colC')
+#browser()
+  for (i in seq_along(cols)){
+    this.colname <- names(cols)[i]
+    this.colval  <- cols[[i]]
+    if (this.colname=='') {this.colname <- this.colval; this.colval <- defval;}
+    if (this.colname %in% names(inpDT)) {message(this.colname, ' already exists.');next;}
     if (nrow(inpDT)==0) this.colval <- this.colval[0]
     inpDT[[this.colname]] <- this.colval
   }
+
   invisible(inpDT)
 }
 
@@ -1820,7 +1848,7 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all.x=NULL, 
     dt2 <- dt2[,c(names(dt2) %-% columns.ignore),with=F]
   }
 
-  names.ovl <- names(dt1) %&% columns %-% c(argsList$by.x,  argsList$by, by.x, by) # argsList$byX,
+  names.ovl <- (names(dt1) %&% names(dt2)) %-% c(argsList$by.x,  argsList$by, by.x, by) # argsList$byX,
   if (length(names.ovl)>0){
     message('Columns to delete and replace: ', paste(names.ovl, collapse = ', '))
     dt1 <- copy(dt1)
@@ -1880,9 +1908,9 @@ rbindV <- function(...){
       }
 
       return(NULL);
-    }
-  )
-}
+    } # e. error function
+  ) # e. tryCatch
+}# e. rbindV
 
 
 dt_ttest <- function(inpDT,grpCol,grpLevels,valCol){

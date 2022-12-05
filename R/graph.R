@@ -259,6 +259,7 @@ stat_build_barplot <- function(inp, threshold=2, inp.label=NA){
   dt.stat <- tab(inp)
   dt.stat[, inpS:=as.character(inp)]
   dt.stat[as.numeric(inpS)>=threshold, inpS:=threshold %+% '+']
+  dt.stat$inpS %<>% factor(ordered=T)
 
   if (F){
     dt.stat %<>% setnames('inpS', inp.label)
