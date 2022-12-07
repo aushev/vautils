@@ -1,13 +1,13 @@
 Package: vautils
 Type: Package
 Title: handy little functions
-Date: 2022-12-05
-Version: 0.1.1.160
+Date: 2022-12-07
+Version: 0.1.1.161
 Author: Vasily Aushev
 Maintainer: Vasily Aushev <vasily@aushev.name>
 Description: bunch of stuff under development
 License: to be defined
 Encoding: UTF-8
 LazyData: true
-Imports: magrittr, data.table, BiocManager, ggplot2
-Suggests: crayon, WGCNA, quantmod
+Imports: magrittr, data.table, BiocManager, ggplot2, crayon
+Suggests: WGCNA, quantmod

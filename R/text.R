@@ -476,3 +476,16 @@ paste_clean <- function(a1,a2='',a3='',a4=''){
 
 
 
+lastname <- function(fullname, split1=' ') {
+  # browser()
+  if (length(fullname)>1) {
+    ret <- sapply(fullname, lastname)
+  } else {
+    ret <- last(strsplitS(fullname, split = split1))
+  }
+  unname(ret)
+}
+
+lastnames <- function(fullnames){
+  paste(lastname(strsplitS(fullnames, split = ';')), collapse = ';')
+}
