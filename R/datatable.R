@@ -795,9 +795,10 @@ deluselesscol <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignN
       colNs2del <- c(colNs2del, colN);
       if (silent==F){
         col_print <- paste0("[", crayon::bold(colname), "]\t");
+        if (is.na(refVal)) col_print <- crayon::silver(col_print);
         padded <- ifelse1(padON==F, col_print, strpad(col_print,padW+2L))
         refValStr <- ifelse(is.na(refVal), crayon::silver$italic(refVal), crayon::bold(refVal))
-        cat(padded,"is all equal to: \t", refValStr, '\n');
+        cat(padded,": \t", refValStr, '\n');
       }# e. not silent
     } # e. identical
   } # e. for
@@ -1827,7 +1828,7 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 # browser()
 # warning('Function not tested thoroughly!')
 # warning('resulting table is re-keyed!')
-mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all.x=NULL, columns=NULL, columns.ignore=NULL,...){
+mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x=T, all.y=all, columns=NULL, columns.ignore=NULL,...){
  # browser()
 
   mc <- match.call(expand.dots = TRUE)
@@ -1837,8 +1838,8 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all.x=NULL, 
   # if ('all.x' %!in% names(mc) & ('all.y' %in% names(mc) | 'all' %in% names(mc))) {all.x <- FALSE;} # UGLY!!! MAYBE WRONG!!!
   # if ('all.x' %in% names(mc) ) {all.x <- list(...)[['all.x']];} # UGLY!!! MAYBE WRONG!!!
 
-  if (is.null(all.x) & 'all.y' %!in% names(mc) & 'all' %!in% names(mc)) {all.x <- TRUE;}
-  if (is.null(all.x) &  ('all.y' %in% names(mc) | 'all' %in% names(mc))) {all.x <- FALSE;}
+  # if (is.null(all.x) & 'all.y' %!in% names(mc) & 'all' %!in% names(mc)) {all.x <- TRUE;}
+  # if (is.null(all.x) &  ('all.y' %in% names(mc) | 'all' %in% names(mc))) {all.x <- FALSE;}
 
   if (!is.null(by)) {by.x <- by.y <- by; }
   if (!is.null(columns)) {columns <- c(columns,by,by.y) %&% names(dt2); dt2 <- dt2[,c(columns),with=F]}
@@ -1857,8 +1858,10 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all.x=NULL, 
 
   ret <- ifelse1(
     is.null(by),
-    merge(dt1,dt2,by.x=by.x,by.y=by.y,all.x=all.x,...),
-    merge(dt1,dt2,    by=by,          all.x=all.x,...)
+    # merge(dt1,dt2,by.x=by.x,by.y=by.y,all.x=all.x,...),
+    # merge(dt1,dt2,    by=by,          all.x=all.x,...)
+    merge(dt1,dt2,by.x=by.x,by.y=by.y,all=all,all.x=all.x,all.y=all.y,...),
+    merge(dt1,dt2,    by=by,          all=all,all.x=all.x,all.y=all.y,...)
   )
 
   return(ret)

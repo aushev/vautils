@@ -255,11 +255,13 @@ gg_pie <- function(inp, colTitle='Var', colNum='Freq'){
 # gg_pie(dt.qlik.summary$Study.ID) + leg.no
 
 
-stat_build_barplot <- function(inp, threshold=2, inp.label=NA){
+stat_build_barplot <- function(inp, threshold=NA, inp.label=NA, refactor=T){
+#  browser()
   dt.stat <- tab(inp)
-  dt.stat[, inpS:=as.character(inp)]
-  dt.stat[as.numeric(inpS)>=threshold, inpS:=threshold %+% '+']
-  dt.stat$inpS %<>% factor(ordered=T)
+  dt.stat[, inpS:=inp]
+  if (refactor==T) dt.stat[, inpS:=as.character(inp)]
+  if (not.na(threshold)) dt.stat[as.numeric(inpS)>=threshold, inpS:=threshold %+% '+']
+  if (refactor==T) dt.stat$inpS %<>% factor(ordered=T)
 
   if (F){
     dt.stat %<>% setnames('inpS', inp.label)
@@ -290,4 +292,15 @@ layer_if <- function(inpDT, geom,...){
   if (is.null(catch_ret)) return(NULL);
   if (nrow(inpDT)==0) return(NULL);
   return(geom(data=inpDT,...))
+}
+
+geom_box_custom <- function(inpDT, byX, colY, q=0.25, barwidth=0.5, ...){
+  dt.stat <- inpDT[,.(
+    medVal=median(get(colY)),
+    avgVal=median(get(colY)),
+    qLow=quantile(get(colY), q),
+    qHigh=quantile(get(colY), 1-q)
+  ),by=c(byX)]
+  dt.stat[,IQR:=qHigh-qLow]
+  geom_tile(aes_string(x=byX, y='medVal', height='IQR'), data=dt.stat, width=barwidth,...)
 }
