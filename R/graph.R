@@ -174,7 +174,9 @@ gg_vec2colors <- function(inpVec, levs=sort(unique(inpVec)), shift=0L   ){
 gg_replace_geomlabel <- function(inpPlot){
   outPlot <- copy(inpPlot)
   for (this_layer in inpPlot$layers){
+    cat('\n', paste0(bold(class(this_layer$geom)),collapse = ', '))
     if ('GeomLabel' %in% class(this_layer$geom)){
+      browser()
       # message('GeomLabel!')
       this_map.fill.str <- as_label(this_layer$computed_mapping$fill)
       if (this_map.fill.str=="NULL") this_map.fill.str <- as_label(this_layer$mapping$fill)
@@ -194,7 +196,7 @@ gg_replace_geomlabel <- function(inpPlot){
       outPlot <- outPlot + geom_text(data=this_data, mapping = new_aes)
     } # e. if
   } # e. for
-
+browser()
   for (i in rev(seq_along(outPlot$layers))){
     this_layer <- outPlot$layers[[i]]
     if ('GeomLabel' %in% class(this_layer$geom)){
@@ -227,12 +229,12 @@ pmod1 <- function(inp, coefs, lab.x=NA, lab.y=0.4){
 
 
 
-gg_labN <- function(inpPlot, yPos=NULL, ...){
+gg_labN <- function(inpPlot, yPos=Inf, vjust=1, ...){
   grpX <- as_label(inpPlot$mapping$x)
   if (is.null(yPos)) yPos <- 1.1 * suppressWarnings(ggplot_build(inpPlot)$layout$panel_params[[1]]$y.range[2])
   data1 <- inpPlot$data[, .(lblN='N='%+%.N), by=c(grpX)]
   #setnames(data1,'get',grpX)
-  inpPlot + geom_text(aes(label=lblN,y=yPos, fill='blue', color='blue'), data = data1, ...)
+  inpPlot + geom_text(aes(label=lblN,y=yPos, fill='blue', color='blue',vjust=vjust), data = data1, ...)
 #  inpPlot + geom_text(aes(label=lblN,y=yPos), data = data1, ...)
 }
 

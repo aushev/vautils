@@ -1936,3 +1936,25 @@ dt_multiply <- function(inpDT,colname,listIDs) {
 }
 
 
+
+dt_match_shrink <- function(dtTo, dtFrom, col.To, col.from, match.on){
+  dtTo[,c(col.To) :=
+         dtFrom[.SD,
+                shrink_values(get(col.from), fillempty = NA_character_),
+                on=match.on,
+                by=.EACHI]$V1
+  ]
+
+}
+
+
+# if we opened a table where the header is not in the first row,
+# i.e. first n rows are filled with some other info and header is in the n+1-th row
+dt_reheader <- function(inpDT, n=1, clean.names=T){
+  names_dt <- inpDT[n,] %>% unname() %>% unlist()
+  inpDT <- inpDT[-n,]
+  names(inpDT) <- names_dt
+  if (clean.names==T) inpDT %<>% dtcleannames()
+  inpDT
+}
+
