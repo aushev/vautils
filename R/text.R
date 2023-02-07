@@ -19,7 +19,7 @@ cs <- function(inputstr, sep=",", fix=T, nonewlines=T){
   return(rez[rez!=""]);
 }
 
-printcs <- cs1 <- function(input, collapse=' '){paste0(cs(input), collapse = collapse)}
+printcs <- cs1 <- function(input, collapse=','){paste0(cs(input), collapse = collapse)}
 
 
 
@@ -271,6 +271,16 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
 }
 
 
+xls_date_char <- function(inp){
+  ret <- as.character(xls_date(inp))
+  ret[is.na(ret)] <- inp[is.na(ret)]
+  ret
+}
+
+
+
+
+
 # charnumchar() deals with the bug of excel import,
 # when "1234567" becomes "1.2345E7":
 # "1.2345E7" -> 1234567 -> "1234567"
@@ -488,4 +498,27 @@ lastname <- function(fullname, split1=' ') {
 
 lastnames <- function(fullnames){
   paste(lastname(strsplitS(fullnames, split = ';')), collapse = ';')
+}
+
+
+va_txt_reduce <- function(inpTxt,fun.case=toupper,repl=T){
+  inpTxt %<>% fun.case()
+  if (!repl==F) inpTxt %<>% gsub('_','.',.)
+  inpTxt
+}
+
+
+# Removes more "general" text if more "specific" presents, for example:
+# cs('CRC/Colon,CRC,Lung,Lung/NSCLC,Lung/SCLC') => cs('CRC/Colon,Lung/NSCLC,Lung/SCLC') # ('CRC' and 'Lung' are removed)
+va_txt_remove_parents <- function(inpVec){
+  vec.work <- sort(unique(inpVec))
+  if (length(vec.work)<2) return(inpVec)
+
+  vec.remove <- c()
+  for (i in 2:length(vec.work)){
+    el.1 <- vec.work[i-1]
+    el.2 <- vec.work[i]
+    if (el.1==substr(el.2,1,nchar(el.1))) vec.remove <- c(vec.remove,el.1);
+  }
+  return(inpVec[!inpVec %in% vec.remove])
 }

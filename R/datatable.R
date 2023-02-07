@@ -166,7 +166,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     flexread.counter <<- flexread.counter
     cat('  ',flexread.counter,'   ')
   }
-  message(' Opening ' %+% fnRead);
+  message(' Opening ' %+% bold(fnRead));
 
   dots <- substitute(list(...));
 
@@ -768,7 +768,13 @@ deluselesscol <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignN
   if (nrow(dtIn)==0) {
     if (!silent) warning("Table is empty (0 rows).");
     return(dtIn)
-    }
+  }
+
+  if (nrow(dtIn)==1) {
+    if (!silent) warning("Table has 1 row, returning unchanged.");
+    return(dtIn)
+  }
+
   icolnames <- setdiff(icolnames, ignoreColumns);
   if (!is.data.table(dtIn)){
     catV('Input is not data.table! ')
@@ -1648,7 +1654,8 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL){ #inDT=dt.PMCC; key='P
 
 # renames duplicated column names
 # MyColumn MyColumn -> MyColumn.1 MyColumn.2
-dedup.colnames <- function(dtIn, sep='.'){
+# former dedup.colnames()
+dt_names_dedup_n <- function(dtIn, sep='.'){
   inpnames <- names(dtIn)
   if (sum(duplicated(inpnames))==0) {message('No duplicate names;'); invisible(dtIn);}
   dupnames <- unique(inpnames[duplicated(inpnames)]);
@@ -1659,6 +1666,25 @@ dedup.colnames <- function(dtIn, sep='.'){
   }
   invisible(dtIn);
 }
+
+
+dt_names_dedup_pre <- function(inpDT, cols=NULL){
+  if (is.null(cols)) cols <- which(allDuplicated(names(inpDT))) # 9 10 12 13 15 16 68 74 76
+  nondups <- seq_along(names(inpDT)) %-% cols
+  for (i in cols){
+    .prev <- max(nondups[nondups<i])
+    .nm.prev <- names(inpDT)[.prev] # Preoeprative chemotherapy
+    .nm.this <- names(inpDT)[i]     # start.date
+    .nm.new  <-  .nm.prev %+% '.' %+% .nm.this
+    .nm.new.str  <-  bold(red(.nm.prev) %+% '.' %+% blue(.nm.this))
+
+    cat('\nRenaming duplicated ', red(i), bold(.nm.this),' to \t', red(.prev), .nm.new.str)
+    names(inpDT)[i] <- .nm.new
+  }
+  return(inpDT)
+}
+
+
 
 
 
@@ -1761,11 +1787,12 @@ relabel <- function(inpDT,inpList){
     colFrom <- item[1]
     colTo   <- item[2]
     newLevels <- item[-(1:2)]
-    message('Renaming ',colFrom,' to ',colTo,' with levels: ',newLevels)
+    message('Renaming ',bold(colFrom),' to ',bold(colTo),' with levels: ',paste(bold(newLevels),collapse=','))
     #inpDT[, newCol:=get(colFrom)]
     inpDT$newCol <- inpDT[[colFrom]]
     setnames(inpDT,colFrom, colTo)
     setnames(inpDT,'newCol',colFrom)
+    if (!is.factor(inpDT[[colTo]])) inpDT[[colTo]] %<>% factor()
     if (length(newLevels)>0) levels(inpDT[[colTo]]) <- newLevels
   }
   return(inpDT)
@@ -1957,4 +1984,62 @@ dt_reheader <- function(inpDT, n=1, clean.names=T){
   if (clean.names==T) inpDT %<>% dtcleannames()
   inpDT
 }
+
+
+
+dt_analyze_dup_records <- function(inpDT,bycol=key(inpDT), fast=T, silent=F, ret='names'){
+  catV <- cat
+  if (silent==T) catV <- function(...){}
+  lst.dup <- list();
+  .dup.colnames <- c();
+  list.dup <- inpDT[,.N,bycol][N>1,get(bycol)]
+  cat('\n',bold(length(list.dup)),' / ', bold(unqN(list.dup)))
+  for (i in list.dup){
+    catV('\n',bold(i),': ')
+    .this.dt <- inpDT[get(bycol)==i,] %>% deluselesscol(silent = T)
+    if (fast==F) lst.dup[[as.character(i)]] <- .this.dt
+    .dup.colnames %<>% c(names(.this.dt))
+    catV(cs1(names(.this.dt)))
+  }
+  catV('\n')
+  if (ret=='names') return(.dup.colnames)
+  else return(list(names=.dup.colnames, IDs=unique(list.dup), obj=lst.dup) )
+}
+
+
+# va_split_2cols():
+# similar to splitstackshape::cSplit()
+# Example use:
+# dt.events.short:
+# pID evType2  Dates                                  Values
+# 1   Adjuvant 2020-1-1..2020-2-2;2020-3-3..2020-4-4  FOLFIRINOX;gem-nab
+#
+# dt.events.short[, va_split_2cols(.SD,Dates,Values), by=.(Dates,Values)]:
+# pID evType2  Dates                                  Values             vec1               vec2
+# 1   Adjuvant 2020-1-1..2020-2-2;2020-3-3..2020-4-4  FOLFIRINOX;gem-nab 2020-1-1..2020-2-2 FOLFIRINOX
+# 1   Adjuvant 2020-1-1..2020-2-2;2020-3-3..2020-4-4  FOLFIRINOX;gem-nab 2020-3-3..2020-4-4 gem-nab
+va_split_2cols <- function(dtInp, inp1, inp2, sep=';'){
+  dt.ret <- copy(dtInp)
+
+  vec1 <- strsplitS(inp1, split = sep)
+  vec2  <- strsplitS(inp2, split = sep)
+
+  if (length(vec1)>1 & length(vec2)>1 & length(vec1)!=length(vec2))
+    warning('Incompatible number of elements!\n   ' %+%
+              bold(length(vec1)) %+% ' elements in ' %+% bold(inp1) %+% ';\n   ' %+%
+              bold(length(vec2)) %+% ' elements in ' %+% bold(inp2) %+% '.\n'
+    )
+
+  dt.add <- data.table(vec1, vec2)
+
+  dt.ret$temporary_key <- NA
+  dt.add$temporary_key <- NA
+
+  dt.ret <- merge(dt.ret,dt.add,by='temporary_key',allow.cartesian = T)
+  dt.ret$temporary_key <- NULL
+
+  dt.ret
+}
+
+
 

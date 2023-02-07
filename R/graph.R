@@ -244,10 +244,11 @@ gg_pie <- function(inp, colTitle='Var', colNum='Freq'){
     setnames(inp,'Freq',colNum)
 #    DT::datatable(inp)
     # inp[[colTitle]] %<>% factor(levels = inp[[colTitle]])
-  }
-  setnames(inp, c(colNum,colTitle), cs('tmp.Freq tmp.Fill'))
+  } else inp <- copy(inp)
+#  setnames(inp, c(colNum,colTitle), cs('tmp.Freq tmp.Fill'))
   print(inp)
-  ggplot(inp, aes(x="", y=tmp.Freq, fill=tmp.Fill)) +
+#  ggplot(inp, aes(x="", y=tmp.Freq, fill=tmp.Fill)) +
+  ggplot(inp, aes_string(x="1", y=colNum, fill=colTitle)) +
     geom_bar(stat="identity", width=1, color="white") +
     coord_polar("y", start=0) +
     theme_void()
@@ -257,12 +258,18 @@ gg_pie <- function(inp, colTitle='Var', colNum='Freq'){
 # gg_pie(dt.qlik.summary$Study.ID) + leg.no
 
 
-stat_build_barplot <- function(inp, threshold=NA, inp.label=NA, refactor=T){
+stat_build_barplot <- function(inp, threshold=NA, inp.label=NA, refactor=T, showN=F){
 #  browser()
   dt.stat <- tab(inp)
   dt.stat[, inpS:=inp]
   if (refactor==T) dt.stat[, inpS:=as.character(inp)]
-  if (not.na(threshold)) dt.stat[as.numeric(inpS)>=threshold, inpS:=threshold %+% '+']
+  if (not.na(threshold)) {
+    dt.stat[as.numeric(inpS)>=threshold, inpS:=threshold %+% '+']
+    dt.stat[,Freq:=sum(Freq),by=inpS]
+    dt.stat$inp <- NULL
+    dt.stat$FreqP <- NULL
+    dt.stat <- unique(dt.stat)
+  }
   if (refactor==T) dt.stat$inpS %<>% factor(ordered=T)
 
   if (F){
@@ -277,6 +284,11 @@ stat_build_barplot <- function(inp, threshold=NA, inp.label=NA, refactor=T){
   if (not.na(inp.label)){
     pRet <- pRet + xlab(inp.label) + guides(fill=guide_legend(title=inp.label))
   }
+
+  if (showN==T){
+    pRet <- pRet + geom_text(aes(label=Freq), vjust=-0.2)
+  }
+
   pRet
 }
 
