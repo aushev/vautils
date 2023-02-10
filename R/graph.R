@@ -258,7 +258,7 @@ gg_pie <- function(inp, colTitle='Var', colNum='Freq'){
 # gg_pie(dt.qlik.summary$Study.ID) + leg.no
 
 
-stat_build_barplot <- function(inp, threshold=NA, inp.label=NA, refactor=T, showN=F){
+stat_build_barplot <- function(inp, threshold=NA, inp.label=NA, refactor=T, showN=F, show.leg=F, labY=NA){
 #  browser()
   dt.stat <- tab(inp)
   dt.stat[, inpS:=inp]
@@ -289,6 +289,9 @@ stat_build_barplot <- function(inp, threshold=NA, inp.label=NA, refactor=T, show
     pRet <- pRet + geom_text(aes(label=Freq), vjust=-0.2)
   }
 
+  if (show.leg==F) pRet <- pRet + leg.no
+  if (not.na(labY)) pRet <- pRet + ylab(labY)
+
   pRet
 }
 
@@ -317,4 +320,31 @@ geom_box_custom <- function(inpDT, byX, colY, q=0.25, barwidth=0.5, ...){
   ),by=c(byX)]
   dt.stat[,IQR:=qHigh-qLow]
   geom_tile(aes_string(x=byX, y='medVal', height='IQR'), data=dt.stat, width=barwidth,...)
+}
+
+
+gghist <- function(inpDT,val.col,col.mean='red',col.med='green',lg10=NA,...){
+  values <- inpDT[[val.col]]
+  val.median <- median(values,na.rm=T)
+  val.mean <- mean(values,na.rm=T)
+  val.05 <- quantile(values, 0.05, na.rm=T) # 6.14 all,  2.74 circ
+  val.95 <- quantile(values, 0.95, na.rm=T) # 8.76 all, 17.87 circ
+
+  pHist <-
+    inpDT %>%
+    ggplot(aes_string(x=val.col)) +
+    geom_histogram(...) +
+    geom_vline(xintercept = c(val.05,val.95), linetype='dashed', col='darkgrey')+
+    annotate('text', x=val.05, y=Inf, label=round(val.05,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)+
+    annotate('text', x=val.95, y=Inf, label=round(val.95,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)+
+
+    geom_vline(xintercept = val.median, linetype='dashed', col=col.med)+
+    annotate('text', x=val.median, y=0, label=round(val.median,2), col=col.med, angle=90, vjust=-0.5, hjust=-0.2)+
+    geom_vline(xintercept =   val.mean, linetype='dashed', col=col.mean)+
+    annotate('text', x=val.mean, y=0, label=round(val.mean,2), col=col.mean, angle=90, vjust=-0.5,hjust=-0.2)
+
+  if (lg10 %~~% 'x') pHist <- pHist+scale_x_log10()
+  if (lg10 %~~% 'y') pHist <- pHist+scale_y_log10()
+
+  pHist
 }

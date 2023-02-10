@@ -1668,6 +1668,14 @@ dt_names_dedup_n <- function(dtIn, sep='.'){
 }
 
 
+dedup.colnames <- function(...){
+  warning('dedup.colnames() is deprecated! Use dt_names_dedup_n() instead.')
+  dt_names_dedup_n(...)
+}
+
+
+
+
 dt_names_dedup_pre <- function(inpDT, cols=NULL){
   if (is.null(cols)) cols <- which(allDuplicated(names(inpDT))) # 9 10 12 13 15 16 68 74 76
   nondups <- seq_along(names(inpDT)) %-% cols
@@ -1743,13 +1751,14 @@ build_cum_table <- function(inp_dt_sum,colDate='earliestBlood',colType='Type'){
   #            #Location='Cancer location'
   # )
 
-build_stat_table_N <- function(inpDT,categories){
+build_stat_table_N <- function(inpDT,categories, do.sort = F, thrRank=15, ...){
   dt.N <- NULL
+#  browser()
   for (this.cat in names(categories)){
     this.label <- categories[[this.cat]]
     this.vals  <- inpDT[[this.cat]]
     if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
-    this.stat  <- tab(this.vals, do.sort = F)
+    this.stat  <- tab(this.vals, thrRank = thrRank, do.sort = do.sort, ...)
     this.title <- data.table(Category=this.label)
     this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Freq, `%`=this.stat$FreqP), fill=T)
     dt.N %<>% rbind(this.tab, fill=T)
@@ -2043,3 +2052,20 @@ va_split_2cols <- function(dtInp, inp1, inp2, sep=';'){
 
 
 
+dt_setup_key <- function(dtIn, key.from, key.to=key.from){
+  message('Requested key column: ' %+% bold(key.from))
+  if (key.from %!in% names(dtIn)) stop('Key column not found.')
+  if (sumI(key.from==names(dtIn))>1) stop('Key column presents more than once.')
+
+  if (key.from!=key.to){
+    if (key.to %in% names(dtIn)){
+      key.to.bak <- key.to %+% '___bak'
+      warning('Column with key target name (' %+% bold(key.to) %+% ') already presents! Will be renamed to ' %+% bold(key.to.bak) %+% '.\n')
+      dtIn %<>% setnames(key.to, key.to.bak)
+    }
+    dtIn[, c(key.to):=get(key.from)]
+    message('New key column name: ' %+% bold(key.to))
+  }
+  dtIn %<>% setkeyv(key.to)
+  invisible(dtIn)
+}

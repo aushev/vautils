@@ -51,10 +51,12 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
   colVal <- names(dt.ret)[1];
 
   if (not.na(thrRank)){
-    dt.ret[seqlen(dt.ret)>thrRank & not.na(get(colVal)), `:=`(tmp_cat_Other=T,Freq=sumI(Freq) )]
+    dt.ret[, rankFreq:=rank(-Freq)]
+    dt.ret[rankFreq>thrRank & not.na(get(colVal)), `:=`(tmp_cat_Other=T,Freq=sumI(Freq) )]
     dt.ret[tmp_cat_Other==T, c(colVal):=thrLabel]
-    dt.ret <- unique(dt.ret)
     dt.ret[,tmp_cat_Other:=NULL]
+    dt.ret[, rankFreq:=NULL]
+    dt.ret <- unique(dt.ret)
   }
 
   if (not.na(thrNum)){
