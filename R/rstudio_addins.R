@@ -91,3 +91,10 @@ clipboard2selected <- function(){
   rstudioapi::sendToConsole(sel_text %+% ' <- readClipboard()', execute = execute)
 }
 
+
+
+
+
+duView <- function(x, columns=NULL) {dt.tmp <<- x; View(deluselesscol(setcolorderV(dt.tmp,columns)))}
+tView <- function(x) {dt.tmp <<-  as.data.table(t(x), keep.rownames=T); View(dt.tmp)}
+

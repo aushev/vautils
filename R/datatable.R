@@ -1513,10 +1513,11 @@ shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';
   invisible(inpDT)
 }
 
-dt_addcols <- function(inpDT, cols, defval=NA){
+dt_addcols <- function(inpDT, cols, defval=NA, silent=F){
 # adding column if it is not in the table yet
 # dt_addcols(dt, cols = cs('colA colB colC')) - adds columns as NA
 # dt_addcols(dt, cols = list(colA=NA_integer_, colB=NA_real_, 'colC') )
+  if (silent==T) message <- function(...){invisible(NULL);}
   vals <- cols
 # browser()
   if (!is.list(cols)) {cols <- as.list(rep(defval,length(cols))); names(cols) <- vals}
@@ -1526,7 +1527,7 @@ dt_addcols <- function(inpDT, cols, defval=NA){
     this.colname <- names(cols)[i]
     this.colval  <- cols[[i]]
     if (this.colname=='') {this.colname <- this.colval; this.colval <- defval;}
-    if (this.colname %in% names(inpDT)) {message(this.colname, ' already exists.');next;}
+    if (this.colname %in% names(inpDT)) {message(bold(this.colname), ' already exists.');next;}
     if (nrow(inpDT)==0) this.colval <- this.colval[0]
     inpDT[[this.colname]] <- this.colval
   }
@@ -1622,11 +1623,24 @@ del.dupflds.dupnames <- function(inpDT, verbose=T){
 # and fields that can be "reduced"
 # usage:
 # g(dt.patients, dt.plasmas) %<<% dt_normalize(dt1a.a, 'pID')
-dt_normalize <- function(inDT, key, verbose=F, nCol=NULL){ #inDT=dt.PMCC; key='Patient_ID';
+dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL){ #inDT=dt.PMCC; key='Patient_ID';
   cols.gen <- c()
   cols.unq <- c()
 
-  for (this.f in names(inDT) %-% key){ # this.f='Primary_Institute_Patient_ID'
+  if (!is.null(cols)){
+    if (length(cols)==1 && cols %~~% '[/\\*\\^]') { # if cols is regex
+      cols <- grep(cols, names(inDT), value=T)
+    } else
+      cols <- cols %&% names(inDT)
+  }
+
+  if (!is.null(cols)){
+    cols.unq <- names(inDT) %-% cols
+    if (length(cols.unq)>0) message('These columns will not be checked: ' %+% paste0(bold(cols.unq),collapse = ','))
+  } else cols <- names(inDT) %-% key
+
+
+  for (this.f in cols ){ # this.f='Primary_Institute_Patient_ID'
     this.subdt <- inDT[,.(xN=.N, xU=nrow(unique(.SD))), by=key, .SDcols=this.f]
 
     if (all(this.subdt[,xU==1])){
@@ -1638,6 +1652,7 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL){ #inDT=dt.PMCC; key='P
 
   cat('\nGen: \n', paste(cols.gen, collapse = '\n '))
   cat('\n\nUnq: \n', paste(cols.unq, collapse = '\n '))
+  cat('\n')
 
   dt.master <- inDT[,c(key,cols.gen), with=F];
   if (!is.null(nCol)){
@@ -1867,6 +1882,8 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x=T, all.y=all, columns=NULL, columns.ignore=NULL,...){
  # browser()
 
+  ori.key1 <- key(dt1)
+
   mc <- match.call(expand.dots = TRUE)
   argsList <- list(...)
 
@@ -1899,6 +1916,8 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x
     merge(dt1,dt2,by.x=by.x,by.y=by.y,all=all,all.x=all.x,all.y=all.y,...),
     merge(dt1,dt2,    by=by,          all=all,all.x=all.x,all.y=all.y,...)
   )
+
+  if (!is.null(ori.key1) && ori.key1 %in% names(ret)) setkeyv(ret,ori.key1)
 
   return(ret)
 }
@@ -2069,3 +2088,23 @@ dt_setup_key <- function(dtIn, key.from, key.to=key.from){
   dtIn %<>% setkeyv(key.to)
   invisible(dtIn)
 }
+
+dt_set_header <- function(inpDT, headerLine=2){
+  if (!is.integer(headerLine)) stop('headerLine must be integer!')
+  if (!(headerLine>0)) stop('headerLine must be a positive integer!')
+  if (length(headerLine)>1) stop('headerLine must be a single number!')
+  tmp.names <- unlist(inpDT[headerLine,], use.names = F)
+  #  tmp.names <- as.character(inpDT[headerLine,]) # faster?
+  setnames(inpDT, tmp.names)
+
+  inpDT <- inpDT[-(1:headerLine),]
+
+  invisible(inpDT)
+}
+
+dt_del_NA_columns <- function(inpDT){
+  na_cols <- which(colSums(is.na(inpDT)) == nrow(inpDT))
+  inpDT[, c(na_cols) := NULL]
+  invisible(inpDT)
+}
+

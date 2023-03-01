@@ -94,7 +94,7 @@ aes_add <- function(aes1,aes2){
 
 
 gghist_quick <- function(values, breaks=50) {
-  hist_base <- hist(values, plot=FALSE, breaks=breaks)
+  hist_base <- hist(as.numeric(values), plot=FALSE, breaks=breaks)
 
   dat <- data.frame(xmin=head(hist_base$breaks, -1L),
                     xmax=tail(hist_base$breaks, -1L),
@@ -149,7 +149,8 @@ ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, ...){
     ggsave(fn, inpPlot, ...)
   }
   if (exists('OUT') & OUT==1) {message("Saved but won't be open. "); return(FALSE);}
-  system(command = paste0('cmd /C "', fn, '"'), wait = F);
+  ret <- system(command = paste0('cmd /C "', fn, '"'), wait = F);
+#  browser()
 }
 
 
@@ -176,7 +177,6 @@ gg_replace_geomlabel <- function(inpPlot){
   for (this_layer in inpPlot$layers){
     cat('\n', paste0(bold(class(this_layer$geom)),collapse = ', '))
     if ('GeomLabel' %in% class(this_layer$geom)){
-      browser()
       # message('GeomLabel!')
       this_map.fill.str <- as_label(this_layer$computed_mapping$fill)
       if (this_map.fill.str=="NULL") this_map.fill.str <- as_label(this_layer$mapping$fill)
@@ -185,9 +185,13 @@ gg_replace_geomlabel <- function(inpPlot){
       new_aes$fill <- NULL
       new_aes <- aes_add(new_aes, aes_string(color=this_map.fill.str))
 
+#      browser()
+
       for (this_param in names(this_layer$aes_params)){
         this_param_val <- this_layer$aes_params[[this_param]]
+        message(bold(this_param),'=',bold(this_param_val));
         if (this_param_val=='bold') next; # temporary clutch !!!
+        if (this_param=='colour') next; # WTF?!?!?! temporary clutch !!!
         tmp <- aes_string(this_param=this_param_val)
         names(tmp) <- this_param
         new_aes <- aes_add(new_aes, tmp)
@@ -196,7 +200,7 @@ gg_replace_geomlabel <- function(inpPlot){
       outPlot <- outPlot + geom_text(data=this_data, mapping = new_aes)
     } # e. if
   } # e. for
-browser()
+# browser()
   for (i in rev(seq_along(outPlot$layers))){
     this_layer <- outPlot$layers[[i]]
     if ('GeomLabel' %in% class(this_layer$geom)){
@@ -324,7 +328,7 @@ geom_box_custom <- function(inpDT, byX, colY, q=0.25, barwidth=0.5, ...){
 
 
 gghist <- function(inpDT,val.col,col.mean='red',col.med='green',lg10=NA,...){
-  values <- inpDT[[val.col]]
+  values <- as.numeric(inpDT[[val.col]])
   val.median <- median(values,na.rm=T)
   val.mean <- mean(values,na.rm=T)
   val.05 <- quantile(values, 0.05, na.rm=T) # 6.14 all,  2.74 circ
@@ -332,7 +336,7 @@ gghist <- function(inpDT,val.col,col.mean='red',col.med='green',lg10=NA,...){
 
   pHist <-
     inpDT %>%
-    ggplot(aes_string(x=val.col)) +
+    ggplot(aes(x=values)) +
     geom_histogram(...) +
     geom_vline(xintercept = c(val.05,val.95), linetype='dashed', col='darkgrey')+
     annotate('text', x=val.05, y=Inf, label=round(val.05,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)+
@@ -341,9 +345,10 @@ gghist <- function(inpDT,val.col,col.mean='red',col.med='green',lg10=NA,...){
     geom_vline(xintercept = val.median, linetype='dashed', col=col.med)+
     annotate('text', x=val.median, y=0, label=round(val.median,2), col=col.med, angle=90, vjust=-0.5, hjust=-0.2)+
     geom_vline(xintercept =   val.mean, linetype='dashed', col=col.mean)+
+    xlab(val.col) + ylab('Counts')+
     annotate('text', x=val.mean, y=0, label=round(val.mean,2), col=col.mean, angle=90, vjust=-0.5,hjust=-0.2)
 
-  if (lg10 %~~% 'x') pHist <- pHist+scale_x_log10()
+  if (lg10 %~~% 'x' | lg10 %==% T) pHist <- pHist+scale_x_log10()
   if (lg10 %~~% 'y') pHist <- pHist+scale_y_log10()
 
   pHist

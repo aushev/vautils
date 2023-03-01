@@ -100,7 +100,7 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T){
 }
 
 
-reqq <- function(packagename, verbose=T, tryBioconductor=T){
+reqq <- function(packagename, verbose=F, tryBioconductor=T){
   catV <- ifelse(verbose,cat,function(...){})
   catV('\n=======================================================\n');
   pkname.subs <- substitute(packagename);
@@ -185,11 +185,13 @@ trylocs <- function(..., req=F, all=F){
 loadv <- function(file=NULL, envir = parent.frame(n=1L),...){
   if (is.null(file)) {file <- askfilename();}
   #load(file, verbose=T, envir = parent.frame(n=1L), ...)
+  message('Loading file: ' %+% bold(file))
   load(file, verbose=T, envir = envir, ...)
 }
 
 
 loadv1 <- function(fnRdat, index=1, verbose=T){
+  message('Loading file: ' %+% bold(fnRdat))
   obj.names <- load(fnRdat, verbose=verbose)
   if (length(obj.names)>1 & verbose) warning('Multiple objects loaded! Only first one will be returned.')
   obj.name <- obj.names[index]

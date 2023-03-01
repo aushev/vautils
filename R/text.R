@@ -196,14 +196,14 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
 
   tryformats <- formats2try
   if (is.someDate(input)) return(input);
-  if (length(input)==0)      {warning(' Input of zero length in xls_date(). '); return(input)}
+  if (length(input)==0)      {if (!quiet) warning(' Input of zero length in xls_date(). '); return(input)}
 
   if ('character' %in% class(input)){
     input %<>% trimws()
     input[nchar(input)==0] <- NA_character_
   }
 
-  if (sum(!is.na(input))==0) {warning(' Input of NA only in xls_date(). ');     return(as.Date(NA))}
+  if (sum(!is.na(input))==0) {if (!quiet) warning(' Input of NA only in xls_date(). ');     return(as.Date(NA))}
 
   inputNotNA <- na.omit(input)
   inputNum <- suppressWarnings(as.numeric(input));
@@ -211,7 +211,7 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
   inputNumOnlyInt <- as.integer(inputNumOnly)
   notNums <- is.na(inputNum)
 
- # browser()
+#  browser()
 
   if (split==T) {
     ret <- sapply(input, xls_date, strict=strict, quiet=quiet, split=F, USE.NAMES = F)
@@ -313,6 +313,7 @@ str_shrink <- function(inp_str, sep=';'){
 # c(3,2,3,NA,4) => '3;2;4'
 shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, fillempty=NULL, force.char=F){
   if (force.char) values <- as.character(values)
+#  browser()
   values2 <- values;
 
   if (all==F) values2 <- unique(values);
@@ -414,16 +415,36 @@ compl_year <- function(inpStr, regex='(.*)/(\\d+)', thr=25){
 
 }
 
+greplic <- function(...) grepl(...,ignore.case = T)
+
 #`%like%` <- function(x, pattern){grepl(pattern,x)}
  `%~~%`  <- function(x, pattern){ grepl(pattern,x)}
- `%~~i%` <- function(x, pattern){ grepl(pattern,x,ignore.case = T)}
+ `%~~i%` <- function(x, pattern){ greplic(pattern,x)}
 `%!~~%`  <- function(x, pattern){!grepl(pattern,x)}
-`%!~~i%` <- function(x, pattern){!grepl(pattern,x,ignore.case=T)}
+`%!~~i%` <- function(x, pattern){!greplic(pattern,x)}
 
- `%~~~%`  <- function(x, patterns){ apply(sapply(patterns, function(pattern) grepl(pattern,x), USE.NAMES=F), 1,any) }
-`%!~~~%`  <- function(x, patterns){!apply(sapply(patterns, function(pattern) grepl(pattern,x), USE.NAMES=F), 1,any) }
- `%~~~i%` <- function(x, patterns){ apply(sapply(patterns, function(pattern) grepl(pattern,x,ignore.case=T), USE.NAMES=F), 1,any) }
-`%!~~~i%` <- function(x, patterns){!apply(sapply(patterns, function(pattern) grepl(pattern,x,ignore.case=T), USE.NAMES=F), 1,any) }
+
+grepl_mult <- function(y, patterns){
+  if (length(y)==1) {return(any(sapply(patterns, grepl, x=y)))}
+  apply(X=sapply(X=patterns, FUN=grepl, x=y),MARGIN=1,FUN=any)
+}
+
+grepl_mult_ic <- function(y, patterns){
+  if (length(y)==1) {return(any(sapply(patterns, grepl, x=y, ignore.case=T)))}
+  apply(X=sapply(X=patterns, FUN=grepl, x=y, ignore.case=T),MARGIN=1,FUN=any)
+}
+
+
+ `%~~~%`  <- grepl_mult
+`%!~~~%`  <- function(x, patterns) !grepl_mult(x,patterns)
+ `%~~~i%` <- grepl_mult_ic
+`%!~~~i%` <- function(x, patterns) !grepl_mult_ic(x,patterns)
+
+#  `%~~~%`  <- function(x, patterns){ apply(sapply(patterns, function(pattern) grepl(pattern,x), USE.NAMES=F), 1,any) }
+# `%!~~~%`  <- function(x, patterns){!apply(sapply(patterns, function(pattern) grepl(pattern,x), USE.NAMES=F), 1,any) }
+#  `%~~~i%` <- function(x, patterns){ apply(sapply(patterns, function(pattern) greplic(pattern,x), USE.NAMES=F), 1,any) }
+# `%!~~~i%` <- function(x, patterns){!apply(sapply(patterns, function(pattern) greplic(pattern,x), USE.NAMES=F), 1,any) }
+
 
 `%=u=%` <- function(x,y) toupper(x)==toupper(y)
 
@@ -446,7 +467,7 @@ strsplitS <- function(input,split=';',...){
 }
 strsplitMin <- function(x,split=';',...) sapply(strsplit(x,split=split,...), min)
 
-toClip <- function(...){writeClipboard(as.character(...))}
+toClip <- function(content){writeClipboard(replace.mult(as.character(content),NA,''))}
 fromClip <- function(...){readClipboard()}
 
 
@@ -522,3 +543,38 @@ va_txt_remove_parents <- function(inpVec){
   }
   return(inpVec[!inpVec %in% vec.remove])
 }
+
+trim0 <- function(input) gsub('\\.0$','',input)
+
+
+va_txt_dominant_case <- function(inpVec){
+
+  dt.inp <- data.table(inpStr=inpVec)
+  dt.inp[, upperCase:=toupper(inpStr)]
+
+  dt.stat <- dt.inp[,.N,by=.(inpStr,upperCase)]
+
+  dt.stat[, keep:=(N==max(N)),by=upperCase]
+  dt.stat <- dt.stat[keep==T,]
+
+  dt.stat[, dupN:=.N, by=upperCase]
+  #  if (all(dt.stat$dupN==1))
+  dt.stat[dupN>1, startsCap:=(substr1(inpStr)==substr1(upperCase))]
+  dt.stat[dupN>1, keep := (startsCap==T | all(startsCap==F)), by=upperCase]
+  dt.stat <- dt.stat[keep==T,]
+
+  dt.stat[, dupN:=.N, by=upperCase]
+  dt.stat %<>% setorder(upperCase,-inpStr)
+  dt.stat[, xN:=seq_len(.N), by=upperCase]
+  dt.stat <- dt.stat[xN==1,]
+  stopifnotunique(dt.stat$upperCase)
+
+  setkey(dt.stat, upperCase)
+
+  stopifnot(all(dt.inp$upperCase %in% dt.stat$upperCase))
+
+
+  return(dt.stat[dt.inp$upperCase,inpStr])
+
+}
+
