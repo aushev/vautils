@@ -1663,6 +1663,9 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL){ #inDT=dt.P
 
   dt.detail <- inDT[,c(key,cols.unq), with=F]
 
+  setkeyv(dt.master, key)
+  setkeyv(dt.detail, key)
+
   invisible(list(dt.master=dt.master, dt.detail=dt.detail))
 
 }

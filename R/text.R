@@ -9,6 +9,7 @@ testab2 <- function(inpA, inpB){
 
 
 cs <- function(inputstr, sep=",", fix=T, nonewlines=T){
+  if (length(inputstr)==0) return(inputstr);
   if (missing(sep)){
     sep <- ' '
     if (inputstr[[1]] %~~% ',')  {sep=",";}
@@ -74,60 +75,96 @@ print_list <- function(inp) {
 # }
 
 
-`%+%` <- function(...) UseMethod("%+%")
-`%+%.character` <- paste0
-`%+%.numeric`   <- paste0
-`%+%.NULL`      <- paste0
-`%+%.default` <- function (arg1, arg2){
-  if (is.character(arg2)) {return(paste0(arg1,arg2));}
 
+paste0ignNA <- function(arg1, arg2){
+  if (length(arg1)==1 && length(arg2)==1 && not.na(arg1) && not.na(arg2)) return(paste0(arg1,arg2));
+  if (length(arg1)==0) return(arg2);
+  if (length(arg2)==0) return(arg1);
+
+#   browser()
+  if (length(arg1)>1 & length(arg2)>1)  return(mapply(paste0ignNA, arg1, arg2, USE.NAMES=F))
+  if (length(arg1)>1 & length(arg2)==1) return(sapply(arg1, paste0ignNA, arg2=arg2, USE.NAMES=F))
+  if (length(arg2)>1 & length(arg1)==1) return(sapply(arg2, paste0ignNA, arg1=arg1, USE.NAMES=F))
+
+  stopifnot(length(arg1)==1 & length(arg2)==1)
+
+  if (is.na(arg1)) return(arg2);
+  if (is.na(arg2)) return(arg1);
+
+  # if (any(length(arg1)==0, is.na(arg1)) & any(length(arg2)==0, is.na(arg2)) )  return('');
+  # if (any(length(arg1)==0, is.na(arg1)) ) return(arg2);
+  # if (any(length(arg2)==0, is.na(arg2)) ) return(arg1);
+  stop('Unexpected error!');
+}
+
+`%+%` <- function(...) UseMethod("%+%")
+`%+%.character` <- paste0ignNA
+`%+%.numeric`   <- paste0ignNA
+`%+%.logical`   <- paste0ignNA
+`%+%.NULL`      <- paste0ignNA
+`%+%.default` <- function (arg1, arg2){
+  if (is.character(arg2)) {return(paste0ignNA(arg1,arg2));}
   message('\n Running %+%.default! \n ');
   e <- parent.env(getEnvByName(.GlobalEnv,'package:vautils'));
   if (exists('%+%', envir = e)) get('%+%',envir = e)(arg1,arg2);
 }
 
+# Usage:
+# 'a' %+% 'b': 'ab'
+# 'a' %+% NA : 'a'
+# NA %+% NA : NA
+# cs('A B') %+% cs('1 2') : 'A1', 'B2'
+# cs('A B') %+% c('1', NA): 'A1', 'B'
+
+
 paste0notNA <- function(arg1, arg2){
-  # browser()
-  if (length(arg1)>1 & length(arg2)>1) return(mapply(paste0notNA, arg1, arg2, USE.NAMES=F))
-  if (length(arg1)>1 & length(arg2)<2) return(sapply(arg1, paste0notNA, arg2=arg2, USE.NAMES=F))
-  if (length(arg2)>1 & length(arg1)<2) return(sapply(arg2, paste0notNA, arg1=arg1, USE.NAMES=F))
+  if (length(arg1)==1 && length(arg2)==1 && not.na(arg1) && not.na(arg2)) return(paste0(arg1,arg2));
+  if (length(arg1)==0) return(arg2);
+  if (length(arg2)==0) return(arg1);
 
-#  if (length(arg1)==0 | length(arg2)==0) browser()
+  #   browser()
+  if (length(arg1)>1 & length(arg2)>1)  return(mapply(paste0notNA, arg1, arg2, USE.NAMES=F))
+  if (length(arg1)>1 & length(arg2)==1) return(sapply(arg1, paste0notNA, arg2=arg2, USE.NAMES=F))
+  if (length(arg2)>1 & length(arg1)==1) return(sapply(arg2, paste0notNA, arg1=arg1, USE.NAMES=F))
 
-  if (any(length(arg1)==0, is.na(arg1)) & any(length(arg2)==0, is.na(arg2)) )  return('');
-  if (any(length(arg1)==0, is.na(arg1)) ) return(arg2);
-  if (any(length(arg2)==0, is.na(arg2)) ) return(arg1);
-  return(paste0(arg1,arg2));
+  stopifnot(length(arg1)==1 & length(arg2)==1)
+
+  if (is.na(arg1)) return(NA_character_);
+  if (is.na(arg2)) return(NA_character_);
+
+  # if (any(length(arg1)==0, is.na(arg1)) & any(length(arg2)==0, is.na(arg2)) )  return('');
+  # if (any(length(arg1)==0, is.na(arg1)) ) return(arg2);
+  # if (any(length(arg2)==0, is.na(arg2)) ) return(arg1);
+  stop('Unexpected error!');
 }
+
 
 `%++%` <- function(...) UseMethod("%++%")
 `%++%.character` <- paste0notNA
 `%++%.numeric`   <- paste0notNA
+`%++%.logical`   <- paste0notNA
 `%++%.NULL`      <- paste0notNA
 `%++%.default` <- function (arg1, arg2){
+#  browser()
   if (all(is.na(arg1)) & is.character(arg2)) return(paste0notNA(arg1,arg2));
+#  if (all(is.na(arg1)) & all(is.na(arg2)) ) return(NA);
   e <- parent.env(getEnvByName(.GlobalEnv,'package:vautils'));
   if (exists('%++%', envir = e)) get('%++%',envir = e)(arg1,arg2);
 }
 
-
-myfun <- function(...){
-  arglist <- list(...);
-  arglens <- sapply(arglist, length)
-  browser()
-
-}
+# Usage:
+# 'a' %++% 'b': 'ab'
+# 'a' %++% NA : NA
+# NA %++% NA : NA
+# cs('A B') %++% cs('1 2') : 'A1', 'B2'
+# cs('A B') %++% c('1', NA): 'A1', NA
 
 pasteNotNA <- function(...,collapse=', '){
   arglist <- list(...);
   arglens <- sapply(arglist, length)
-#  browser()
+  browser()
   if (all(arglens<2)) return(paste(na.omit(unlist(arglist)),collapse=collapse))
   maxlen <- max(arglens)
-
-#  browser()
-  # for (i in seq_len(maxlen)) {
-  # }
 
   ans <- do.call("mapply", c(pasteNotNA, arglist, collapse=collapse, USE.NAMES = FALSE))
   ans
