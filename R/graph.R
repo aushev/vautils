@@ -9,6 +9,9 @@ resetPar <- function() {
 
 reqq(ggplot2)
 
+# annotate <- ggplot2::annotate
+
+
 gg_nogrids <- theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())
 
 legJ.BL <- legJ.DL <- theme(legend.justification=c(0,0)); # bottom-left
@@ -134,7 +137,7 @@ annotation_compass <- function(label,position='N',
 
 
 
-ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, ...){
+ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, device=NA, ...){
   if (exists('OUT') & OUT==0) {message("Skipping. "); return(FALSE);}
   fn <- trimws(fn)
   fn_dir  <- fs::path_dir(fn)
@@ -142,9 +145,12 @@ ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, ...){
 
   fn <- ifelse(fn_dir=='.',fn_name,fs::path(fn_dir,fn_name))
   ext <- tools::file_ext(fn_name)
+  if (!exists('device') || is.na(device)) device <- ext;
   if (exists(fn)) {warning('File already exists! Will try to save under different name. '); fn <- gsub(fn_name,nicedate() %+% fn_name,fn, fixed = T)}
+  message('Saving as ' %+% bold(fn) )
+#  browser()
   if ('list' %in% class(inpPlot)) {
-    ggpubr::ggexport(filename=fn,plot=inpPlot, device=ext, ...)
+    ggpubr::ggexport(filename=fn,plot=inpPlot, device=device, ...)
   } else {
     ggsave(fn, inpPlot, ...)
   }
@@ -352,4 +358,19 @@ gghist <- function(inpDT,val.col,col.mean='red',col.med='green',lg10=NA,...){
   if (lg10 %~~% 'y') pHist <- pHist+scale_y_log10()
 
   pHist
+}
+
+gg_va_rescale <- function(inp, base=3, basemin=1,basemax=6){
+  # browser()
+  if (!is.numeric(inp)) inp <- as.numeric(inp)
+  inp[inp<=0] <- NA
+  inp <- log10(inp)
+  inp.min <- minI(inp)
+  inp.max <- maxI(inp)
+  inp.delta <- (inp-inp.min)
+  inp.scale <- (inp.max-inp.min)
+  base.scale <- basemax-basemin
+  ret <- basemin + inp.delta*base.scale/inp.scale
+  ret[is.na(ret)] <- base
+  return(ret)
 }

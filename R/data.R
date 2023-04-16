@@ -433,9 +433,9 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
     message('Object ', objName,' already exists in the current environment.');
     return(get(objName));
   } else {
-    message('Object ', objName,' not found in the current environment. ');
+    message('Object ', bold(objName),' not found in the current environment. ');
     if (!is.null(fnRdat)){
-      message(' Trying to pull it from Rdat file ', fnRdat,'. ');
+      message(' Trying to pull it from Rdat file ', bold(fnRdat),'. ');
       if (!file.exists(fnRdat)) {
         message(' Rdat file not found! Will try to rebuild.');
       } else { # Rdat file exists
@@ -456,7 +456,7 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
       message(' Rebuilding... ');
       obj.return <- object
       if (!is.null(fnRdat)) {
-        message(' Saving to ',fnRdat,'...');
+        message(' Saving to ',bold(fnRdat),'...');
         saveas(obj.return, names2save = objName, file = fnRdat)
       }
     }

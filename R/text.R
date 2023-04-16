@@ -227,7 +227,7 @@ chopRight <- function(inpstr,n=1L){
 }
 
 
-xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y,%d/%m/%Y,%Y/%m/%d')){
+xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y,%d/%m/%Y,%Y/%m/%d'), tryPOSIX=T){
   messageA <- warning;
   if (quiet==T) messageA <- function(x) invisible(x);
 
@@ -248,10 +248,10 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
   inputNumOnlyInt <- as.integer(inputNumOnly)
   notNums <- is.na(inputNum)
 
-#  browser()
+ # browser()
 
   if (split==T) {
-    ret <- sapply(input, xls_date, strict=strict, quiet=quiet, split=F, USE.NAMES = F)
+    ret <- sapply(input, xls_date, strict=strict, quiet=quiet, split=F, formats2try=formats2try, tryPOSIX=tryPOSIX, USE.NAMES = F)
     class(ret) <- 'Date'
     return(ret)
   }
@@ -287,7 +287,10 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
       return(as.Date(input, tryFormats=tryformats, optional=T))
     } else {
       messageA(" Maybe date and time?");
-      return(as.POSIXct(input, optional=T))
+      if (tryPOSIX==T) {
+        messageA(" Trying as.POSIXct()");
+        return(as.Date(as.POSIXct(input, optional=T)))
+      } else return(as.Date(NA))
     }
   }
 
@@ -308,8 +311,9 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
 }
 
 
-xls_date_char <- function(inp){
-  ret <- as.character(xls_date(inp))
+xls_date_char <- function(inp, ...){
+#  browser()
+  ret <- as.character(xls_date(inp, ...))
   ret[is.na(ret)] <- inp[is.na(ret)]
   ret
 }
@@ -615,3 +619,4 @@ va_txt_dominant_case <- function(inpVec){
 
 }
 
+re.class <- function(x) {class(x) <- c(class(x), 'regex'); return(x)}

@@ -112,7 +112,7 @@ dt4mosaic <- function(inpDT, byX, byY){
   return(dt.stat)
 }
 
-plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F, showN=T){
+plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F, showN=T, leg.title=NA){
   if (is.null(byX)) byX <- names(inpDTmosaic)[1]
   if (is.null(byY)) byY <- names(inpDTmosaic)[2]
   inpDTmosaic[,grpSize:=grpSize/del]
@@ -135,6 +135,7 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
 
   #inpDTmosaic$byY.fill <- inpDTmosaic[[byY]]   #
   inpDTmosaic[,byY.fill:=get(byY)]
+  if (is.na(leg.title)) leg.title <- byY;
   p <-
     ggplot(inpDTmosaic,
            aes(x=factor(xN),y=rel,fill=byY.fill,width=grpSize)  #aes_string(x='xN',y='rel',fill=byY,width='grpSize')
@@ -143,7 +144,7 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
     scale_x_discrete(expand = c(0, 0)) +
     scale_y_continuous(labels = scales::percent_format(scale = 100))+
     theme(axis.text = element_text(face="bold") ) +
-    guides(fill=guide_legend(title=byY))+
+    guides(fill=guide_legend(title=leg.title))+
     facet_grid(as.formula('~ ' %+% byX), scales = "free", space = "free")
   if (!is.null(colors)) p <- p + scale_fill_manual(values = colors, name=byY)
   if (scaleY==F) p <- p + theme(axis.text.y = element_blank())

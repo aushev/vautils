@@ -197,7 +197,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     sheet <- sheetIndex;
     if (!is.null(sheetName)) sheet <- sheetName;
     reqq('openxlsx', verbose = F);
-    rez <- openxlsx::read.xlsx(fnRead, sheet, ...);
+    rez <- openxlsx::read.xlsx(fnRead, sheet, check.names=clean.names,...);
     rez <- data.table(rez);
   }
   else if (filetype == 'sas7bdat') {
@@ -1714,18 +1714,14 @@ dt_names_dedup_pre <- function(inpDT, cols=NULL){
 
 
 
-dt_del_columns <- function(inpDT, names=NULL, re=NULL){
-  if (!is.null(names)){
-    inpDT[, c(names):=NULL]
-  }
+dt_del_columns <- function(inpDT, cols2del){
+#  browser()
+  if ('regex' %in% class(cols2del)){
+    vec.match <- which(names(inpDT) %~~~% cols2del)
+  } else vec.match <- which(names(inpDT) %in% cols2del)
 
-    if (!is.null(re)){
-    inpDT[, grep(re,names(inpDT)):=NULL]
-  }
-
-
+  if (length(vec.match)>0) inpDT[, c(vec.match):=NULL]
   invisible(inpDT)
-
 }
 
 
@@ -1839,7 +1835,7 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
   for (.dup in (dups %-% c(key.x,key.y))){
     .dupX <- .dup %+% '.x'
     .dupY <- .dup %+% '.y'
-    cat('\n',.dup)
+    cat('\n',bold(.dup))
     this.dt <- dt.merged[,c(key.x,.dupX,.dupY),with=F]
     this.dt[, isNA.x:=is.na(get(.dupX))]
     this.dt[, isNA.y:=is.na(get(.dupY))]
@@ -1856,7 +1852,7 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
       this.bad.long %<>% cast.char(cs('.x .y'))
       dt.bad.long %<>% rbind(this.bad.long, fill=T)
 
-      cat('\t', nrow(this.bad))
+      cat('\t', red(nrow(this.bad)))
 
     } # e. if (nrow(this.bad)>0)
 
@@ -2076,8 +2072,8 @@ va_split_2cols <- function(dtInp, inp1, inp2, sep=';'){
 
 dt_setup_key <- function(dtIn, key.from, key.to=key.from){
   message('Requested key column: ' %+% bold(key.from))
-  if (key.from %!in% names(dtIn)) stop('Key column not found.')
-  if (sumI(key.from==names(dtIn))>1) stop('Key column presents more than once.')
+  if (key.from %!in% names(dtIn)) stop('Key column ' %+% bold(key.from) %+% ' not found.')
+  if (sumI(key.from==names(dtIn))>1) stop('Key column ' %+% bold(key.from) %+% ' presents more than once.')
 
   if (key.from!=key.to){
     if (key.to %in% names(dtIn)){
