@@ -197,7 +197,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     sheet <- sheetIndex;
     if (!is.null(sheetName)) sheet <- sheetName;
     reqq('openxlsx', verbose = F);
-    rez <- openxlsx::read.xlsx(fnRead, sheet, check.names=clean.names,...);
+    rez <- openxlsx::read.xlsx(fnRead, sheet, check.names=F,...); # don't do check.names=clean.names bc it also dedups names
     rez <- data.table(rez);
   }
   else if (filetype == 'sas7bdat') {
@@ -1348,6 +1348,7 @@ loadDTlazy <- function(dtVar, fnVar=NULL, fnDef, refresh=T, colsExcl=NULL, ...) 
 setnamessp <- function(dtIn, old, new, verbose=T){
   foundOld <- old %in% names(dtIn);
 
+  if (length(new)==1) new <- rep(new, length(old))
   old <- old[foundOld]
   new <- new[foundOld]
 
@@ -1628,19 +1629,19 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL){ #inDT=dt.P
   cols.unq <- c()
 
   if (!is.null(cols)){
-    if (length(cols)==1 && cols %~~% '[/\\*\\^]') { # if cols is regex
+    if (('regex') %in% class(cols)){
       cols <- grep(cols, names(inDT), value=T)
-    } else
-      cols <- cols %&% names(inDT)
-  }
+    } else cols <- cols %&% names(inDT)
 
-  if (!is.null(cols)){
     cols.unq <- names(inDT) %-% cols
     if (length(cols.unq)>0) message('These columns will not be checked: ' %+% paste0(bold(cols.unq),collapse = ','))
+
   } else cols <- names(inDT) %-% key
 
 
+  if (verbose==T) cat('\n Checking columns...')
   for (this.f in cols ){ # this.f='Primary_Institute_Patient_ID'
+    if (verbose==T) cat('   ', blue(this.f))
     this.subdt <- inDT[,.(xN=.N, xU=nrow(unique(.SD))), by=key, .SDcols=this.f]
 
     if (all(this.subdt[,xU==1])){
@@ -1940,11 +1941,16 @@ dt_dict <- function(inpDT, keys=names(inpDT)[1], vals=names(inpDT)[2], check=T){
 
 
 
-rbindV <- function(...){
+rbindV <- function(...,fill=T){
+#  browser()
   arglist <- list(...)
+  # if (!'fill' %in% names(arglist)) {
+  #   fill<-T;
+  #   } else fill <- arglist[['fill']];
   re.attr <- 'Class attribute on column (.*) of item (.*) does not match with column (.*) of item (.*).'
   catch_ret <- tryCatch(
-    rbind(...),
+    rbind(fill=fill,...),
+#    rbind(...),
     error = function(errmsg) {
       warning(errmsg);
           #browser()
@@ -2006,7 +2012,7 @@ dt_match_shrink <- function(dtTo, dtFrom, col.To, col.from, match.on){
 # i.e. first n rows are filled with some other info and header is in the n+1-th row
 dt_reheader <- function(inpDT, n=1, clean.names=T){
   names_dt <- inpDT[n,] %>% unname() %>% unlist()
-  inpDT <- inpDT[-n,]
+  inpDT <- inpDT[-seq_len(n),]
   names(inpDT) <- names_dt
   if (clean.names==T) inpDT %<>% dtcleannames()
   inpDT

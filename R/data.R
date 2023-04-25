@@ -462,7 +462,7 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
     }
 
     if (unlist==T) {
-      message(' Unfolding list.')
+      message(' Unfolding list of ' %+% bold(length(obj.return)) %+% ' objects: ' %+% paste(bold(blue(names(obj.return))),collapse = ', ') %+% '.\n')
       list2env(obj.return, envir = parent.frame(n=1L))
       return(obj.return[[1]]);
     } else return(obj.return);

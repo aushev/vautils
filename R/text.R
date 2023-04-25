@@ -227,6 +227,14 @@ chopRight <- function(inpstr,n=1L){
 }
 
 
+xlsxlsdate <- function(inp, optional=T, limits=c(as.Date('1906-01-01'),as.Date('2100-01-01'))) {
+  output <- as.Date(as.numeric(inp), origin="1899-12-30", optional=T)
+  output[output<limits[1]] <- NA
+  output[output>limits[2]] <- NA
+  return(output)
+}
+
+
 xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y,%d/%m/%Y,%Y/%m/%d'), tryPOSIX=T){
   messageA <- warning;
   if (quiet==T) messageA <- function(x) invisible(x);
@@ -260,7 +268,7 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
     messageA(" Numeric!")
     if (all(inputNumOnly == inputNumOnlyInt)){
       messageA(" Integer!")
-      output <- as.Date(inputNum, origin="1899-12-30", optional=T);
+      output <- xlsxlsdate(inputNum)
       return(output)
     } else {
       messageA(" Not integer!")
@@ -310,6 +318,90 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
   return(output)
 }
 
+
+va_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y,%d/%m/%Y,%Y/%m/%d'), tryPOSIX=T, limits=c(as.Date('1906-01-01'),as.Date('2100-01-01'))){
+  messageA <- warning;
+  if (quiet==T) messageA <- function(x) invisible(x);
+
+  tryformats <- formats2try
+  if (is.someDate(input)) return(input);
+  if (length(input)==0)      {if (!quiet) warning(' Input of zero length. '); return(input)}
+
+  if ('character' %in% class(input)){
+    input %<>% trimws()
+    input[nchar(input)==0] <- NA_character_
+  }
+
+  if (sum(!is.na(input))==0) {if (!quiet) warning(' Input of NA only in xls_date(). ');     return(as.Date(NA))}
+
+  inputNotNA <- na.omit(input)
+  inputNum <- suppressWarnings(as.numeric(input));
+  inputNumOnly <- na.omit(inputNum)
+  inputNumOnlyInt <- as.integer(inputNumOnly)
+  notNums <- is.na(inputNum)
+
+  # browser()
+
+  if (split==T) {
+    ret <- sapply(input, va_date, strict=strict, quiet=quiet, split=F, formats2try=formats2try, tryPOSIX=tryPOSIX, USE.NAMES = F)
+    class(ret) <- 'Date'
+    return(ret)
+  }
+
+  output <- rep(as.Date(NA), length(input))
+
+  mask.xls <- input %~~% '\\d+\\.0'
+  output[mask.xls] <- xlsxlsdate(input[mask.xls])
+
+  re.ok <- '\\d{4}[-/\\.]\\d{1,2}[-/\\.]\\d{1,2}'
+  re.ok.ex <- '.*(' %+% re.ok %+% ').*'
+  match.ok <- input %~~% re.ok
+  output[match.ok] <-
+    input[match.ok] %>%
+    gsub(re.ok.ex,'\\1',.) %>%
+    gsub('[-\\.]','/',.) %>%
+    as.Date(optional=T)
+
+ # browser()
+
+
+  re.ok <- '\\d{1,2}[-/\\.]\\d{1,2}[-/\\.]\\d{4}'
+  re.ok.ex <- '[^0-9]*(' %+% re.ok %+% ').*'
+  match.ok <- input %~~% re.ok
+  output[match.ok] <-
+    input[match.ok] %>%
+    gsub(re.ok.ex,'\\1',.) %>%
+    gsub('[-\\.]','/',.) %>%
+    as.Date(tryFormats=formats2try, optional=T)
+
+  match.fail <- is.na(output)
+  output[match.fail] <- lubridate::as_date(input[match.fail])
+
+  match.fail <- is.na(output)
+  output[match.fail] <- xls_date(input[match.fail])
+
+  output[output<limits[1]] <- NA
+  output[output>limits[2]] <- NA
+
+  return(output)
+
+
+}
+
+va_date_char <- function(inp, ...){
+#  browser()
+  ret <- as.character(va_date(inp, ...))
+  ret[is.na(ret)] <- inp[is.na(ret)]
+  ret
+}
+
+
+xlsxlsdate_char <- function(inp, ...){
+#  browser()
+  ret <- as.character(xlsxlsdate(inp, ...))
+  ret[is.na(ret)] <- inp[is.na(ret)]
+  ret
+}
 
 xls_date_char <- function(inp, ...){
 #  browser()
@@ -584,6 +676,22 @@ va_txt_remove_parents <- function(inpVec){
   }
   return(inpVec[!inpVec %in% vec.remove])
 }
+
+
+# myfun <- function(x){
+#   browser()
+# }
+
+# c('a;b','b;a') => c('a;b','a;b')
+va_txt_splitsort <- function(x, split=','){
+  x %>% strsplit(split=split) %>% lapply(sort) %>% sapply(paste, collapse=split)
+}
+
+# c('a;b','b;a','c;b;c') => c('a;b','a;b', 'b;c')
+va_txt_splitsortunique <- function(x, split=','){
+  x %>% strsplit(split=split) %>% lapply(sort) %>% lapply(unique) %>% sapply(paste, collapse=split)
+}
+
 
 trim0 <- function(input) gsub('\\.0$','',input)
 
