@@ -3,4 +3,5 @@
   cat('\nzzz.R: Load package: ', pkgname,'from library:',libname,'\n');
   require('data.table');
   require('magrittr');
+  require('crayon');
 }

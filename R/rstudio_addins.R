@@ -91,10 +91,22 @@ clipboard2selected <- function(){
   rstudioapi::sendToConsole(sel_text %+% ' <- readClipboard()', execute = execute)
 }
 
+flexread_clip <- function(){
+  fnOri <- fromClip()
+  txt2inp <- 'fn1 <- '
+  txt2inp <- txt2inp %+% "'" %+% gsub('\\\\','/',fnOri) %+% "'\n"
+  txt2inp <- txt2inp %+% 'dt1 <- flexread(fn1, deluseless = T)\n'
+
+  rstudioapi::insertText(NULL, txt2inp)
+  rstudioapi::sendToConsole(txt2inp)
+  rstudioapi::sendToConsole('duView(dt1)')
+}
 
 
 
-
-duView <- function(x, columns=NULL) {dt.tmp <<- x; View(deluselesscol(setcolorderV(dt.tmp,columns)))}
+duView <- function(x, columns=NULL) {
+  dt.tmp <<- x;
+  View(deluselesscol(setcolorderV(dt.tmp,columns)), title = deparse(substitute(x)))
+}
 tView <- function(x) {dt.tmp <<-  as.data.table(t(x), keep.rownames=T); View(dt.tmp)}
 

@@ -35,8 +35,8 @@ substrRight <- rightstr
 
 substr1 <- function(inpStr) {substring(inpStr,1,1)}
 
-strpad <- function(inpstr,padW,padSide='right'){
-  pads <- strrep(' ',padW - nchar(inpstr));
+strpad <- function(inpstr,padWidth, padSym=' ',padSide='right'){
+  pads <- strrep(padSym,padWidth - nchar(inpstr));
   switch(padSide, right = paste0(inpstr,pads), left = paste0(pads, inpstr))
 }
 
@@ -234,6 +234,7 @@ xlsxlsdate <- function(inp, optional=T, limits=c(as.Date('1906-01-01'),as.Date('
   return(output)
 }
 
+#xls_date(c("6/30/22"," 1/2021"))
 
 xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y,%d/%m/%Y,%Y/%m/%d'), tryPOSIX=T){
   messageA <- warning;
@@ -256,7 +257,7 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
   inputNumOnlyInt <- as.integer(inputNumOnly)
   notNums <- is.na(inputNum)
 
- # browser()
+  # browser()
 
   if (split==T) {
     ret <- sapply(input, xls_date, strict=strict, quiet=quiet, split=F, formats2try=formats2try, tryPOSIX=tryPOSIX, USE.NAMES = F)
@@ -279,20 +280,19 @@ xls_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y
     }
   } else {
     messageA(" Not numeric!")
+    input.cleaned <- input %>% trimws() %>% gsub('[\\\ /-]+','/',.)
     if (all(nchar(inputNotNA)==10 | nchar(inputNotNA)==9)){
       messageA("Text date, 10!");
       if (all(inputNotNA %~~% '^\\d{4}'))  tryformats <- cs('%Y/%m/%d')
       if (all(inputNotNA %~~%  '\\d{4}$')) tryformats <- formats2try
-      input %<>% gsub('[\\\ /-]+','/',.)
-      return(as.Date(input, tryFormats=tryformats, optional=T))
+      return(as.Date(input.cleaned, tryFormats=tryformats, optional=T))
     } else if (all(nchar(inputNotNA) %in% c(6,7,8))){
       messageA("Text date, 8!");
       tryformats <- cs('%m/%d/%y,%d/%m/%y')
       #browser()
       if (any(inputNotNA %~~% '^\\d{4}'))  tryformats <- cs('%Y/%m/%d') # ??? !!! should be all() instead of any()!!!
       if (any(inputNotNA %~~%  '\\d{4}$')) tryformats <- formats2try
-      input %<>% gsub('[\\\ /-]+','/',.)
-      return(as.Date(input, tryFormats=tryformats, optional=T))
+      return(as.Date(input.cleaned, tryFormats=tryformats, optional=T))
     } else {
       messageA(" Maybe date and time?");
       if (tryPOSIX==T) {

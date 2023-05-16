@@ -33,7 +33,7 @@ loadAny <- function(...){
 } # e. loadAny()
 
 
-reqS <- function(packagename, verbose=T, tryBioconductor=T){
+reqS <- function(packagename, verbose=T, tryBioconductor=T, reload=F){
   catV <- ifelse(verbose,cat,function(...){})
   stopifnot(length(packagename)==1L);
   stopifnot(class(packagename)=='character');
@@ -97,10 +97,16 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T){
   if (tryrez) {catV("Success!\n"); return(T);}
   if (tryrez==F) {cat("Failed!\n"); return(F);}
 
+  if (reload==T){
+    message('\nReloading vautils...\n')
+    unloadNamespace(pkgName);
+    require(vautils);
+  }
+
 }
 
 
-reqq <- function(packagename, verbose=F, tryBioconductor=T){
+reqq <- function(packagename, verbose=F, tryBioconductor=T, reload=T){
   catV <- ifelse(verbose,cat,function(...){})
   catV('\n=======================================================\n');
   pkname.subs <- substitute(packagename);
@@ -108,7 +114,7 @@ reqq <- function(packagename, verbose=F, tryBioconductor=T){
   if (class(pkname.subs)=='name') {
     catV(" named variable ");
     if (exists(deparse(pkname.subs))){
-      cat("exists");
+      catV("exists");
       packagename <- eval.parent(pkname.subs);
 
       if (!is.character(packagename)){
@@ -117,7 +123,7 @@ reqq <- function(packagename, verbose=F, tryBioconductor=T){
       }
 
     } else {
-      cat(" doesn't exist");
+      catV(" doesn't exist");
       packagename <- deparse(pkname.subs);
     }
     #,);
@@ -132,20 +138,26 @@ reqq <- function(packagename, verbose=F, tryBioconductor=T){
       ndx <- ndx + 1L;
       ndx_s <- paste0('(', ndx, ')');
       catV(ndx_s);
-      reqS(eachpackagename);
+      reqS(eachpackagename, reload=F);
     }
     catV("Finished loading", length(packagename), "packages.\n");
+
+    if (reload==T){
+      unloadNamespace(pkgName);
+      require(vautils);
+    }
+
     return(T);
-  }
+  } # e. if (length>1)
 
   packagename <- unlist(strsplit(packagename, " ", fixed=T));
   if (length(packagename)>1) {
     catV('Splitting package name:', length(packagename), "names.\n");
-    reqq(packagename,verbose = verbose,tryBioconductor=tryBioconductor);
+    reqq(packagename,verbose = verbose,tryBioconductor=tryBioconductor, reload=reload);
     return(T);
   }
 
-  reqS(packagename,verbose = verbose,tryBioconductor=tryBioconductor);
+  reqS(packagename,verbose = verbose,tryBioconductor=tryBioconductor, reload=reload);
 } # e. reqq()
 
 reload <- function(pkgName){

@@ -8,6 +8,11 @@ Description: calls tab() for selection
 Binding: selectionTab
 Interactive: false
 
+Name: flexread clipboard
+Description: calls flexread() for clipboard
+Binding: flexread_clip
+Interactive: false
+
 Name: Experimental
 Description: calls experimental function
 Binding: expFun

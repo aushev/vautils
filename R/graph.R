@@ -137,7 +137,7 @@ annotation_compass <- function(label,position='N',
 
 
 
-ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, device=NA, ...){
+ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, device=NULL, ...){
   if (exists('OUT') & OUT==0) {message("Skipping. "); return(FALSE);}
   fn <- trimws(fn)
   fn_dir  <- fs::path_dir(fn)
@@ -145,14 +145,14 @@ ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, device=NA, ...){
 
   fn <- ifelse(fn_dir=='.',fn_name,fs::path(fn_dir,fn_name))
   ext <- tools::file_ext(fn_name)
-  if (!exists('device') || is.na(device)) device <- ext;
+  #if (!exists('device') || is.na(device)) device <- ext;
   if (exists(fn)) {warning('File already exists! Will try to save under different name. '); fn <- gsub(fn_name,nicedate() %+% fn_name,fn, fixed = T)}
   message('Saving as ' %+% bold(fn) )
 #  browser()
   if ('list' %in% class(inpPlot)) {
     ggpubr::ggexport(filename=fn,plot=inpPlot, device=device, ...)
   } else {
-    ggsave(fn, inpPlot, ...)
+    ggsave(fn, inpPlot, device=device, ...)
   }
   if (exists('OUT') & OUT==1) {message("Saved but won't be open. "); return(FALSE);}
   ret <- system(command = paste0('cmd /C "', fn, '"'), wait = F);

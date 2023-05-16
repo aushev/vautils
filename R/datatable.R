@@ -166,6 +166,9 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     flexread.counter <<- flexread.counter
     cat('  ',flexread.counter,'   ')
   }
+
+  if(is.na(fnRead)) stop(bold(italic('NA'))%+%' provided as input file name.');
+
   message(' Opening ' %+% bold(fnRead));
 
   dots <- substitute(list(...));
@@ -1440,7 +1443,9 @@ findnamesrange <- function(inpDT,name1,name2, values=F){
 
 cast.fun <- function(inp.dt, cols2cast=names(inp.dt), FUN, ...){
   cols2castY <- intersect(cols2cast,names(inp.dt))
-  if (!identical(cols2castY,cols2cast)) warning('Columns not found: ', paste0(setdiff(cols2cast,names(inp.dt)), collapse = ' '),'\n')
+  list.notfound <- cols2cast %-% names(inp.dt)
+
+  if (length(list.notfound)>0) warning('Columns not found: ', paste0(bold(list.notfound), collapse = ', '),'\n')
   inp.dt[, (cols2castY) := lapply(.SD, FUN, ...), .SDcols = cols2castY]
   return(inp.dt);
 }
