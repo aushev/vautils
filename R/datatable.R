@@ -1442,6 +1442,8 @@ findnamesrange <- function(inpDT,name1,name2, values=F){
 
 
 cast.fun <- function(inp.dt, cols2cast=names(inp.dt), FUN, ...){
+  if (re.is(cols2cast)) cols2cast <- grep(cols2cast,names(inp.dt),value = T)
+
   cols2castY <- intersect(cols2cast,names(inp.dt))
   list.notfound <- cols2cast %-% names(inp.dt)
 
@@ -1634,7 +1636,7 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL){ #inDT=dt.P
   cols.unq <- c()
 
   if (!is.null(cols)){
-    if (('regex') %in% class(cols)){
+    if (re.is(cols)){
       cols <- grep(cols, names(inDT), value=T)
     } else cols <- cols %&% names(inDT)
 
@@ -1722,7 +1724,7 @@ dt_names_dedup_pre <- function(inpDT, cols=NULL){
 
 dt_del_columns <- function(inpDT, cols2del){
 #  browser()
-  if ('regex' %in% class(cols2del)){
+  if (re.is(cols2del)){
     vec.match <- which(names(inpDT) %~~~% cols2del)
   } else vec.match <- which(names(inpDT) %in% cols2del)
 

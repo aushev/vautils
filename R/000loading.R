@@ -99,7 +99,7 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T, reload=F){
 
   if (reload==T){
     message('\nReloading vautils...\n')
-    unloadNamespace(pkgName);
+    unloadNamespace('vautils');
     require(vautils);
   }
 
@@ -143,7 +143,7 @@ reqq <- function(packagename, verbose=F, tryBioconductor=T, reload=T){
     catV("Finished loading", length(packagename), "packages.\n");
 
     if (reload==T){
-      unloadNamespace(pkgName);
+      unloadNamespace('vautils');
       require(vautils);
     }
 
@@ -226,9 +226,11 @@ getvloc <- function(){
 }
 
 
-reqq('data.table magrittr crayon');
+require('data.table');
+require('magrittr');
+require('crayon');
 
-vai <- function(){
-  reqq('data.table magrittr');
-}
+# vai <- function(){
+#   reqq('data.table magrittr');
+# }
 
