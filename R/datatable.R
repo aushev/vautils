@@ -2120,3 +2120,47 @@ dt_del_NA_columns <- function(inpDT){
   invisible(inpDT)
 }
 
+
+
+dt_process <- function(inpDT,
+                       dedup=T, cleannames=T,
+                       rename.from=NULL, rename.to=NULL,
+                       transform=list(),
+                       add.cols=NULL){
+
+  cat('\n Processing data.table. ')
+
+  # 1. Deduplicate columns
+  if (dedup==T) {
+    cat('\n  Deduplicating columns. ')
+    inpDT %<>% dt_names_dedup_n()
+  }
+
+
+  # 2. Clean column names
+  if (cleannames==T) {
+    cat('\n  Cleaning column names. ')
+    inpDT %<>% dtcleannames()
+  }
+
+  # 3. Rename columns
+  if (!is.null(rename.from)) {
+    cat('\n  Renaming columns. ')
+    inpDT %<>% setnamessp(rename.from, rename.to)
+  }
+
+  # 4. Apply functions to columns
+  for (this.fun in names(transform)){
+    this.cols <- transform[[this.fun]]
+    message('\n   Casting function ' %+% bold(this.fun %+% '()') %+% ' to columns ' %+% paste(bold(this.cols, collapse = ', ')))
+    inpDT %<>% cast.fun(this.cols, as.name(this.fun))
+  }
+
+  # 5. Add columns
+  if (length(add.cols)>0) {
+    inpDT %<>% dt_addcols(add.cols)
+  }
+
+  invisible(inpDT)
+}
+

@@ -730,3 +730,54 @@ va_txt_dominant_case <- function(inpVec){
 re.class <- function(x) {class(x) <- c(class(x), 'regex'); return(x)}
 re.is    <- function(x) {'regex' %in% class(x);}
 
+
+
+
+
+dates_test <- function(inpDT, colsKey='Case.ID', colsCheck=names(inpDT) %-% colsKey, colsIgnore=NULL, minDate=as.Date('1910-01-01'), maxDate=as.Date('2100-01-01')){
+  colsCheck <- colsCheck %-% colsIgnore;
+  if (is.character(colsCheck)) colsCheck <- (colsCheck %inw% names(inpDT))
+  outDT <- outDT.char <-
+    inpDT[,c(colsKey), with=F]
+  for (i in colsCheck){
+    this.col <- names(inpDT)[[i]]
+    this.vals <- inpDT[[i]]
+    this.vals.char <- as.character(this.vals)
+    cat('\n',i,this.col)
+    if (sum(!is.na(this.vals))==0){
+      cat('   Empty or NA only!');
+      next;
+    }
+    if (is.someDate(this.vals)) {
+      cat('               It\'s a date already!')
+      this.vals.dates <- this.vals
+    } else {
+      this.vals.dates <- xls_date(this.vals)
+      if (!is.someDate(this.vals.dates)) {
+        cat('               Could not convert to a date!');
+        next;
+      } else{
+        looks_ok <- F
+        if (      'Date' %in% class(this.vals.dates)  ) {minDateComp <- as.Date(   minDate); maxDateComp <- as.Date(   maxDate);}
+        if (any(grepl('POSIX',class(this.vals.dates)))) {minDateComp <- as.POSIXct(minDate); maxDateComp <- as.POSIXct(maxDate);}
+        looks_ok <- this.vals.dates>minDateComp & this.vals.dates<maxDateComp
+      }
+
+      if (sum(looks_ok,na.rm = T)>0) {
+        cat('               Looks like a date!')
+      } else {cat(' Not a date...'); next;}
+    }
+    cat(' Ok, working on it');
+    outDT.char[[this.col]] <- this.vals.char
+    outDT[[this.col]] <- as.character(this.vals.dates)
+  }
+  # outDT.long <- melt(outDT, id.vars = colsKey, variable.name = 'Column', value.name = 'Date')
+  outDT.long <- melt(outDT, id.vars = colsKey, variable.name = 'Column', value.name = 'Date')
+  outDT.char.long <- melt(outDT.char, id.vars = colsKey, variable.name = 'Column', value.name = 'Char')
+  stopifnot(outDT.long[,c(colsKey,'Column'),with=F] %===% outDT.char.long[,c(colsKey,'Column'),with=F])
+
+  outDT.full <- cbind(outDT.long,outDT.char.long[,.(Char)])
+  outDT.full %<>% setcolorderV(c(colsKey,'Column','Char'))
+  outDT.full %<>% setorderv(c(colsKey, 'Date'))
+  return(outDT.full)
+}
