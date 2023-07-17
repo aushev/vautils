@@ -96,8 +96,10 @@ aes_add <- function(aes1,aes2){
 
 
 
-gghist_quick <- function(values, breaks=50) {
-  hist_base <- hist(as.numeric(values), plot=FALSE, breaks=breaks)
+gghist_quick <- function(values, breaks=50, to.numeric=T) {
+#  browser()
+  if (to.numeric==T) values <- as.numeric(values)
+  hist_base <- hist(values, plot=FALSE, breaks=breaks)
 
   dat <- data.frame(xmin=head(hist_base$breaks, -1L),
                     xmax=tail(hist_base$breaks, -1L),
@@ -106,6 +108,17 @@ gghist_quick <- function(values, breaks=50) {
 
   ggplot(dat, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)) +
     geom_rect(size=0.5, colour="grey30", fill="grey80")
+}
+
+
+
+gghist_slow <- function(values, breaks=50, to.numeric=T) {
+#  browser()
+  if (to.numeric==T) values <- as.numeric(values)
+  dat <- data.frame(values=values)
+
+  ggplot(dat, aes(x=values)) +
+    geom_histogram(size=0.5, colour="grey30", fill="grey80")
 }
 
 annotation_compass <- function(label,position='N',

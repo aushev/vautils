@@ -173,6 +173,15 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
   dots <- substitute(list(...));
 
+  if ('drive_id' %in% class(fnRead)){
+    message(' Opening as Google Sheet.');
+    drDownloaded <- googledrive::drive_download(fnRead, overwrite = T)
+    rez <- flexread(drDownloaded$local_path)
+    return(rez)
+  }
+
+
+
   if (!file.exists(fnRead)){stop('... File not found!\n');return(NULL);}
 
   if (is.null(filetype)){
@@ -2164,3 +2173,5 @@ dt_process <- function(inpDT,
   invisible(inpDT)
 }
 
+`%hascol%` <- function(dtInp, cols2search) cols2search %in% names(dtInp);
+`%hasnames%` <- function(dtInp, cols2search) cols2search %in% names(dtInp);

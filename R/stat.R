@@ -379,8 +379,22 @@ btmN <- function(x,thr){sort(unique(x), decreasing = F)[1:thr]}
 # `%bww%`  <- function(x,rng){return(x>rng[1]  & x<=rng[2])}
 # `%bbww%` <- function(x,rng){return(x>=rng[1] & x<=rng[2])}
 
+# Checks if `x` falls in any of the intervals provided in `rng`
+# vectorized for `x`
 mybetween <- function(x, rng, incbounds=F, NAbounds=NA){
+  if (length(rng)== 0) {
+    return(rep(F,length(x)))
+    # browser()
+    # stop('provided range is empty!')
+  }
+  # if (length(rng) != 2 & length(rng) != 2*length(x)) {
+  #   message('Length of rng: ' %+% length(rng))
+  #   message('Length of x: ' %+% length(x))
+  #   # browser()
+  #   # stop('range must be length 2 or 2x .')
+  # }
   n<-length(x);
+#  browser()
   lower <- ifelse1(length(rng)>2, rng[1:n],         rng[1]) # WTF!!! ifelse doesn't work!
   upper <- ifelse1(length(rng)>2, rng[(n+1):(2*n)], rng[2]) # WTF!!! ifelse doesn't work!
   between(x,lower,upper,incbounds=incbounds, NAbounds = NAbounds)
@@ -390,6 +404,9 @@ mybetween <- function(x, rng, incbounds=F, NAbounds=NA){
 #`%bbw%`  <- function(x,rng){mybetween(x,rng, incbounds=c(T,F));} # NOT IMPLEMENTED IN between()
 #`%bww%`  <- function(x,rng){mybetween(x,rng, incbounds=c(F,T));} # NOT IMPLEMENTED IN between()
 `%bbww%` <- function(x,rng){mybetween(x,rng, incbounds=T);}
+
+
+
 
 
 # usual duplicated() returns all but first, this one returns all:

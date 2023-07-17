@@ -63,12 +63,6 @@ show.envs.plus <- function(){
 # intersect
 "%&%" <- function(arg1, arg2){return(intersect(arg1, arg2));}
 
-"%!=%" <- function(arg1,arg2){
-  eq <- (arg1!=arg2);
-  eq[is.na(eq)] <- T;
-  return(eq)
-}
-
 
 "%~%" <- function(arg1, arg2){
   if (identical(sort(arg1, na.last=T), sort(arg2, na.last=T))) {return(TRUE);}
@@ -109,6 +103,14 @@ show.envs.plus <- function(){
   }
   rez;
 } # e. %==%:
+
+
+"%!=%" <- function(arg1,arg2){
+  # eq <- (arg1!=arg2);
+  # eq[is.na(eq)] <- T;
+  # return(eq)
+  return(!(arg1 %==% arg2))
+}
 
 
 # %inw% - returns positions of any of needles in hay ####
@@ -741,49 +743,29 @@ dt_forcedominant <- function(inpDT, colName, colNew=colName %+% '.dom',  sep=';'
 
 }
 
-forcedominant <- function(input, sep=';', ignore='', fast=F) {
-  list.single <- input[!input %~~% sep & (input %!in% ignore)]
-  list.amb <- input[input %~~% sep & (input %!in% ignore)] %>% strsplit(sep) %>% unlist()
-
-  dt.stat <- data.table(tab(c(list.single,list.amb), inpName = 'statCol'))
-  dt.stat <- dt.stat[statCol %in% list.amb,]
-  list.top <- dt.stat$statCol
+forcedominant <- function(input, sep=';', ignore='') {
   output <- input
 
-  list.top %<>% gsub('(','\\(',., fixed = T)
+  mask.amb <- (input %~~% sep) & (input %!in% ignore) # logical vector flagging all elements with `sep`
+  vec.amb    <- input[mask.amb]           # only elements with `sep`
+  list.amb   <- vec.amb %>% strsplit(sep)
+  vec.amb.split <- list.amb %>% unlist()
 
+  dt.stat <- data.table(tab(strsplitS(input,sep), inpName = 'statCol'))
+  list.top <- dt.stat[statCol %in% vec.amb.split,statCol]
+
+  output.amb <- output[mask.amb]
+
+ # browser()
   for (this.val in rev(list.top)){
-    output[sapply(X = strsplit(input,sep), FUN = function(x) this.val %in% x)] <- this.val
+    flag1 <- sapply(X=list.amb, FUN = function(x) this.val %in% x)
+    output.amb[flag1] <- this.val
   }
 
-  # if (fast==F){
-  #   for (this.val in rev(list.top)){
-  #     #cat('\n',this.val)
-  #     re1 <- '^' %+% this.val %+% sep
-  #     re2 <- sep %+% this.val %+% sep
-  #     re3 <- sep %+% this.val %+% '$'
-  #     output[input %~~% re1 | input %~~% re2 | input %~~% re3 ] <- this.val
-  #   }
-  # } else {
-  #   for (this.val in rev(list.top)){
-  #     output[input %~~% this.val] <- this.val
-  #   }
-  # }
+  output[mask.amb] <- output.amb
 
   (output)
 }
-
-# time1()
-# dt.our.crc %<>% forcedominant_dt('Physician.Name', ignore = '-')
-# time2()
-#
-# time1()
-# dt.our.crc[, Phys2:=forcedominant(Physician.Name, ignore = '-')]
-# time2()
-# #
-# View(dt.our.crc[Phys2!=Physician.Name.dom,.(Physician.Name,Phys2,Physician.Name.dom)])
-
-
 
 
 list_from_S4 <- function(S4obj){
