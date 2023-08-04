@@ -246,7 +246,7 @@ pmod1 <- function(inp, coefs, lab.x=NA, lab.y=0.4){
     if (!is.null(inp$data.survtable)) lab.x <- max(inp$data.survtable$time)*0.4
   }
   #message(lab.x)
-  inp$plot <- inp$plot + annotate('text', x=lab.x, y=lab.y, label=lab.s, hjust=0, size=5)
+  inp$plot <- inp$plot + ggplot2::annotate('text', x=lab.x, y=lab.y, label=lab.s, hjust=0, size=5)
   return(inp)
 }
 
