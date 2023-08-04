@@ -252,7 +252,8 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
   }
 
   if (length(rez)>0) cat('Success:', paste(dim(rez),collapse = ' x '));
-  if (!is.na(keyby)) setkeyv(rez, keyby)
+
+#  browser()
 
   if (!is.null(num)){
     for (.col in num){
@@ -269,6 +270,14 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
         }
     } # e. for
   } # e. if !is.null(char)
+
+  if (not.na(keyby)) {
+    if (sum(keyby %in% names(rez))>0) {
+      cat('\n Setting key column(s): ' %+% bold(keyby %&% names(rez)))
+      setkeyv(rez, keyby);
+    } else warning('Key columns not found!');
+  }
+
 
   if (clean.names == T) names(rez) <- cleannames(names(rez));
   if (deluseless == T) rez <- deluselesscol(rez);
@@ -522,7 +531,7 @@ cmp2dupflds.strict <- function(dtIn, f1, f2){
 }
 
 
-dt_del2dupflds <- function(dtIn, f1, f2){
+dt_del2dupflds <- function(dtIn, f1, f2, tolNA=F){
   if (is.numeric(f1) & is.numeric(f2)) diff <- cmp2fldsbynum(dtIn, f1, f2)
   else diff <- cmp2flds(dtIn, f1, f2);
   if (all(!is.na(diff) & diff==F)){
@@ -530,7 +539,7 @@ dt_del2dupflds <- function(dtIn, f1, f2){
     dtIn[,c(f2):=NULL]
   } else cat(' Not equal, skipping.');
 
-  invisible(dtIn)
+  invisible(diff)
 
 }
 
@@ -561,11 +570,16 @@ dt_deldupflds <- function(dtIn, f1=NULL, f2=NULL, tolNA=FALSE) { # delete one of
   if      (lf1==1 & lf2==1) {diff <- diff | dt_del2dupflds(dtIn, f1, f2, tolNA);}
 
   else if (lf1>0 & is.na(f2[1])) {
+    browser()
+
     for (i in f1) {diff <- diff | dt_del2dupflds(dtIn, i, NA, tolNA);}
   }
   else if (lf1>1 & lf2>1 & lf1==lf2) {
+    browser()
+
     for (i in 1:lf1) {
       diff <- diff | dt_del2dupflds(dtIn, f1[i], f2[i], tolNA);
+
     }
   }
   else stop('Unexpected number of arguments!');
@@ -1933,7 +1947,10 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x
     merge(dt1,dt2,    by=by,          all=all,all.x=all.x,all.y=all.y,...)
   )
 
-  if (!is.null(ori.key1) && ori.key1 %in% names(ret)) setkeyv(ret,ori.key1)
+  # browser()
+  if (!is.null(ori.key1) && all(ori.key1 %in% names(ret))) {
+    setkeyv(ret,ori.key1)
+  } else warning('Cant re-key the result table.')
 
   return(ret)
 }
@@ -1968,8 +1985,7 @@ rbindV <- function(...,fill=T){
     rbind(fill=fill,...),
 #    rbind(...),
     error = function(errmsg) {
-      warning(errmsg);
-          #browser()
+#browser()
 
       if (errmsg$message %~~% re.attr){
         itemN1 <- gsub(re.attr,'\\4',errmsg$message)
@@ -1985,7 +2001,7 @@ rbindV <- function(...,fill=T){
         message(sprintf('Item %s: column %s (%s): %s', itemN1, bold(col1), bold(name1), bold(class1)))
         message(sprintf('Item %s: column %s (%s): %s', itemN2, bold(col2), bold(name2), bold(class2)))
       }
-
+      stop(errmsg);
       return(NULL);
     } # e. error function
   ) # e. tryCatch

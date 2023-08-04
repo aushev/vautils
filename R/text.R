@@ -781,3 +781,11 @@ dates_test <- function(inpDT, colsKey='Case.ID', colsCheck=names(inpDT) %-% cols
   outDT.full %<>% setorderv(c(colsKey, 'Date'))
   return(outDT.full)
 }
+
+
+
+
+
+va_txt_initials <- function(inpTxt, collapse=''){
+  lapply(strsplit(inpTxt, ' '), FUN = function(x){paste0(substr1(x),collapse=collapse)}) %>% unlist
+}
