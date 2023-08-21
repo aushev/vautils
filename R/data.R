@@ -822,3 +822,7 @@ sourcermd <- function(fn_rmd){
   knitr::purl(fn_rmd, output=fn_r_out);
   source(fn_r_out)
 }
+
+
+
+splitvec <- function(vec, piece_length) split(vec, rep(1:(length(vec) %/% piece_length), each = piece_length, length.out = length(vec)))

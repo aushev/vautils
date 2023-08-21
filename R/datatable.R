@@ -531,7 +531,7 @@ cmp2dupflds.strict <- function(dtIn, f1, f2){
 }
 
 
-dt_del2dupflds <- function(dtIn, f1, f2, tolNA=F){
+dt_del2dupflds <- function(dtIn, f1, f2, tolNA=F, return.diff=F){
   if (is.numeric(f1) & is.numeric(f2)) diff <- cmp2fldsbynum(dtIn, f1, f2)
   else diff <- cmp2flds(dtIn, f1, f2);
   if (all(!is.na(diff) & diff==F)){
@@ -539,9 +539,17 @@ dt_del2dupflds <- function(dtIn, f1, f2, tolNA=F){
     dtIn[,c(f2):=NULL]
   } else cat(' Not equal, skipping.');
 
-  invisible(diff)
+  if (return.diff==T){
+    message(' Returning diff.')
+    invisible(diff)
+  } else {
+    message(' Returning dt.')
+    invisible(dtIn)
+  }
 
 }
+
+
 
 dt_delNamesakes <- function(dtIn, cols2scan=NULL){
   # browser()
@@ -1932,6 +1940,8 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x
     dt2 <- dt2[,c(names(dt2) %-% columns.ignore),with=F]
   }
 
+  message(' Second table has the following columns: ', paste(bold(names(dt2)),collapse = ', '))
+
   names.ovl <- (names(dt1) %&% names(dt2)) %-% c(argsList$by.x,  argsList$by, by.x, by) # argsList$byX,
   if (length(names.ovl)>0){
     message('Columns to delete and replace: ', paste(names.ovl, collapse = ', '))
@@ -2042,10 +2052,11 @@ dt_match_shrink <- function(dtTo, dtFrom, col.To, col.from, match.on){
 
 # if we opened a table where the header is not in the first row,
 # i.e. first n rows are filled with some other info and header is in the n+1-th row
-dt_reheader <- function(inpDT, n=1, clean.names=T){
+dt_reheader <- function(inpDT, n=1, dedup=T, clean.names=T){
   names_dt <- inpDT[n,] %>% unname() %>% unlist()
   inpDT <- inpDT[-seq_len(n),]
   names(inpDT) <- names_dt
+  if (dedup==T) inpDT %<>% dt_names_dedup_n()
   if (clean.names==T) inpDT %<>% dtcleannames()
   inpDT
 }

@@ -443,3 +443,17 @@ prop.test.str <- function(inpStr,...){
   message('Values: ',paste(percent(inpMtx[,1]/(inpMtx[,1]+inpMtx[,2])),collapse = ', ' ))
   prop.test(inpMtx, ...)
 }
+
+
+
+getmode <- function(x, all=F) {
+  freq_table <- table(x)
+  max_freq <- max(freq_table)
+
+  mode_values <- names(freq_table[freq_table==max_freq])
+  if (all==F & length(mode_values)>1){
+    return(sort(mode_values)[floor(length(mode_values)/2)+1])
+  } else return(mode_values)
+
+}
+
