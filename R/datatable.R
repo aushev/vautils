@@ -566,7 +566,7 @@ dt_delNamesakes <- function(dtIn, cols2scan=NULL){
     }
   }
   invisible(dtIn)
-}
+} # e. dt_delNamesakes()
 
 dt_deldupflds <- function(dtIn, f1=NULL, f2=NULL, tolNA=FALSE) { # delete one of 2 fields if they are "identical"
   if (is.null(f1)) f1 <- allDuplicated(names(dtIn));
@@ -1709,6 +1709,8 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL){ #inDT=dt.P
 
 }
 
+
+
 # renames duplicated column names
 # MyColumn MyColumn -> MyColumn.1 MyColumn.2
 # former dedup.colnames()
@@ -1716,11 +1718,16 @@ dt_names_dedup_n <- function(dtIn, sep='.'){
   inpnames <- names(dtIn)
   if (sum(duplicated(inpnames))==0) {message('No duplicate names;'); invisible(dtIn);}
   dupnames <- unique(inpnames[duplicated(inpnames)]);
-  for (dupname in dupnames){
-    positions <- which(inpnames==dupname);
-    newnames <- paste0(dupname,sep,seqlen(positions))
-    names(dtIn)[positions] <- newnames
-  }
+  message('Duplicated columns: ', paste(blue(dupnames), collapse = ', '))
+
+  # for (dupname in dupnames){
+  #   positions <- which(inpnames==dupname);
+  #   newnames <- paste0(dupname,sep,seqlen(positions))
+  #   names(dtIn)[positions] <- newnames
+  # }
+
+  names(dtIn) %<>% dedup_vals()
+
   invisible(dtIn);
 }
 
@@ -1942,7 +1949,9 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x
 
   message(' Second table has the following columns: ', paste(bold(names(dt2)),collapse = ', '))
 
-  names.ovl <- (names(dt1) %&% names(dt2)) %-% c(argsList$by.x,  argsList$by, by.x, by) # argsList$byX,
+#  browser()
+
+  names.ovl <- (names(dt1) %&% names(dt2)) %-% c(argsList$by.x,  argsList$by, by.x, by.y, by) # argsList$byX,
   if (length(names.ovl)>0){
     message('Columns to delete and replace: ', paste(names.ovl, collapse = ', '))
     dt1 <- copy(dt1)

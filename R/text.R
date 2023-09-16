@@ -599,6 +599,8 @@ strsplitS <- function(input,split=';',...){
   unlist(strsplit(input,split=split,...))
 }
 strsplitMin <- function(x,split=';',...) sapply(strsplit(x,split=split,...), min)
+strsplitMax <- function(x,split=';',...) sapply(strsplit(x,split=split,...), max)
+strsplitUnq <- function(x,split=';',...) sapply(strsplit(x,split=split,...), function(x) paste0(unique(x), collapse = split))
 
 toClip <- function(content){writeClipboard(replace.mult(as.character(content),NA,''))}
 fromClip <- function(...){readClipboard()}
@@ -789,3 +791,22 @@ dates_test <- function(inpDT, colsKey='Case.ID', colsCheck=names(inpDT) %-% cols
 va_txt_initials <- function(inpTxt, collapse=''){
   lapply(strsplit(inpTxt, ' '), FUN = function(x){paste0(substr1(x),collapse=collapse)}) %>% unlist
 }
+
+
+# dedup_vals(cs('abc def abc xyz')) -> abc.1 def abc.2 xyz
+dedup_vals <- function(inpvec, sep='.'){
+  if (sum(duplicated(inpvec))==0) {message('No duplicate values;'); invisible(inpvec);}
+  dupvals <- unique(inpvec[duplicated(inpvec)]);
+
+  for (val in dupvals){
+    positions <- which(inpvec==val);
+    newvals <- paste0(val,sep,seqlen(positions))
+    inpvec[positions] <- newvals
+  }
+  inpvec
+} # e. dedup_vals()
+
+
+
+
+
