@@ -808,5 +808,6 @@ dedup_vals <- function(inpvec, sep='.'){
 
 
 
-
+# nbspace <- rawToChar(as.raw(0xA0))
+nbspace <- "\u00A0"
 

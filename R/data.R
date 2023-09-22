@@ -432,7 +432,7 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
   #browser()
   obj.return <- NULL
   if (exists(objName)) {
-    message('Object ', objName,' already exists in the current environment.');
+    message('Object ', bold(objName),' already exists in the current environment.');
     return(get(objName));
   } else {
     message('Object ', bold(objName),' not found in the current environment. ');
@@ -466,8 +466,8 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
     if (unlist==T) {
       message(' Unfolding list of ' %+% bold(length(obj.return)) %+% ' objects: ' %+% paste(bold(blue(names(obj.return))),collapse = ', ') %+% '.\n')
       list2env(obj.return, envir = parent.frame(n=1L))
-      return(obj.return[[1]]);
-    } else return(obj.return);
+      invisible(obj.return[[1]]);
+    } else invisible(obj.return);
   }
 
 } # e. lazyBuild()
