@@ -445,15 +445,15 @@ prop.test.str <- function(inpStr,...){
 }
 
 
-
-getmode <- function(x, all=F) {
+getmode <- function(x, all=F, na.rm=T, noNULL=T) {
+  if (na.rm==T) x <- na.omit(x)
   freq_table <- table(x)
-  max_freq <- max(freq_table)
-
+  max_freq <- maxI(freq_table)
   mode_values <- names(freq_table[freq_table==max_freq])
   if (all==F & length(mode_values)>1){
-    return(sort(mode_values)[floor(length(mode_values)/2)+1])
-  } else return(mode_values)
-
+    retval <- sort(mode_values)[floor(length(mode_values)/2)+1]
+  } else retval <- mode_values
+  if (noNULL==T & is.null(retval)) retval <- NA
+  return(retval)
 }
 

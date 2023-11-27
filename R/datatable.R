@@ -169,17 +169,20 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
   if(is.na(fnRead)) stop(bold(italic('NA'))%+%' provided as input file name.');
 
-  message(' Opening ' %+% bold(fnRead));
+
+  msgOp <- ' Opening ' %+% bold(fnRead)
+  if (!is.null(sheetName)) msgOp <- msgOp %+% ' ' %+% bold(green(sheetName))
+  message(msgOp);
 
   dots <- substitute(list(...));
 
   if ('drive_id' %in% class(fnRead)){
     message(' Opening as Google Sheet.');
+    # browser()
     drDownloaded <- googledrive::drive_download(fnRead, overwrite = T)
     rez <- flexread(drDownloaded$local_path)
     return(rez)
   }
-
 
 
   if (!file.exists(fnRead)){stop('... File not found!\n');return(NULL);}
@@ -559,9 +562,10 @@ dt_delNamesakes <- function(dtIn, cols2scan=NULL){
     this.pos <- which(names(dtIn)==this.col)
     if (length(this.pos)==0) {cat(' not found!'); next;}
     if (length(this.pos)==1) {cat(' only one! '); next;}
-    cat(length(this.pos));
+    cat('n =',length(this.pos),' ');
+    cat(blue(paste(this.pos, collapse = ', ')));
     for (this.pos.last in rev(this.pos[-1])){
-      cat('\n   ', this.pos[1], 'vs', this.pos.last)
+      cat('\n    ', this.pos[1], 'vs', this.pos.last)
       dtIn %<>% dt_del2dupflds(this.pos[1],this.pos.last)
     }
   }
@@ -1387,12 +1391,12 @@ setnamessp <- function(dtIn, old, new, verbose=T){
   new <- new[foundOld]
 
   newDups <- new %in% names(dtIn); # if old_col is supposed to be renamed to new_col while new_col already exists in dtIn
-  if (sum(newDups)>0) warning('Warning! those column already existed: ', paste(bold(new[newDups]),collapse = ', '));
+  if (sum(newDups)>0) warning(' Warning! those column already existed: ', paste(bold(new[newDups]),collapse = ', '));
   if (sum(foundOld)>0){
     setnames(dtIn, old, new);
     #if (verbose) {cat(sum(foundOld), ' names changed:\nFrom:', old[foundOld], '\n  to:', new[foundOld], '\n');}
     if (verbose) {
-      cat(sum(foundOld), ' names changed:\n');
+      cat('\n',sum(foundOld), ' names changed:\n');
       cat(paste(bold(old),bold(new), sep = '\t=> ', collapse = '\n'), '\n');
     }
   }
@@ -1925,9 +1929,10 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 # warning('Function not tested thoroughly!')
 # warning('resulting table is re-keyed!')
 mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x=T, all.y=all, columns=NULL, columns.ignore=NULL,...){
- # browser()
+#  browser()
 
   ori.key1 <- key(dt1)
+  ori.columns <- columns; # needed if columns is passed as a named vector
 
   mc <- match.call(expand.dots = TRUE)
   argsList <- list(...)
@@ -1946,14 +1951,16 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x
     columns <- columns %-% columns.ignore;
     dt2 <- dt2[,c(names(dt2) %-% columns.ignore),with=F]
   }
+#  browser();
+  if (!is.null(names(ori.columns))) {dt2 %<>% setnamessp(ori.columns, names(ori.columns))}
 
-  message(' Second table has the following columns: ', paste(bold(names(dt2)),collapse = ', '))
+  cat('\n Second table has the following columns: ', paste(bold(names(dt2)),collapse = ', '))
 
 #  browser()
 
   names.ovl <- (names(dt1) %&% names(dt2)) %-% c(argsList$by.x,  argsList$by, by.x, by.y, by) # argsList$byX,
   if (length(names.ovl)>0){
-    message('Columns to delete and replace: ', paste(names.ovl, collapse = ', '))
+    cat('\n Columns to delete and replace: ', paste(bold(red(names.ovl)), collapse = ', '))
     dt1 <- copy(dt1)
     dt1[,c(names.ovl):=NULL]
   }
@@ -1968,8 +1975,9 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x
 
   # browser()
   if (!is.null(ori.key1) && all(ori.key1 %in% names(ret))) {
+    cat('\nSetting key: ', paste(blue(bold(ori.key1)), collapse = ', '))
     setkeyv(ret,ori.key1)
-  } else warning('Cant re-key the result table.')
+  } else cat('\n Cant re-key the result table.')
 
   return(ret)
 }
@@ -2211,3 +2219,98 @@ dt_process <- function(inpDT,
 
 `%hascol%` <- function(dtInp, cols2search) cols2search %in% names(dtInp);
 `%hasnames%` <- function(dtInp, cols2search) cols2search %in% names(dtInp);
+
+
+dt_set <- function(inputDT, newColName, condition=NA, construction){
+
+  ret_i <- NULL
+  ret_val <- eval(expr = parse(text = construction), envir=inputDT)
+
+  if (!is.na(condition)) {
+    ret_i <- which(eval(expr = parse(text=condition), envir=inputDT))
+    if (length(ret_val)>1) ret_val <- ret_val[ret_i]
+  }
+
+  set(
+    i = ret_i,
+    x = inputDT,
+    j = newColName,
+    value = ret_val
+  )
+}
+
+dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T){
+
+  mode.work.multi <- NA
+  if ('data.frame' %in% class(input)){
+    mode.work.multi <- FALSE
+    message('Input is a single table. Working in Single-Table mode.')
+  } else if ('list' %in% class(input)){
+    mode.work.multi <- TRUE
+    message('Input is a list. Working in Multi-Table mode.')
+  } else {
+    stop("Can't recognize input type. Must be either a single table, or list of tables. ")
+  }
+
+  ndx.pre <- which(names(dt.template)=='PreCondition')
+  ndx.post<- which(names(dt.template)=='PostCondition')
+
+  if (anyDuplicated(names(dt.template))>0) stop('Template table contains duplicated column names.')
+
+  if (length(ndx.pre)==0) stop('Template table must contain column called "PreCondition".')
+  if (length(ndx.post)==0)stop('Template table must contain column called "PostCondition".')
+  if (length(ndx.pre)>1)  stop('Template table must contain only 1 column called "PreCondition".')
+  if (length(ndx.post)>1) stop('Template table must contain only 1 column called "PostCondition".')
+  if (ndx.pre>ndx.post)   stop('"PreCondition" column must be before "PostCondition" column.')
+  if (ndx.post==ndx.pre+1)stop('There should be some columns between "PreCondition" and "PostCondition".')
+  cols.other <- names(dt.template)[(ndx.pre+1):(ndx.post-1)]
+  message('Following columns will be constructed: ', paste(bold(cols.other), collapse = ', '))
+
+  if (mode.work.multi==T & !dt.template %hasnames% 'Table') stop('For Multi-Table mode, template table must contain "Table" column.')
+  if (mode.work.multi==F & sum(not.na(dt.template$Table))>0 ) warning('Single-Table mode, "Table" column will be ignored!')
+
+  if (mode.work.multi==F) dt.this.dat <- copy(input)
+
+  dt.ret <- NULL
+  for (i in seqlen(nrow(dt.template))){
+    cat('\n', bold(blue(i)),'\t')
+    this.row <- dt.template[i]
+
+    if (mode.work.multi==T){
+      this.table_name <- this.row$Table
+      cat(bold(green(this.table_name)),'\t')
+      dt.this.dat <- copy(input[[this.table_name]])
+      if (is.null(dt.this.dat)) stop("Can't find table named ", this.table_name, "in the input list.")
+      cat(blue(nrow(dt.this.dat)),'\t')
+    }
+
+    cols.keep.this <- cols.keep
+
+    for (e.col in cols.other){
+      this.constr <- this.row[[e.col]]
+      if (is.null(this.constr)) next;
+      if (is.na(this.constr)) next;
+      cat(e.col,'=',this.constr,sep = '')
+      cols.keep.this %<>% c(e.col)
+      dt.this.dat <- dt_set(inputDT=dt.this.dat, condition=this.row$PreCondition, newColName = e.col, construction = this.constr)
+      if (char.all==T) {
+        # browser()
+        # dt.this.dat[[e.col]] <- as.character(dt.this.dat[[e.col]]) # for some reason this crashes R session!
+        tmp <- as.character(dt.this.dat[[e.col]])
+        data.table::set(dt.this.dat, j = e.col, value = tmp)
+      }
+      cat('\t')
+    }
+
+    dt.this.dat[, .tmp.PreCondition:=T]
+    if (not.na(this.row$PreCondition)) dt.this.dat[, .tmp.PreCondition := eval(expr = parse(text=this.row$PreCondition), envir=dt.this.dat)]
+
+    dt.this.dat[, .tmp.PostCondition:=T]
+    if (not.na(this.row$PostCondition)) dt.this.dat[, .tmp.PostCondition := eval(expr = parse(text=this.row$PostCondition), envir=dt.this.dat)]
+    #browser()
+    dt.add <- dt.this.dat[.tmp.PreCondition==T & .tmp.PostCondition==T, c(cols.keep.this %&% names(dt.this.dat)),with=F]
+    dt.ret %<>% rbindV(dt.add)
+  }
+  return(dt.ret)
+}
+

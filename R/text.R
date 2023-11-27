@@ -36,7 +36,10 @@ substrRight <- rightstr
 substr1 <- function(inpStr) {substring(inpStr,1,1)}
 
 strpad <- function(inpstr,padWidth, padSym=' ',padSide='right'){
-  pads <- strrep(padSym,padWidth - nchar(inpstr));
+  add_length <- padWidth - nchar(inpstr)
+  if (any(add_length<0)) warning('Some input strings are already longer than required string length! ')
+  add_length[add_length<0] <- 0
+  pads <- strrep(padSym,add_length);
   switch(padSide, right = paste0(inpstr,pads), left = paste0(pads, inpstr))
 }
 
@@ -604,6 +607,7 @@ strsplitUnq <- function(x,split=';',...) sapply(strsplit(x,split=split,...), fun
 
 toClip <- function(content){writeClipboard(replace.mult(as.character(content),NA,''))}
 fromClip <- function(...){readClipboard()}
+tromClip <- function(...){fromClip() %>% paste(collapse = '\n') %>% fread()}
 
 
 # this doesn't work in data.table, see https://stackoverflow.com/questions/72926127/
@@ -795,7 +799,10 @@ va_txt_initials <- function(inpTxt, collapse=''){
 
 # dedup_vals(cs('abc def abc xyz')) -> abc.1 def abc.2 xyz
 dedup_vals <- function(inpvec, sep='.'){
-  if (sum(duplicated(inpvec))==0) {message('No duplicate values;'); invisible(inpvec);}
+  if (sum(duplicated(inpvec))==0) {
+  #  message('No duplicate values;');
+    invisible(inpvec);
+  }
   dupvals <- unique(inpvec[duplicated(inpvec)]);
 
   for (val in dupvals){

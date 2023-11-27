@@ -254,10 +254,23 @@ pmod1 <- function(inp, coefs, lab.x=NA, lab.y=0.4){
 
 gg_labN <- function(inpPlot, yPos=Inf, vjust=1, ...){
   grpX <- as_label(inpPlot$mapping$x)
+  grpY <- as_label(inpPlot$mapping$y)
   if (is.null(yPos)) yPos <- 1.1 * suppressWarnings(ggplot_build(inpPlot)$layout$panel_params[[1]]$y.range[2])
   data1 <- inpPlot$data[, .(lblN='N='%+%.N), by=c(grpX)]
   #setnames(data1,'get',grpX)
   inpPlot + geom_text(aes(label=lblN,y=yPos, fill='blue', color='blue',vjust=vjust), data = data1, ...)
+#  inpPlot + geom_text(aes(label=lblN,y=yPos), data = data1, ...)
+}
+
+gg_labNb <- function(inpPlot, yPos=Inf, vjust=0, ...){
+  grpX <- as_label(inpPlot$mapping$x)
+  grpY <- as_label(inpPlot$mapping$y)
+  if (is.null(yPos)) yPos <- 1.1 * suppressWarnings(ggplot_build(inpPlot)$layout$panel_params[[1]]$y.range[2])
+  data1 <- inpPlot$data[, .(N=sumI(get(grpY))), by=c(grpX)]
+  data1[,lblN := 'N='%+% N]
+  #setnames(data1,'get',grpX)
+#  inpPlot + geom_text(aes(label=lblN,y=yPos, fill='blue', color='blue',vjust=vjust), data = data1, ...)
+  inpPlot + annotate('text',label=data1$lblN,x = data1$yearS, y=data1$N, vjust=vjust)
 #  inpPlot + geom_text(aes(label=lblN,y=yPos), data = data1, ...)
 }
 

@@ -330,7 +330,10 @@ seqlen <- function(obj){
   return(seq_len(length(obj)));
 }
 
-replace.mult <- function(inpvec, from, to, case.sensitive=T){
+replace.mult <- function(inpvec, from, to, case.sensitive=T, char.only=T){
+  if (char.only==T){
+    if (! 'character' %in% class(inpvec)) {warning('Non-character input, will not work'); return(inpvec);}
+  }
   fun.compare <- ifelse(case.sensitive==T, `%==%`, function(a,b){toupper(a) %==% toupper(b)})
 
   stopifnot(length(from)>0)
