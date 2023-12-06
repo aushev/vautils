@@ -180,7 +180,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     message(' Opening as Google Sheet.');
     # browser()
     drDownloaded <- googledrive::drive_download(fnRead, overwrite = T)
-    rez <- flexread(drDownloaded$local_path)
+    rez <- do.call(flexread, args = c(list(fnRead = drDownloaded$local_path),as.list(match.call()[-(1:2)])))
     return(rez)
   }
 
@@ -1928,10 +1928,10 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 # browser()
 # warning('Function not tested thoroughly!')
 # warning('resulting table is re-keyed!')
-mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x=T, all.y=all, columns=NULL, columns.ignore=NULL,...){
-#  browser()
+mergeR <- function(dtX, dtY, by.x=key(dtX), by.y=key(dtY), by=NULL, all=F, all.x=T, all.y=all, columns=NULL, columns.ignore=NULL,...){
+#   browser()
 
-  ori.key1 <- key(dt1)
+  ori.keyX <- key(dtX)
   ori.columns <- columns; # needed if columns is passed as a named vector
 
   mc <- match.call(expand.dots = TRUE)
@@ -1945,38 +1945,46 @@ mergeR <- function(dt1, dt2, by.x=key(dt1), by.y=key(dt2), by=NULL, all=F, all.x
   # if (is.null(all.x) &  ('all.y' %in% names(mc) | 'all' %in% names(mc))) {all.x <- FALSE;}
 
   if (!is.null(by)) {by.x <- by.y <- by; }
-  if (!is.null(columns)) {columns <- c(columns,by,by.y) %&% names(dt2); dt2 <- dt2[,c(columns),with=F]}
+  if (is.null(by.x)) stop('Key column for the first table is not provided and not defined.')
+  if (is.null(by.y)) {message('Key column for the second table is not provided and not defined, will try to use key from the first column'); by.y <- by.x;}
+
+  keysX.notfound <- by.x %-% names(dtX)
+  keysY.notfound <- by.y %-% names(dtY)
+  if (length(keysX.notfound)>0) stop("In the first table, can't find column names to be used as a key: ", paste(bold(keysX.notfound), collapse = ', '))
+  if (length(keysY.notfound)>0) stop("In the second table, can't find column names to be used as a key: ", paste(bold(keysY.notfound), collapse = ', '))
+
+  if (!is.null(columns)) {columns <- c(columns,by,by.y) %&% names(dtY); dtY <- dtY[,c(columns),with=F]}
   if (!is.null(columns.ignore)) {
     #browser()
     columns <- columns %-% columns.ignore;
-    dt2 <- dt2[,c(names(dt2) %-% columns.ignore),with=F]
+    dtY <- dtY[,c(names(dtY) %-% columns.ignore),with=F]
   }
 #  browser();
-  if (!is.null(names(ori.columns))) {dt2 %<>% setnamessp(ori.columns, names(ori.columns))}
+  if (!is.null(names(ori.columns))) {dtY %<>% setnamessp(ori.columns, names(ori.columns))}
 
-  cat('\n Second table has the following columns: ', paste(bold(names(dt2)),collapse = ', '))
+  cat('\n Second table has the following columns: ', paste(bold(names(dtY)),collapse = ', '))
 
 #  browser()
 
-  names.ovl <- (names(dt1) %&% names(dt2)) %-% c(argsList$by.x,  argsList$by, by.x, by.y, by) # argsList$byX,
+  names.ovl <- (names(dtX) %&% names(dtY)) %-% c(argsList$by.x,  argsList$by, by.x, by.y, by) # argsList$byX,
   if (length(names.ovl)>0){
     cat('\n Columns to delete and replace: ', paste(bold(red(names.ovl)), collapse = ', '))
-    dt1 <- copy(dt1)
-    dt1[,c(names.ovl):=NULL]
+    dtX <- copy(dtX)
+    dtX[,c(names.ovl):=NULL]
   }
 
   ret <- ifelse1(
     is.null(by),
-    # merge(dt1,dt2,by.x=by.x,by.y=by.y,all.x=all.x,...),
-    # merge(dt1,dt2,    by=by,          all.x=all.x,...)
-    merge(dt1,dt2,by.x=by.x,by.y=by.y,all=all,all.x=all.x,all.y=all.y,...),
-    merge(dt1,dt2,    by=by,          all=all,all.x=all.x,all.y=all.y,...)
+    # merge(dtX,dtY,by.x=by.x,by.y=by.y,all.x=all.x,...),
+    # merge(dtX,dtY,    by=by,          all.x=all.x,...)
+    merge(dtX,dtY,by.x=by.x,by.y=by.y,all=all,all.x=all.x,all.y=all.y,...),
+    merge(dtX,dtY,    by=by,          all=all,all.x=all.x,all.y=all.y,...)
   )
 
   # browser()
-  if (!is.null(ori.key1) && all(ori.key1 %in% names(ret))) {
-    cat('\nSetting key: ', paste(blue(bold(ori.key1)), collapse = ', '))
-    setkeyv(ret,ori.key1)
+  if (!is.null(ori.keyX) && all(ori.keyX %in% names(ret))) {
+    cat('\nSetting key: ', paste(blue(bold(ori.keyX)), collapse = ', '))
+    setkeyv(ret,ori.keyX)
   } else cat('\n Cant re-key the result table.')
 
   return(ret)

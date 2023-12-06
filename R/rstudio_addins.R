@@ -87,8 +87,15 @@ expFun <- function(){
 clipboard2selected <- function(){
   execute <- TRUE;
   sel_text <- getrseltxt();
-  if (sel_text=='') {sel_text <- 'list1'; if (exists('list1')) execute <- FALSE;}
-  rstudioapi::sendToConsole(sel_text %+% ' <- readClipboard()', execute = execute)
+  if (sel_text=='') {sel_text <- 'vecB'; if (exists('vecB')) execute <- FALSE; message('Variable already exists, check before executing.')}
+  rstudioapi::sendToConsole(sel_text %+% ' <- fromClip()', execute = execute)
+}
+
+selected2clipboard <- function(){
+  execute <- TRUE;
+  sel_text <- getrseltxt();
+#  if (sel_text=='') {sel_text <- 'list1'; if (exists('list1')) execute <- FALSE;}
+  rstudioapi::sendToConsole('(' %+% sel_text %+% ') %>% toClip()', execute = execute)
 }
 
 flexread_clip <- function(){

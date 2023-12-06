@@ -22,3 +22,8 @@ Name: Clipboard to selection
 Description: assigns clipboard contents to selected variable
 Binding: clipboard2selected
 Interactive: false
+
+Name: Selection to Clipboard
+Description: pastes value of selected variable to the clipboard
+Binding: selected2clipboard
+Interactive: false
