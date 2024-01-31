@@ -48,7 +48,15 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
   if (!keepN) {row.names(df1) <- NULL;}
 
   dt.ret <- data.table(df1);
-  colVal <- names(dt.ret)[1];
+  colVal <- first(names(dt.ret))
+  colFreq <- last(names(dt.ret))
+
+#      browser()
+
+#  stopifnot(colVal=='input')
+  stopifnot(colFreq=='Freq')
+  if (colVal!='input' & (not.na(thrRank) | not.na(thrNum))) stop('Not implemented yet!')
+
 
   if (not.na(thrRank)){
     dt.ret[, rankFreq:=rank(-Freq)]
@@ -60,7 +68,8 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
   }
 
   if (not.na(thrNum)){
-    dt.ret[as.numeric(as.character(get(colVal)))>thrNum, `:=`(tmp_cat_Other=T,Freq=sumI(Freq) )]
+#    browser()
+    dt.ret[as.numeric(as.character(get(colFreq)))<thrNum, `:=`(tmp_cat_Other=T,Freq=sumI(Freq) )]
     dt.ret[tmp_cat_Other==T, c(colVal):=thrLabel]
     dt.ret <- unique(dt.ret)
     dt.ret[,tmp_cat_Other:=NULL]

@@ -77,6 +77,7 @@ inexcel <- function(dtIn, row.names=F, na='', name_dt=NA, quotize=c(), ...){
 
 
 inexcel2 <- function(dtIn, row.names=F, na='', name_dt=NA, ...){
+#  browser()
   if (is.na(name_dt)) name_dt <- deparse(substitute(dtIn))
   name_date <- format(Sys.time(), '%Y%m%d_%Hh%Mm%Ss')
   name_fn <- name_date %+% '_' %+% name_dt %+% '_'
@@ -1928,7 +1929,7 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 # browser()
 # warning('Function not tested thoroughly!')
 # warning('resulting table is re-keyed!')
-mergeR <- function(dtX, dtY, by.x=key(dtX), by.y=key(dtY), by=NULL, all=F, all.x=T, all.y=all, columns=NULL, columns.ignore=NULL,...){
+mergeR <- function(dtX, dtY, by.x=key(dtX), by.y=key(dtY), by=NULL, all=F, all.x=T, all.y=all, columns=NULL, columns.ignore=NULL, uniqueY=TRUE,...){
 #   browser()
 
   ori.keyX <- key(dtX)
@@ -1972,6 +1973,8 @@ mergeR <- function(dtX, dtY, by.x=key(dtX), by.y=key(dtY), by=NULL, all=F, all.x
     dtX <- copy(dtX)
     dtX[,c(names.ovl):=NULL]
   }
+
+  if (uniqueY==TRUE) dtY %<>% unique()
 
   ret <- ifelse1(
     is.null(by),

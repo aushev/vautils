@@ -165,7 +165,7 @@ paste0notNA <- function(arg1, arg2){
 pasteNotNA <- function(...,collapse=', '){
   arglist <- list(...);
   arglens <- sapply(arglist, length)
-  browser()
+#  browser()
   if (all(arglens<2)) return(paste(na.omit(unlist(arglist)),collapse=collapse))
   maxlen <- max(arglens)
 
