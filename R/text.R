@@ -605,6 +605,12 @@ strsplitMin <- function(x,split=';',...) sapply(strsplit(x,split=split,...), min
 strsplitMax <- function(x,split=';',...) sapply(strsplit(x,split=split,...), max)
 strsplitUnq <- function(x,split=';',...) sapply(strsplit(x,split=split,...), function(x) paste0(unique(x), collapse = split))
 
+
+if (Sys.info()['sysname'] != 'Windows'){
+  readClipboard <- clipr::read_clip
+  writeClipboard<- clipr::write_clip
+}
+
 toClip <- function(content){writeClipboard(replace.mult(as.character(content),NA,''))}
 fromClip <- function(...){readClipboard()}
 tromClip <- function(...){fromClip() %>% paste(collapse = '\n') %>% fread()}
