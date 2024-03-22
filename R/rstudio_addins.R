@@ -125,7 +125,7 @@ flexread_clip <- function(){
 
 
 
-duView <- function(x, columns=NULL,ignoreColumns=NULL) {
+duView <- function(x, columns=NULL,ignoreColumns=columns) {
   dt.tmp <<- x;
   View(deluselesscol(setcolorderV(dt.tmp,columns), ignoreColumns = ignoreColumns), title = deparse(substitute(x)))
 }

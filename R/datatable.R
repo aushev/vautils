@@ -2325,3 +2325,16 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T){
   return(dt.ret)
 }
 
+
+
+
+dt_difftime_num <- function(inpDT){
+  for (this.col in names(inpDT)){
+    if ('difftime' %in% class(inpDT[[this.col]])) {
+#      cat('\n',bold(this.col),' was difftime. ')
+      cat(bold(this.col),' ')
+      inpDT[[this.col]] %<>% as.numeric()
+    }
+  }
+  return(inpDT)
+}

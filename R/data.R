@@ -708,9 +708,8 @@ TorNA <- NAorT
 ForNA <- NAorF
 sumnotna <- function(x) sum(!is.na(x))
 
-
-
-
+TnotNA <- function(x) ( x & !is.na(x))
+FnotNA <- function(x) (!x & !is.na(x))
 
 
 

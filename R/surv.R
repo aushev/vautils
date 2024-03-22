@@ -51,7 +51,7 @@ summarize.cox <- function(inp.cox, filtS){
 }
 
 fitsum <- function(inpFit, cox.fun=coxph){
-#   browser()
+ #  browser()
   cox.obj <- cox.fun(as.formula(inpFit$call$formula), data = eval(inpFit$call$data))
 
   cox.obj.sum <- summary(cox.obj)
