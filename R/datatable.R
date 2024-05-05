@@ -2263,6 +2263,18 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T){
     stop("Can't recognize input type. Must be either a single table, or list of tables. ")
   }
 
+
+  if (! dt.template %hasnames% 'PreCondition'){
+    warning("Column 'PreCondition' not found.")
+    dt.template %<>% dt_addcols('PreCondition', defval=NA_character_)
+    dt.template %<>% setcolorderV('PreCondition')
+  }
+
+  if (! dt.template %hasnames% 'PostCondition'){
+    warning("Column 'PostCondition' not found.")
+    dt.template %<>% dt_addcols('PostCondition', defval=NA_character_)
+  }
+
   ndx.pre <- which(names(dt.template)=='PreCondition')
   ndx.post<- which(names(dt.template)=='PostCondition')
 
@@ -2291,7 +2303,7 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T){
       this.table_name <- this.row$Table
       cat(bold(green(this.table_name)),'\t')
       dt.this.dat <- copy(input[[this.table_name]])
-      if (is.null(dt.this.dat)) stop("Can't find table named ", this.table_name, "in the input list.")
+      if (is.null(dt.this.dat)) stop("Can't find table named ", bold(this.table_name), " in the input list.")
       cat(blue(nrow(dt.this.dat)),'\t')
     }
 

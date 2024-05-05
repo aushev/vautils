@@ -179,12 +179,14 @@ gg_color_hue <- function(n) {
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
-gg_vec2colors <- function(inpVec, levs=sort(unique(inpVec)), shift=0L   ){
+gg_vec2colors <- function(inpVec, levs=sort(unique(inpVec)), shift=0L, valNA=NA){
   retval <- NULL
-  inpF <- factor(inpVec, levels=levs)
-  N <- length(levels(inpF))
+  inpF <- factors(inpVec, newlevels=levs)
+#   N0 <- length(start) # number of colors already provided
+  N  <- length(levels(inpF)) # total number of levels/colors
   if (is.numeric(shift) & length(shift)==1) retval <- gg_color_hue(N+shift)[as.numeric(inpF)+shift]
   if (is.character(shift) | length(shift)>1) retval <- shift[as.numeric(inpF)]
+  if (not.na(valNA)) retval[is.na(retval)] <- valNA
 
 #  retval <- gg_color_hue(N+shift)[as.numeric(inpF)+shift]
   return(retval)

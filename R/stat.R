@@ -122,6 +122,9 @@ dt4mosaic <- function(inpDT, byX, byY){
 }
 
 plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F, showN=T, leg.title=NA){
+  if (!is.null(byX) & !is.null(byY)){
+    inpDTmosaic %<>% dt4mosaic(byX, byY)
+  }
   if (is.null(byX)) byX <- names(inpDTmosaic)[1]
   if (is.null(byY)) byY <- names(inpDTmosaic)[2]
   inpDTmosaic[,grpSize:=grpSize/del]
