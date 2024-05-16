@@ -679,7 +679,7 @@ get1val <- function(input, lenAll=c(0,1,Inf), mult='first', sep=';'){
 
 factors <- function(input,newlevels,...){
   cur.levels <- unique(as.character(input))
-  other.levels <- cur.levels %-% newlevels
+  other.levels <- cur.levels %-% as.character(newlevels)
   return(factor(input, levels = c(newlevels,other.levels),...))
 }
 

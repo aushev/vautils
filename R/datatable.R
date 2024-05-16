@@ -491,10 +491,9 @@ cmp2fldsbynum <- function(dtIn, f1n, f2n, verbose=F){
   if (class(values1)=='Date') {values1 <- as.character(values1);}
   if (class(values2)=='Date') {values2 <- as.character(values2);}
 
-  diff <- (values1 != values2);
+  diff <- (values1 %!=% values2);
 
   #diff[is.na(diff)] <- T
-  diff[is.na(values1) & is.na(values2)] <- F
 
   invisible(diff);
 }
@@ -523,6 +522,8 @@ cmp2flds <- function(dtIn, f1, f2, verbose=F){  # compares 2 fields
   if (length(f1n)>1){warning('Multiple fields named ', f1);}
   if (length(f2n)>1){warning('Multiple fields named ', f2);}
 
+#  browser()
+
   invisible(cmp2fldsbynum(dtIn, f1n[1], f2n[1], verbose=verbose));
 } # e. cmp2flds()
 
@@ -536,8 +537,12 @@ cmp2dupflds.strict <- function(dtIn, f1, f2){
 
 
 dt_del2dupflds <- function(dtIn, f1, f2, tolNA=F, return.diff=F){
-  if (is.numeric(f1) & is.numeric(f2)) diff <- cmp2fldsbynum(dtIn, f1, f2)
-  else diff <- cmp2flds(dtIn, f1, f2);
+#  browser()
+  if (is.numeric(f1) & is.numeric(f2))
+    diff <- cmp2fldsbynum(dtIn, f1, f2)
+  else
+    diff <- cmp2flds(dtIn, f1, f2);
+
   if (all(!is.na(diff) & diff==F)){
     cat(' Equal, deleting: ', f2)
     dtIn[,c(f2):=NULL]

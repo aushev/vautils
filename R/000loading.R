@@ -201,6 +201,7 @@ loadv <- function(file=NULL, envir = parent.frame(n=1L),...){
   load(file, verbose=T, envir = envir, ...)
 }
 
+loadvc <- function()loadv(fromClip(), envir = parent.frame(n=1L))
 
 loadv1 <- function(fnRdat, index=1, verbose=T){
   message('Loading file: ' %+% bold(fnRdat))
