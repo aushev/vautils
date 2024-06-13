@@ -361,7 +361,7 @@ geom_box_custom <- function(inpDT, byX, colY, q=0.25, barwidth=0.5, ...){
 }
 
 
-gghist <- function(inpDT,val.col,col.mean='red',col.med='green',lg10=NA,...){
+gghist <- function(inpDT,val.col,col.mean='red',col.med='green',lg10=NA,col.line='grey30',col.fill='grey80',...){
   values <- as.numeric(inpDT[[val.col]])
   val.median <- median(values,na.rm=T)
   val.mean <- mean(values,na.rm=T)
@@ -371,7 +371,7 @@ gghist <- function(inpDT,val.col,col.mean='red',col.med='green',lg10=NA,...){
   pHist <-
     inpDT %>%
     ggplot(aes(x=values)) +
-    geom_histogram(...) +
+    geom_histogram(colour=col.line,fill=col.fill,...) +
     geom_vline(xintercept = c(val.05,val.95), linetype='dashed', col='darkgrey')+
     annotate('text', x=val.05, y=Inf, label=round(val.05,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)+
     annotate('text', x=val.95, y=Inf, label=round(val.95,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)+

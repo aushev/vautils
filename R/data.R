@@ -584,15 +584,17 @@ minI <- function(inp){
   return(min(inp))
 }
 
-medianI <- function(inp){
+medianI <- function(inp, digs=NA){
   inp <- na.omit(inp)
   if (length(inp)==0) {
     return(ifelse('integer' %in% class(inp), NA_integer_, NA_real_))
   }
-  return(median(inp))
+  retval <- median(inp)
+  if (not.na(digs)) retval <- round(retval, digits=digs)
+  return(retval)
 }
 
-meanI <- function(inp){
+meanI <- function(inp, digs=NA){
   inp <- na.omit(inp)
   if (length(inp)==0) {
     return(match.fun(paste0('as.', class(inp)[[1]]))(NA)); # don't use return(`class<-`(NA, class(inp))) !!!
@@ -600,7 +602,10 @@ meanI <- function(inp){
     # if ('Date' %in% class(inp)) return(as.Date(NA))
     # return(NA_real_)
   }
-  return(mean(inp))
+  retval <- mean(inp)
+  if (not.na(digs)) retval <- round(retval, digits=digs)
+
+  return(retval)
 }
 
 sumI <- function(...) sum(..., na.rm=T)

@@ -302,7 +302,7 @@ add_q <- function(inpDT, inpCols, q=10L, verbose=F){
 }
 
 
-contingency <- function(inpDT, colTest, colReal, valNeg, valPos, percDigits=1){
+contingency <- function(inpDT, colTest, colReal, valNeg=c(F,F), valPos=c(T,T), percDigits=1){
   inpDT <- copy(inpDT)
   valNegTest <- valNeg[[1]]
   valNegReal <- valNeg[[2]]
