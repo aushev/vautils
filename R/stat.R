@@ -391,6 +391,67 @@ btmN <- function(x,thr){sort(unique(x), decreasing = F)[1:thr]}
 # `%bww%`  <- function(x,rng){return(x>rng[1]  & x<=rng[2])}
 # `%bbww%` <- function(x,rng){return(x>=rng[1] & x<=rng[2])}
 
+# between() is forked from data.table::between
+between <- function (x, lower, upper, incbounds = TRUE, NAbounds = TRUE,
+          check = FALSE)
+{
+  if (is.logical(x)) stop("between has been passed an argument x of type logical")
+  if (is.logical(lower)) lower = as.integer(lower)
+  if (is.logical(upper)) upper = as.integer(upper)
+  is.px = function(x) inherits(x, "POSIXct")
+  is.i64 = function(x) inherits(x, "integer64")
+  if (is.px(x) && (is.character(lower) || is.character(upper))) {
+    tz = attr(x, "tzone", exact = TRUE)
+    if (is.null(tz)) tz = ""
+    if (is.character(lower)) lower = tryCatch(as.POSIXct(lower, tz = tz), error = function(e) stop("'between' function the 'x' argument is a POSIX class while '%s' was not, coercion to POSIX failed with: %s", "lower", e$message))
+    if (is.character(upper)) upper = tryCatch(as.POSIXct(upper, tz = tz), error = function(e) stopf("'between' function the 'x' argument is a POSIX class while '%s' was not, coercion to POSIX failed with: %s", "upper", e$message))
+    stopifnot(is.px(x), is.px(lower), is.px(upper))
+  }
+
+  if (is.px(x) && is.px(lower) && is.px(upper)) {
+    tzs = sapply(list(x, lower, upper), function(x) {
+      tt = attr(x, "tzone", exact = TRUE)
+      if (is.null(tt))
+        ""
+      else tt
+    })
+    if (tzs[2L] != tzs[3L]) {
+      stop("'between' lower= and upper= are both POSIXct but have different tzone attributes: %s. Please align their time zones.", data.table:::brackify(tzs[2:3], quote = TRUE))
+    }
+    if (tzs[1L] != tzs[2L]) {
+      message("'between' arguments are all POSIXct but have mismatched tzone attributes: %s. The UTC times will be compared.", data.table:::brackify(tzs, quote = TRUE))
+    }
+  }
+  if (is.i64(x)) {
+    if (!requireNamespace("bit64", quietly = TRUE)) stop("trying to use integer64 class when 'bit64' package is not installed")
+    if (!is.i64(lower) && is.numeric(lower)) lower = bit64::as.integer64(lower)
+    if (!is.i64(upper) && is.numeric(upper)) upper = bit64::as.integer64(upper)
+  }
+  is.supported = function(x) is.numeric(x) || is.character(x) || is.px(x)
+  if (is.supported(x) && is.supported(lower) && is.supported(upper) && length(incbounds)==1L) {
+    .Call(Cbetween, x, lower, upper, incbounds, NAbounds, check)
+  }
+  else {
+    if (isTRUE(getOption("datatable.verbose")))
+      cat("optimised between not available for this data type, fallback to slow R routine\n")
+    if (isTRUE(NAbounds) && (anyNA(lower) || anyNA(upper)))
+      stop("Not yet implemented NAbounds=TRUE for this non-numeric and non-character type")
+    if (check && any(lower > upper, na.rm = TRUE))
+      stop("Some lower>upper for this non-numeric and non-character type")
+    if (incbounds %===% T) {
+      x >= lower & x <= upper
+    } else if (incbounds %===% T){
+      x > lower & x < upper
+    } else if (incbounds %===% c(T,F)){
+      x >= lower & x < upper
+    } else if (incbounds %===% c(F,T)){
+      x > lower & x <= upper
+    } else stop('Unexpected combination! ')
+  }
+}
+
+
+
 # Checks if `x` falls in any of the intervals provided in `rng`
 # vectorized for `x`
 mybetween <- function(x, rng, incbounds=F, NAbounds=NA){
@@ -413,8 +474,8 @@ mybetween <- function(x, rng, incbounds=F, NAbounds=NA){
 }
 
 `%bw%`   <- function(x,rng){mybetween(x,rng, incbounds=F);}
-#`%bbw%`  <- function(x,rng){mybetween(x,rng, incbounds=c(T,F));} # NOT IMPLEMENTED IN between()
-#`%bww%`  <- function(x,rng){mybetween(x,rng, incbounds=c(F,T));} # NOT IMPLEMENTED IN between()
+`%bbw%`  <- function(x,rng){mybetween(x,rng, incbounds=c(T,F));}
+`%bww%`  <- function(x,rng){mybetween(x,rng, incbounds=c(F,T));}
 `%bbww%` <- function(x,rng){mybetween(x,rng, incbounds=T);}
 
 

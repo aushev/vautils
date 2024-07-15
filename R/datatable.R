@@ -2255,7 +2255,9 @@ dt_set <- function(inputDT, newColName, condition=NA, construction){
   )
 }
 
-dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T){
+
+
+dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requireTable=T){
 
   mode.work.multi <- NA
   if ('data.frame' %in% class(input)){
@@ -2308,7 +2310,13 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T){
       this.table_name <- this.row$Table
       cat(bold(green(this.table_name)),'\t')
       dt.this.dat <- copy(input[[this.table_name]])
-      if (is.null(dt.this.dat)) stop("Can't find table named ", bold(this.table_name), " in the input list.")
+      if (is.null(dt.this.dat)) {
+        msg_text <- "Can't find table named " %+% bold(this.table_name) %+% " in the input list."
+        if (requireTable==T) {
+          stop(msg_text)
+        } else warning(msg_text)
+        next;
+      }
       cat(blue(nrow(dt.this.dat)),'\t')
     }
 
