@@ -12,8 +12,8 @@ cs <- function(inputstr, sep=",", fix=T, nonewlines=T){
   if (length(inputstr)==0) return(inputstr);
   if (missing(sep)){
     sep <- ' '
-    if (inputstr[[1]] %~~% ',')  {sep=",";}
-    if (inputstr[[1]] %~~% '\t') {sep="\t";}
+    if (any(inputstr %~~% ','))  {sep=",";}
+    if (any(inputstr %~~% '\t')) {sep="\t";}
   }
   if (nonewlines) inputstr <- gsub("[\n\r]+", sep, inputstr);
   rez <- unlist(strsplit(inputstr, sep, fixed=fix));

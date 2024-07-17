@@ -429,7 +429,7 @@ between <- function (x, lower, upper, incbounds = TRUE, NAbounds = TRUE,
   }
   is.supported = function(x) is.numeric(x) || is.character(x) || is.px(x)
   if (is.supported(x) && is.supported(lower) && is.supported(upper) && length(incbounds)==1L) {
-    .Call(Cbetween, x, lower, upper, incbounds, NAbounds, check)
+    .Call(data.table:::Cbetween, x, lower, upper, incbounds, NAbounds, check)
   }
   else {
     if (isTRUE(getOption("datatable.verbose")))
@@ -440,7 +440,7 @@ between <- function (x, lower, upper, incbounds = TRUE, NAbounds = TRUE,
       stop("Some lower>upper for this non-numeric and non-character type")
     if (incbounds %===% T) {
       x >= lower & x <= upper
-    } else if (incbounds %===% T){
+    } else if (incbounds %===% F){
       x > lower & x < upper
     } else if (incbounds %===% c(T,F)){
       x >= lower & x < upper
