@@ -168,7 +168,8 @@ ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, device=NULL, ...){
     ggsave(fn, inpPlot, device=device, ...)
   }
   if (exists('OUT') & OUT==1) {message("Saved but won't be open. "); return(FALSE);}
-  ret <- system(command = paste0('cmd /C "', fn, '"'), wait = F);
+  cmd_str <- ifelse(Sys.info()['sysname'] == 'Windows', 'cmd /C "', 'open "')
+  ret <- system(command = paste0(cmd_str, fn, '"'), wait = F);
 #  browser()
 }
 
