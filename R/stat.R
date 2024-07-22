@@ -121,7 +121,7 @@ dt4mosaic <- function(inpDT, byX, byY){
   return(dt.stat)
 }
 
-plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F, showN=T, leg.title=NA){
+plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F, showN=T, leg.title=NA, compare=NA){
   if (!is.null(byX) & !is.null(byY)){
     inpDTmosaic %<>% dt4mosaic(byX, byY)
   }
@@ -161,6 +161,20 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
   if (!is.null(colors)) p <- p + scale_fill_manual(values = colors, name=byY)
   if (scaleY==F) p <- p + theme(axis.text.y = element_blank())
   if (showN==T)  p <- p + geom_text(aes(label=Freq, y=y1))
+
+  if (not.na(compare)){
+#    browser()
+    dt.stat1 <- inpDTmosaic[get(byY)==compare,c(byX,'Freq','grpN','nP','relP'),with=F]
+    print(dt.stat1)
+
+    dt.stat2 <- inpDTmosaic[,.(byX=get(byX),byY=get(byY),Freq)]
+    tab2 <- dcast(as.data.table(dt.stat2),byX~byY,value.var = 'Freq', fill=0)
+    mtx4fisher <- as.matrix(tab2[,],rownames = 'byX')
+    # mtx4fisher <- as.matrix(tab2[Test!=valOther,],rownames = 'Test')
+    print(fisher.test(mtx4fisher))
+
+  }
+
   p + xlab(byX) + ylab(NULL)
 }
 
@@ -302,12 +316,23 @@ add_q <- function(inpDT, inpCols, q=10L, verbose=F){
 }
 
 
-contingency <- function(inpDT, colTest, colReal, valNeg=c(F,F), valPos=c(T,T), percDigits=1){
+#contingency <- function(inpDT, colTest, colReal, valNeg=c(F,F), valPos=c(T,T), percDigits=1){
+contingency <- function(inpDT, colTest, colReal, valsNeg=NULL, valsPos=NULL, percDigits=1){
   inpDT <- copy(inpDT)
-  valNegTest <- valNeg[[1]]
-  valNegReal <- valNeg[[2]]
-  valPosTest <- valPos[[1]]
-  valPosReal <- valPos[[2]]
+
+  levels.test <- inpDT[[colTest]] %>% unique() %>% na.omit()
+  levels.real <- inpDT[[colReal]] %>% unique() %>% na.omit()
+
+  if (is.factor(levels.test)) levels.test %<>% as.character()
+  if (is.factor(levels.real)) levels.real %<>% as.character()
+
+  if (is.null(valsNeg)) valsNeg <- c(levels.test[1],levels.real[1])
+  if (is.null(valsPos)) valsPos <- c(levels.test[2],levels.real[2])
+
+  valNegTest <- valsNeg[[1]]
+  valNegReal <- valsNeg[[2]]
+  valPosTest <- valsPos[[1]]
+  valPosReal <- valsPos[[2]]
   valOther <-'<OTHER>'
 
   if (valNegTest %in% cs('FALSE TRUE')) valNegTest %<>% as.logical()
@@ -317,6 +342,8 @@ contingency <- function(inpDT, colTest, colReal, valNeg=c(F,F), valPos=c(T,T), p
 
   message('Test column: ' %+% bold(colTest) %+% '; negative value: ' %+% bold(valNegTest)%+% '; positive value: ' %+% bold(valPosTest));
   message('Real column: ' %+% bold(colReal) %+% '; negative value: ' %+% bold(valNegReal)%+% '; positive value: ' %+% bold(valPosReal));
+
+  # browser()
 
 
   inpDT[, .tmp.Test:=get(colTest)]
@@ -361,6 +388,9 @@ contingency <- function(inpDT, colTest, colReal, valNeg=c(F,F), valPos=c(T,T), p
 
   tab0 <- inpDT[,c(key(inpDT), colTest, colReal, '.tmp.Test', '.tmp.Real', 'rez'), with=F]
 
+
+  # inpDT %>% duView(c(colTest,colReal,'.tmp.Test','.tmp.Real','rez'))
+
   cat('\n')
   print(tab1)
   cat('\n')
@@ -369,6 +399,7 @@ contingency <- function(inpDT, colTest, colReal, valNeg=c(F,F), valPos=c(T,T), p
   print(tab3a)
   cat('\n')
   mtx4fisher <- as.matrix(tab2[Test!=valOther,],rownames = 'Test')
+# browser()
   print(fisher.test(mtx4fisher))
   invisible(list(tab0=tab0,tab1=tab1,tab2=tab2,tab3=tab3))
 }
