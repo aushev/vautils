@@ -199,8 +199,10 @@ loadv <- function(file=NULL, envir = parent.frame(n=1L),...){
   #load(file, verbose=T, envir = parent.frame(n=1L), ...)
   message('Loading file: ' %+% bold(file))
   load(file, verbose=T, envir = envir, ...)
-  if (exists('run_on_load')) {
-    cat('\n Running', italic('run_on_load()'))
+  if (exists('run_on_load_dat')) {
+    cat('\n Running', italic('run_on_load_dat()'))
+    run_on_load_dat()
+
   }
 }
 

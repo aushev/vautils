@@ -362,7 +362,7 @@ geom_box_custom <- function(inpDT, byX, colY, q=0.25, barwidth=0.5, ...){
 }
 
 
-gghist <- function(inpDT,val.col,col.mean='red',col.med='green',lg10=NA,col.line='grey30',col.fill='grey80',...){
+gghist <- function(inpDT,val.col,col.mean='red',col.med='darkgreen',lg10=NA,col.line='grey30',col.fill='grey80', xlab=val.col,...){
   values <- as.numeric(inpDT[[val.col]])
   val.median <- median(values,na.rm=T)
   val.mean <- mean(values,na.rm=T)
@@ -380,7 +380,7 @@ gghist <- function(inpDT,val.col,col.mean='red',col.med='green',lg10=NA,col.line
     geom_vline(xintercept = val.median, linetype='dashed', col=col.med)+
     annotate('text', x=val.median, y=0, label=round(val.median,2), col=col.med, angle=90, vjust=-0.5, hjust=-0.2)+
     geom_vline(xintercept =   val.mean, linetype='dashed', col=col.mean)+
-    xlab(val.col) + ylab('Counts')+
+    xlab(xlab) + ylab('Counts')+
     annotate('text', x=val.mean, y=0, label=round(val.mean,2), col=col.mean, angle=90, vjust=-0.5,hjust=-0.2)
 
   if (lg10 %~~% 'x' | lg10 %==% T) pHist <- pHist+scale_x_log10()

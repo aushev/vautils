@@ -121,7 +121,7 @@ dt4mosaic <- function(inpDT, byX, byY){
   return(dt.stat)
 }
 
-plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F, showN=T, leg.title=NA, compare=NA){
+plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F, showN='N', leg.title=NA, compare=NA){
   if (!is.null(byX) & !is.null(byY)){
     inpDTmosaic %<>% dt4mosaic(byX, byY)
   }
@@ -160,7 +160,9 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
     facet_grid(as.formula('~ ' %+% byX), scales = "free", space = "free")
   if (!is.null(colors)) p <- p + scale_fill_manual(values = colors, name=byY)
   if (scaleY==F) p <- p + theme(axis.text.y = element_blank())
-  if (showN==T)  p <- p + geom_text(aes(label=Freq, y=y1))
+#  browser()
+  if (showN=='N')  p <- p + geom_text(aes(label=Freq, y=y1))
+  if (showN=='%')  p <- p + geom_text(aes(label=percent(rel,ndig=1), y=y1))
 
   if (not.na(compare)){
 #    browser()
