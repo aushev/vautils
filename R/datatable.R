@@ -177,8 +177,15 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
   dots <- substitute(list(...));
 
+#  browser()
+
+  if ('drive_id' %!in% class(fnRead) & nchar(fnRead) %in% c(33,44) & fnRead %~~% '^[a-zA-Z0-9_-]{33,44}$' & !file.exists(fnRead)){
+    message(' Seems to be a Google Drive file.');
+    fnRead <- googledrive::as_id(fnRead)
+  }
+
   if ('drive_id' %in% class(fnRead)){
-    message(' Opening as Google Sheet.');
+    message(' Opening as Google Drive file.');
     # browser()
     drDownloaded <- googledrive::drive_download(fnRead, overwrite = T)
     rez <- do.call(flexread, args = c(list(fnRead = drDownloaded$local_path),as.list(match.call()[-(1:2)])))
