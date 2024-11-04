@@ -127,7 +127,16 @@ flexread_clip <- function(){
 
 duView <- function(x, columns=NULL,ignoreColumns=columns) {
   dt.tmp <<- x;
-  View(deluselesscol(setcolorderV(dt.tmp,columns), ignoreColumns = ignoreColumns), title = deparse(substitute(x)))
+  if (nrow(dt.tmp)==0) {warning('No records in the input table!'); return(NULL);}
+  dt.tmp <- deluselesscol(setcolorderV(dt.tmp,columns), ignoreColumns = ignoreColumns)
+  if (nrow(dt.tmp)==0) {warning('No records left in the table!'); return(NULL);}
+  View(dt.tmp, title = deparse(substitute(x)))
 }
-tView <- function(x) {dt.tmp <<-  as.data.table(t(x), keep.rownames=T); View(dt.tmp)}
+
+tView <- function(x) {
+  dt.tmp <<-  as.data.table(t(x), keep.rownames=T);
+  title <- deparse(substitute(x));
+  if (title=='.') title <- 'dt.tmp'
+  View(dt.tmp, title = title)
+}
 

@@ -613,7 +613,7 @@ if (Sys.info()['sysname'] != 'Windows'){
 
 toClip <- function(content){writeClipboard(replace.mult(as.character(content),NA,''))}
 fromClip <- function(...){readClipboard()}
-tromClip <- function(...){fromClip() %>% paste(collapse = '\n') %>% fread()}
+tromClip <- function(...){fromClip() %>% paste(collapse = '\n') %>% fread(...)}
 
 
 # this doesn't work in data.table, see https://stackoverflow.com/questions/72926127/

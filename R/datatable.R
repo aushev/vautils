@@ -78,6 +78,7 @@ inexcel <- function(dtIn, row.names=F, na='', name_dt=NA, quotize=c(), ...){
 
 inexcel2 <- function(dtIn, row.names=F, na='', name_dt=NA, ...){
 #  browser()
+  reqq(openxlsx)
   if (is.na(name_dt)) name_dt <- deparse(substitute(dtIn))
   name_date <- format(Sys.time(), '%Y%m%d_%Hh%Mm%Ss')
   name_fn <- name_date %+% '_' %+% name_dt %+% '_'
@@ -2249,7 +2250,7 @@ dt_set <- function(inputDT, newColName, condition=NA, construction){
   ret_i <- NULL
   ret_val <- eval(expr = parse(text = construction), envir=inputDT)
 
-  if (!is.na(condition)) {
+  if (not.na(condition)) {
     ret_i <- which(eval(expr = parse(text=condition), envir=inputDT))
     if (length(ret_val)>1) ret_val <- ret_val[ret_i]
   }
@@ -2343,7 +2344,7 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requ
         data.table::set(dt.this.dat, j = e.col, value = tmp)
       }
       cat('\t')
-    }
+    } # e. for(e.col)
 
     dt.this.dat[, .tmp.PreCondition:=T]
     if (not.na(this.row$PreCondition)) dt.this.dat[, .tmp.PreCondition := eval(expr = parse(text=this.row$PreCondition), envir=dt.this.dat)]
