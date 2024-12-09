@@ -197,6 +197,19 @@ trylocs <- function(..., req=F, all=F){
 loadv <- function(file=NULL, envir = parent.frame(n=1L),...){
   if (is.null(file)) {file <- askfilename();}
   #load(file, verbose=T, envir = parent.frame(n=1L), ...)
+
+  if ('drive_id' %!in% class(file) & nchar(file) %in% c(33,44) & file %~~% '^[a-zA-Z0-9_-]{33,44}$' & !file.exists(file)){
+    message(' Seems to be a Google Drive file.');
+    file <- googledrive::as_id(file)
+  }
+
+  if ('drive_id' %in% class(file)){
+    message(' Opening as Google Drive file.');
+    # browser()
+    drDownloaded <- googledrive::drive_download(file, overwrite = T)
+    file <- drDownloaded$local_path
+  }
+
   message('Loading file: ' %+% bold(file))
   returned.objects <- load(file, verbose=T, envir = envir, ...)
   if ('run_on_load_dat' %in% returned.objects) {

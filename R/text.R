@@ -447,14 +447,15 @@ str_shrink <- function(inp_str, sep=';'){
 
 # shrink_values():
 # c(3,2,3,NA,4) => '3;2;4'
-shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, fillempty=NULL, force.char=F){
-  if (force.char) values <- as.character(values)
-#  browser()
+shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, fillempty=NULL, force.char=T, do.sort=NA){
+  # browser()
+  if (force.char==T & 'character' %!in% class(values)) values <- as.character(values)
   values2 <- values;
 
   if (all==F) values2 <- unique(values);
-  if (dropNA==T) values2 <- na.omit(values2);
+  if (dropNA==T) values2 <- na.omitva(values2);
   if (length(exclude)>0) values2 <- values2[values2 %!in% exclude];
+  if (not.na(do.sort)) values2 %<>% sort()
 
   if (length(values2)==1) return(values2);
   #if (length(values2)==0) return(ifelse(is.null(fill),values[1],fill));

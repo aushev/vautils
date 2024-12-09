@@ -21,15 +21,16 @@ tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, inpName=NA, ...){
 
   name1 <- deparse(substitute(input));
   df <- data.frame(table(input, useNA = useNA, ...));
+  setnames(df,'Freq','Count')
   if (nrow(df)==0) {warning(' Empty!'); return(NULL);}
-  df <- df[df$Freq!=0,]
-  sum1 <- sum(df$Freq);
-  df$FreqP <- percent(df$Freq/sum1);
+  df <- df[df$Count!=0,]
+  sum1 <- sum(df$Count);
+  df$FreqP <- percent(df$Count/sum1);
   print(names(df));
   df <- data.table(df);
   setnames(df, 'input', name1); # names(df)[names(df)=='input'] <- name1;
-  print(order(-df$Freq));
-  df <- df[order(-df$Freq)];
+  print(order(-df$Count));
+  df <- df[order(-df$Count)];
   print(names(df));
   return(df);
 }
@@ -40,11 +41,12 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
 
   name1 <- deparse(substitute(input));
   df1 <- data.frame(table(input, useNA = useNA, ...));
+  setnames(df1,'Freq','Count')
   if (nrow(df1)==0) return(NULL);
 
-  df1 <- df1[df1$Freq!=0,]
+  df1 <- df1[df1$Count!=0,]
 
-  if (do.sort) df1 <- df1[order(-df1$Freq),];
+  if (do.sort) df1 <- df1[order(-df1$Count),];
   if (!keepN) {row.names(df1) <- NULL;}
 
   dt.ret <- data.table(df1);
@@ -54,13 +56,13 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
 #      browser()
 
 #  stopifnot(colVal=='input')
-  stopifnot(colFreq=='Freq')
+  stopifnot(colFreq=='Count')
   if (colVal!='input' & (not.na(thrRank) | not.na(thrNum))) stop('Not implemented yet!')
 
 
   if (not.na(thrRank)){
-    dt.ret[, rankFreq:=rank(-Freq)]
-    dt.ret[rankFreq>thrRank & not.na(get(colVal)), `:=`(tmp_cat_Other=T,Freq=sumI(Freq) )]
+    dt.ret[, rankFreq:=rank(-Count)]
+    dt.ret[rankFreq>thrRank & not.na(get(colVal)), `:=`(tmp_cat_Other=T,Count=sumI(Count) )]
     dt.ret[tmp_cat_Other==T, c(colVal):=thrLabel]
     dt.ret[,tmp_cat_Other:=NULL]
     dt.ret[, rankFreq:=NULL]
@@ -69,13 +71,13 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
 
   if (not.na(thrNum)){
 #    browser()
-    dt.ret[as.numeric(as.character(get(colFreq)))<thrNum, `:=`(tmp_cat_Other=T,Freq=sumI(Freq) )]
+    dt.ret[as.numeric(as.character(get(colFreq)))<thrNum, `:=`(tmp_cat_Other=T,Count=sumI(Count) )]
     dt.ret[tmp_cat_Other==T, c(colVal):=thrLabel]
     dt.ret <- unique(dt.ret)
     dt.ret[,tmp_cat_Other:=NULL]
   }
 
-  if (keepP) dt.ret[,FreqP := percent(Freq/sum(Freq))];
+  if (keepP) dt.ret[,FreqP := percent(Count/sum(Count))];
 
   if (is.na(inpName) & !isTRUE(dim(input)[2]>0)) {
     names(dt.ret)[1] <- name1
@@ -88,16 +90,16 @@ tabDT <- function(input, useNA='ifany', do.sort=T, ...){
   if (useNA==F) useNA <- 'no';
   name1 <- deparse(substitute(input));
   dt1 <- data.table(table(input, useNA = useNA, ...));
-  setnames(dt1, 'N', 'Freq')
+  setnames(dt1, 'N', 'Count')
   print(names(dt1));
   print(is.data.table(dt1))
-  dt1 <- dt1[Freq!=0,]
-  sum1 <- sum(dt1$Freq);
-  dt1[, FreqP:=percent(Freq/sum1)];
+  dt1 <- dt1[Count!=0,]
+  sum1 <- sum(dt1$Count);
+  dt1[, FreqP:=percent(Count/sum1)];
   setnames(dt1, 'input', name1);
-#  print(order(-df$Freq));
+#  print(order(-df$Count));
 #  print(names(dt));
-  if (do.sort) dt1 <- dt1[order(Freq),];
+  if (do.sort) dt1 <- dt1[order(Count),];
 #  print(names(dt1));
   return(dt1);
 }
@@ -108,10 +110,10 @@ dt4mosaic <- function(inpDT, byX, byY){
   inpDT <- copy(inpDT)
   inpDT <- inpDT[,c(byX,byY),with=F]
   dt.stat <- as.data.table(tab(inpDT))
-  dt.stat[,rel:=Freq/sum(Freq),by=get(byX)]
-  dt.stat[,grpSize:=sum(Freq), by=get(byX)]
-  dt.stat[,grpN:=sum(Freq),    by=get(byX)]
-  dt.stat[,nP:=Freq %+% '/' %+% grpN]
+  dt.stat[,rel:=Count/sum(Count),by=get(byX)]
+  dt.stat[,grpSize:=sum(Count), by=get(byX)]
+  dt.stat[,grpN:=sum(Count),    by=get(byX)]
+  dt.stat[,nP:=Count %+% '/' %+% grpN]
   dt.stat[,relP:=percent(rel)]
   dt.stat %<>% setorderv(c(byX,byY),na.last=T)
 
@@ -121,7 +123,7 @@ dt4mosaic <- function(inpDT, byX, byY){
   return(dt.stat)
 }
 
-plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Freq', prefix='n=', scaleY=F, showN='N', leg.title=NA, compare=NA){
+plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Count', prefix='n=', scaleY=F, showN='N', leg.title=NA, compare=NA){
   if (!is.null(byX) & !is.null(byY)){
     inpDTmosaic %<>% dt4mosaic(byX, byY)
   }
@@ -161,16 +163,16 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
   if (!is.null(colors)) p <- p + scale_fill_manual(values = colors, name=byY)
   if (scaleY==F) p <- p + theme(axis.text.y = element_blank())
 #  browser()
-  if (showN=='N')  p <- p + geom_text(aes(label=Freq, y=y1))
+  if (showN=='N')  p <- p + geom_text(aes(label=Count, y=y1))
   if (showN=='%')  p <- p + geom_text(aes(label=percent(rel,ndig=1), y=y1))
 
   if (not.na(compare)){
 #    browser()
-    dt.stat1 <- inpDTmosaic[get(byY)==compare,c(byX,'Freq','grpN','nP','relP'),with=F]
+    dt.stat1 <- inpDTmosaic[get(byY)==compare,c(byX,'Count','grpN','nP','relP'),with=F]
     print(dt.stat1)
 
-    dt.stat2 <- inpDTmosaic[,.(byX=get(byX),byY=get(byY),Freq)]
-    tab2 <- dcast(as.data.table(dt.stat2),byX~byY,value.var = 'Freq', fill=0)
+    dt.stat2 <- inpDTmosaic[,.(byX=get(byX),byY=get(byY),Count)]
+    tab2 <- dcast(as.data.table(dt.stat2),byX~byY,value.var = 'Count', fill=0)
     mtx4fisher <- as.matrix(tab2[,],rownames = 'byX')
     # mtx4fisher <- as.matrix(tab2[Test!=valOther,],rownames = 'Test')
     print(fisher.test(mtx4fisher))
@@ -372,7 +374,7 @@ contingency <- function(inpDT, colTest, colReal, valsNeg=NULL, valsPos=NULL, per
   tab1 <- data.table(tab(inpDT[,.(Test=.tmp.Test,Real=.tmp.Real,class=rez)]))
   tab1$Test %<>% factor(levels = c(valNegTest, valPosTest, valOther))
   tab1$Real %<>% factor(levels = c(valNegReal, valPosReal, valOther))
-  tab2 <- dcast(as.data.table(tab1),Test~Real,value.var = 'Freq', fill=0)
+  tab2 <- dcast(as.data.table(tab1),Test~Real,value.var = 'Count', fill=0)
 
   tab3 <- rbind(
     data.table(Metrics='Sensitivity', Calc=sprintf('%s / (%s + %s)', truePos, truePos, falsNeg), Value=percent(Sens,percDigits)),

@@ -1370,29 +1370,6 @@ loadOrBuild <- function (fnDT, inDT, saveResult=TRUE, ...){
   }
 }
 
-# loadDTlazy: loads dt from file only if it is not defined yet ####
-# previously known as load_DT, should be replaced everywhere
-loadDTlazy <- function(dtVar, fnVar=NULL, fnDef, refresh=T, colsExcl=NULL, ...) {
-  varnameDT <- deparse(substitute(dtVar));
-  varnameFN <- deparse(substitute(fnVar));
-  newfn <- "";
-  if ((exists(varnameDT) | varnameDT=='.') & refresh!=T) {
-    cat("DT (", varnameDT, ") already exists!\n");
-    dtOut <- dtVar;# copy(dtVar) doesn't work :/
-  } else {
-    if (refresh==T) {cat("Existing DT (", varnameDT, ") ignored! ");} else {cat("DT (", varnameDT, ") does not exist! ");}
-    if (exists(varnameFN)) {
-      cat("filename variable (", varnameFN,") is defined! \n");
-      newfn <- fnVar;
-    } else {
-      cat("filename (", varnameFN,") was not defined before! \n");
-      if (!missing(fnDef)) {newfn <- fnDef;} else {cat("Default filename not set!\n")};
-    }
-    dtOut <- loadDT(fnInput = newfn, colsExcl=colsExcl, ...);
-  }
-  return(dtOut);
-}
-
 
 # setnamessp ####################################
 # usual setnames() requires that all old names are present in the table,
@@ -1561,11 +1538,13 @@ shrink.col <- function(inpDT, cols, sep=';'){
 }
 
 
-shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';', ...) {
+shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';', force.char=T, ...) {
   for (this.col in cols){ # this.col='Chr'
     cat('\n', bold(this.col))
     if (this.col %!in% names(inpDT)) {warning(' Column ',this.col, ' not found within names of input table. '); next;}
-    inpDT[, c(this.col):=shrink_values(get(this.col), ...), by=c(col_by)]
+    # browser()
+    if (force.char==T) inpDT[[this.col]] %<>% as.character()
+    inpDT[, c(this.col):=shrink_values(get(this.col), force.char=force.char,...), by=c(col_by)]
   }
   invisible(inpDT)
 }
@@ -1838,7 +1817,7 @@ build_stat_table_N <- function(inpDT,categories, do.sort = F, thrRank=15, ...){
     if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
     this.stat  <- tab(this.vals, thrRank = thrRank, do.sort = do.sort, ...)
     this.title <- data.table(Category=this.label)
-    this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Freq, `%`=this.stat$FreqP), fill=T)
+    this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Count, `%`=this.stat$FreqP), fill=T)
     dt.N %<>% rbind(this.tab, fill=T)
   }
 
@@ -1967,7 +1946,14 @@ mergeR <- function(dtX, dtY, by.x=key(dtX), by.y=key(dtY), by=NULL, all=F, all.x
   if (length(keysX.notfound)>0) stop("In the first table, can't find column names to be used as a key: ", paste(bold(keysX.notfound), collapse = ', '))
   if (length(keysY.notfound)>0) stop("In the second table, can't find column names to be used as a key: ", paste(bold(keysY.notfound), collapse = ', '))
 
-  if (!is.null(columns)) {columns <- c(columns,by,by.y) %&% names(dtY); dtY <- dtY[,c(columns),with=F]}
+  if (!is.null(columns)) {
+    columns.missing <- columns %-% names(dtY);
+    columns.found   <- columns %&% names(dtY);
+    if (length(columns.missing)>0) warning('Requested columns not found: ', paste(bold(columns.missing), collapse=', '))
+    if (length(columns.found)==0)   stop('No columns to add.')
+    columns <- c(columns,by,by.y) %&% names(dtY);
+    dtY <- dtY[,c(columns),with=F]
+    }
   if (!is.null(columns.ignore)) {
     #browser()
     columns <- columns %-% columns.ignore;
@@ -2370,4 +2356,34 @@ dt_difftime_num <- function(inpDT){
     }
   }
   return(inpDT)
+}
+
+
+
+
+dt_compare_tables_A <- function(dt1, dt2, cols=names(dt1) %&% names(dt2)){
+  cat('\n Comparing ', bold(length(cols)), ' columns.\n')
+
+  for (f in names(dt1)){
+    cat('\n', bold(f), '\t')
+    levels1 <- unique(dt1[[f]])
+    levels2 <- unique(dt2[[f]])
+
+    n1 <- length(levels1)
+    n2 <- length(levels2)
+
+    cat(red(n1),' ',red(n2))
+
+    if (n1>1000 | n2>1000) next;
+    cat('.\t')
+
+    diff1 <- levels1 %-% levels2
+    diff2 <- levels2 %-% levels1
+
+    if (length(diff1)<20) cat(paste(green(diff1), collapse = '; '),'\t')
+    if (length(diff2)<20) cat(paste(blue(diff2), collapse = '; '))
+
+  }
+
+
 }

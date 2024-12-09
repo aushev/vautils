@@ -277,10 +277,10 @@ gg_labNb <- function(inpPlot, yPos=Inf, vjust=0, ...){
 #  inpPlot + geom_text(aes(label=lblN,y=yPos), data = data1, ...)
 }
 
-gg_pie <- function(inp, colTitle='Var', colNum='Freq'){
+gg_pie <- function(inp, colTitle='Var', colNum='Count'){
   if (! 'data.frame' %in% class(inp)){
     inp <- tab(inp, inpName=colTitle)
-    setnames(inp,'Freq',colNum)
+    setnames(inp,'Count',colNum)
 #    DT::datatable(inp)
     # inp[[colTitle]] %<>% factor(levels = inp[[colTitle]])
   } else inp <- copy(inp)
@@ -304,7 +304,7 @@ stat_build_barplot <- function(inp, threshold=NA, inp.label=NA, refactor=T, show
   if (refactor==T) dt.stat[, inpS:=as.character(inp)]
   if (not.na(threshold)) {
     dt.stat[as.numeric(inpS)>=threshold, inpS:=threshold %+% '+']
-    dt.stat[,Freq:=sum(Freq),by=inpS]
+    dt.stat[,Count:=sum(Count),by=inpS]
     dt.stat$inp <- NULL
     dt.stat$FreqP <- NULL
     dt.stat <- unique(dt.stat)
@@ -317,7 +317,7 @@ stat_build_barplot <- function(inp, threshold=NA, inp.label=NA, refactor=T, show
 
   pRet <-
     dt.stat %>%
-    ggplot(aes(x=inpS, y=Freq, fill=inpS)) +
+    ggplot(aes(x=inpS, y=Count, fill=inpS)) +
     geom_bar(stat = 'identity')
 
   if (not.na(inp.label)){
@@ -325,7 +325,7 @@ stat_build_barplot <- function(inp, threshold=NA, inp.label=NA, refactor=T, show
   }
 
   if (showN==T){
-    pRet <- pRet + geom_text(aes(label=Freq), vjust=-0.2)
+    pRet <- pRet + geom_text(aes(label=Count), vjust=-0.2)
   }
 
   if (show.leg==F) pRet <- pRet + leg.no

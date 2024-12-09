@@ -431,16 +431,19 @@ tryRdat <- function(fnRdat, FUN, nEnv=1L, resnames=NA,...){
 
 } # e. try_rdat
 
-lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
+lazyBuild <- function(objNames,fnRdat=NULL, object=NULL, verbose=F, unlist=F){
   #browser()
   obj.return <- NULL
-  if (exists(objName)) {
-    message('Object ', bold(objName),' already exists in the current environment.');
+
+  obj_find <- sapply(objNames,exists)
+
+  if (all(obj_find)) {
+    message('Objects ', paste(bold(objNames), collapse=', '),' already exists in the current environment.');
     return(get(objName));
   } else {
-    message('Object ', bold(objName),' not found in the current environment. ');
+    message('Objects ', paste(bold(objNames[obj_find==F]), collapse=', '),' not found in the current environment.');
     if (!is.null(fnRdat)){
-      message(' Trying to pull it from Rdat file ', bold(fnRdat),'. ');
+      message(' Trying to load from Rdat file ', bold(fnRdat),'. ');
       if (!file.exists(fnRdat)) {
         message(' Rdat file not found! Will try to rebuild.');
       } else { # Rdat file exists
@@ -450,7 +453,7 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
           message(' No objects loaded! ');
         } else {
           message(length(obj.names) %+% ' objects loaded! ' %+% paste(obj.names, collapse = ', '));
-          if (objName %in% obj.names) {
+          if (objNames %in% obj.names) {
             obj.return <- get(objName)
           } else obj.return <- get(obj.names[1])
         }
@@ -460,6 +463,7 @@ lazyBuild <- function(objName,fnRdat=NULL,object,verbose=F, unlist=F){
     if (is.null(obj.return)){
       message(' Rebuilding... ');
       obj.return <- object
+      if (is.null(object)) stop('No object definition provided, or NULL provided.')
       if (!is.null(fnRdat)) {
         message(' Saving to ',bold(fnRdat),'...');
         saveas(obj.return, names2save = objName, file = fnRdat)
@@ -833,3 +837,5 @@ sourcermd <- function(fn_rmd){
 
 
 splitvec <- function(vec, piece_length) split(vec, rep(1:(length(vec) %/% piece_length), each = piece_length, length.out = length(vec)))
+
+na.omitva <- function(x) x[not.na(x)]
