@@ -2387,3 +2387,77 @@ dt_compare_tables_A <- function(dt1, dt2, cols=names(dt1) %&% names(dt2)){
 
 
 }
+
+
+
+
+
+tab_explore <- function(dtIn, columns.on=T, columns.off=F, tests.on=T, tests.off=F){
+  stopifnot('data.frame' %in% class(dtIn))
+  if ('data.table' %!in% class(dtIn)) dtIn %<>% data.table()
+  columns.all.N <- seq_len(ncol(dtIn))
+  columns.all.s <- names(dtIn)
+  columns.on.N <- columns.all.N
+  columns.off.N <- numeric(0)
+  tests.all <- cs('class,unqN,anyDuplicated,mean,median,min,max,meanI,medianI,minI,maxI,xxx')
+  tests.do <- tests.all
+
+  # Define columns.on.N:
+  if (! columns.on %===% T) {
+    if (is.character(columns.on)){
+      vec.notfound <- columns.on %-% columns.all.s
+      if (length(vec.notfound)>0) warning('Columns not found: ', paste(bold(vec.notfound), collapse = ', '))
+      columns.on.N <- which(columns.all.s %in% columns.on)
+    }
+    else if (is.numeric(columns.on)){
+      vec.notfound <- columns.on %-% columns.all.N
+      if (length(vec.notfound)>0) warning('Columns not found: ', paste(bold(vec.notfound), collapse = ', '))
+      columns.on.N <- which(columns.all.N %in% columns.on)
+    }
+  }
+
+  # Define columns.off.N:
+  if (! columns.off %===% F){
+    if (is.character(columns.off)){
+      vec.notfound <- columns.off %-% columns.all.s
+      if (length(vec.notfound)>0) warning('Columns not found: ', paste(bold(vec.notfound), collapse = ', '))
+      columns.off.N <- which(columns.all.s %in% columns.off)
+    }
+    else if (is.numeric(columns.off)){
+      vec.notfound <- columns.off %-% columns.all.N
+      if (length(vec.notfound)>0) warning('Columns not found: ', paste(bold(vec.notfound), collapse = ', '))
+      columns.off.N <- which(columns.all.N %in% columns.off)
+    }
+  }
+
+  # Define columns.work:
+  columns.work <- columns.on.N %-% columns.off.N
+
+  # Define dtRet:
+  dtRet <- data.table(id=columns.all.N, name=names(dtIn)) %>% setkey(id)
+  dtRet[, skip := id %!in% columns.work]
+
+  procs <- list()
+  procs[['class']] <- function(input){shrink_values(class(input))}
+  procs[['unqN']] <- function(input){unqN(input)}
+
+  for (i in tests.all){
+    if (i %in% names(procs)) next;
+    if (!exists(i)) next;
+    i_obj <- get(i)
+    if (!is.function(i_obj)) next;
+    procs[[i]] <- i_obj;
+  }
+
+
+  this.test <- 'class'
+  for (this.test in tests.do){
+    this.test.fun <- procs[[this.test]]
+    if (is.null(this.test.fun)) {warning('Test not defined: ', bold(this.test)); next;}
+    this.test.fun.full <- function(colN, dtIn, test_fun) {test_fun(dtIn[[colN]])}
+    rez <- sapply(columns.work, this.test.fun.full, dtIn=dtIn, test_fun=this.test.fun)
+    set(x = dtRet, i = columns.work, j = this.test, value = rez)
+  }
+
+  return(dtRet)
+}

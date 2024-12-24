@@ -435,11 +435,13 @@ lazyBuild <- function(objNames,fnRdat=NULL, object=NULL, verbose=F, unlist=F){
   #browser()
   obj.return <- NULL
 
+  objName1 <- objNames[[1]]
+
   obj_find <- sapply(objNames,exists)
 
   if (all(obj_find)) {
     message('Objects ', paste(bold(objNames), collapse=', '),' already exists in the current environment.');
-    return(get(objName));
+    return(get(objName1));
   } else {
     message('Objects ', paste(bold(objNames[obj_find==F]), collapse=', '),' not found in the current environment.');
     if (!is.null(fnRdat)){
@@ -454,7 +456,7 @@ lazyBuild <- function(objNames,fnRdat=NULL, object=NULL, verbose=F, unlist=F){
         } else {
           message(length(obj.names) %+% ' objects loaded! ' %+% paste(obj.names, collapse = ', '));
           if (objNames %in% obj.names) {
-            obj.return <- get(objName)
+            obj.return <- get(objName1)
           } else obj.return <- get(obj.names[1])
         }
       }
@@ -466,7 +468,7 @@ lazyBuild <- function(objNames,fnRdat=NULL, object=NULL, verbose=F, unlist=F){
       if (is.null(object)) stop('No object definition provided, or NULL provided.')
       if (!is.null(fnRdat)) {
         message(' Saving to ',bold(fnRdat),'...');
-        saveas(obj.return, names2save = objName, file = fnRdat)
+        saveas(obj.return, names2save = objName1, file = fnRdat)
       }
     }
 
@@ -569,6 +571,8 @@ maxI <- function(inp){
        return(NA_integer_);
      } else if ('Date' %in% class(inp)) {
        return(as.Date(NA))
+     } else if ('character' %in% class(inp)) {
+       return(NA_character_)
      } else return(NA_real_);
   } # e. if length 0
 
@@ -582,6 +586,8 @@ minI <- function(inp){
       return(NA_integer_);
     } else if ('Date' %in% class(inp)) {
       return(as.Date(NA))
+    } else if ('character' %in% class(inp)) {
+      return(NA_character_)
     } else return(NA_real_);
   } # e. if length 0
 
@@ -839,3 +845,13 @@ sourcermd <- function(fn_rmd){
 splitvec <- function(vec, piece_length) split(vec, rep(1:(length(vec) %/% piece_length), each = piece_length, length.out = length(vec)))
 
 na.omitva <- function(x) x[not.na(x)]
+
+rm.from.env <- function(re.mask='^this', envir=parent.frame()){
+  objs_found <- ls(envir = envir, pattern = re.mask)
+  if (length(objs_found)==0) {warning('No objects found.'); return(NULL);}
+
+  cat(length(objs_found), ' objects found. Will be deleted: ')
+  cat(paste(bold(objs_found), collapse = ','))
+  rm(list=objs_found, envir=envir)
+}
+

@@ -98,15 +98,15 @@ selected2clipboard <- function(){
   rstudioapi::sendToConsole('(' %+% sel_text %+% ') %>% toClip()', execute = execute)
 }
 
-flexread_clip <- function(){
-  fnOri <- fromClip()
-  obj_open <- 'dt1'
+flexread_clip <- function(fnOri=fromClip(), obj_open='dt1'){
 
   if (file.exists(fnOri)){
-    print('A file!')
+    message('Existing file found!')
+    message(tools::file_ext(fnOri))
     txt2inp <- 'fn1 <- ' %+% "'" %+% gsub('\\\\','/',fnOri) %+% "'\n"
     txt2inp <- txt2inp %+% 'dt1 <- flexread(fn1, deluseless = T)\n'
     if (tools::file_ext(fnOri) %~~i% 'Rdat'){
+      message('RDat file')
       txt2inp <- 'loadv(' %+% "'" %+% gsub('\\\\','/',fnOri) %+% "')\n"
       obj_open <- NA
     }

@@ -248,6 +248,8 @@ require('data.table');
 require('magrittr');
 require('crayon');
 
+filter <- dplyr::filter
+
 # vai <- function(){
 #   reqq('data.table magrittr');
 # }
