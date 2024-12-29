@@ -41,7 +41,7 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T, reload=F){
   catV('Loading',packagename,'...')
 
   # first, check if the package is installed at all:
-  if(packagename %in% rownames(installed.packages())) {
+  if(packagename %in% rownames(utils::installed.packages())) {
     catV('already installed... ')
   } else {
     catV('Not installed! Trying to install... \n');
