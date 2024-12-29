@@ -8,7 +8,7 @@ testab2 <- function(inpA, inpB){
 
 
 
-cs <- function(inputstr, sep=",", fix=T, nonewlines=T){
+cs <- function(inputstr, sep=",", fixed=T, nonewlines=T, allowempty=F){
   if (length(inputstr)==0) return(inputstr);
   if (missing(sep)){
     sep <- ' '
@@ -16,8 +16,9 @@ cs <- function(inputstr, sep=",", fix=T, nonewlines=T){
     if (any(inputstr %~~% '\t')) {sep="\t";}
   }
   if (nonewlines) inputstr <- gsub("[\n\r]+", sep, inputstr);
-  rez <- unlist(strsplit(inputstr, sep, fixed=fix));
-  return(rez[rez!=""]);
+  rez <- unlist(strsplit(inputstr, sep, fixed=fixed));
+  if (allowempty==F) rez <- rez[rez!=""];
+  return(rez);
 }
 
 printcs <- cs1 <- function(input, collapse=','){paste0(cs(input), collapse = collapse)}
@@ -449,7 +450,10 @@ str_shrink <- function(inp_str, sep=';'){
 # c(3,2,3,NA,4) => '3;2;4'
 shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, fillempty=NULL, force.char=T, do.sort=NA){
   # browser()
-  if (force.char==T & 'character' %!in% class(values)) values <- as.character(values)
+  if (force.char==T){
+    if (!is.character(values)) values %<>% as.character()
+    if (!is.null(fillempty) & !is.character(fillempty)) fillempty %<>% as.character()
+  }
   values2 <- values;
 
   if (all==F) values2 <- unique(values);

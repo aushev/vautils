@@ -2461,3 +2461,42 @@ tab_explore <- function(dtIn, columns.on=T, columns.off=F, tests.on=T, tests.off
 
   return(dtRet)
 }
+
+
+
+
+
+
+dt_addlabels <- function(inpDT, vec.labels, vec.names=NULL){
+  # browser()
+  vec.indices <- NULL
+  if (!is.null(vec.names) & length(vec.names)!=length(vec.labels)) stop('Column names should be either NULL or the same length as column labels.')
+  if (is.numeric(vec.names)) {
+    vec.indices <- vec.names
+  } else if (is.null(vec.names)) {
+    vec.names   <- names(vec.labels)
+    vec.indices <- match(vec.names, names(inpDT))
+  } else {
+    vec.indices <- match(vec.names, names(inpDT))
+  }
+
+  if (is.null(vec.indices)) stop('Columns should be provided as (character) column names or (numeric) column indices.')
+
+
+  for (i in seq_along(vec.indices)) {
+    this.ndx   <- vec.indices[i]
+    this.name  <- vec.names[i]
+    this.label <- vec.labels[i]
+    if (is.numeric(this.name)) this.name <- names(inpDT)[this.name]
+    cat('\n',i,'\t',bold(this.name),'\t')
+    if (is.na(this.ndx)) {cat(italic('Not found')); next;}
+    cat(' <=>',this.label)
+    setattr(inpDT[[this.ndx]], "label", this.label)
+  }
+  invisible(inpDT)
+}
+
+# dt.iris <- data.table(iris)
+# dt.iris %<>% dt_addlabels(c(Sepal.Length='Sep Length',Species='Speciessss'))
+# dt.iris %<>% dt_addlabels(vec.labels = cs('Sep Length,Speciessss'),vec.names = cs('Sepal.Length,Species'))
+# dt.iris %<>% dt_addlabels(vec.labels = cs('Sep Length,Speciessss'),vec.names = c(1,5))

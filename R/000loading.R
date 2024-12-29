@@ -250,6 +250,10 @@ require('crayon');
 
 filter <- dplyr::filter
 
+checkPlus <- function(){
+  if (is.null('a'%+%'b')) reload('vautils')
+}
+
 # vai <- function(){
 #   reqq('data.table magrittr');
 # }
