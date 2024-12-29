@@ -98,16 +98,15 @@ selected2clipboard <- function(){
   rstudioapi::sendToConsole('(' %+% sel_text %+% ') %>% toClip()', execute = execute)
 }
 
-flexread_clip <- function(fnOri=fromClip(), obj_open='dt1'){
-
+flexread_clip <- function(fnOri=fromClip(), obj_open='dt1', write_code=T){
+  checkPlus()
   if (file.exists(fnOri)){
-    message('Existing file found!')
-    message(tools::file_ext(fnOri))
-    txt2inp <- 'fn1 <- ' %+% "'" %+% gsub('\\\\','/',fnOri) %+% "'\n"
+    message('Existing file found! \nExtension: ' %+% tools::file_ext(fnOri))
+    txt2inp <- sprintf("fn1 <- '%s';\n", gsub('\\\\','/',fnOri))
     txt2inp <- txt2inp %+% 'dt1 <- flexread(fn1, deluseless = T)\n'
     if (tools::file_ext(fnOri) %~~i% 'Rdat'){
       message('RDat file')
-      txt2inp <- 'loadv(' %+% "'" %+% gsub('\\\\','/',fnOri) %+% "')\n"
+      txt2inp <- sprintf("loadv('%s')\n", gsub('\\\\','/',fnOri))
       obj_open <- NA
     }
 
@@ -118,19 +117,22 @@ flexread_clip <- function(fnOri=fromClip(), obj_open='dt1'){
     txt2inp <- txt2inp %+% 'dt1 <- flexread(fn1, deluseless = T)\n'
 
   }
-  rstudioapi::insertText(NULL, txt2inp)
+  if (write_code==T) rstudioapi::insertText(NULL, txt2inp)
+  # print(str(txt2inp))
+  # message('YYY')
   rstudioapi::sendToConsole(txt2inp)
   if (not.na(obj_open)) rstudioapi::sendToConsole('duView(dt1)')
 }
 
 
 
-duView <- function(x, columns=NULL,ignoreColumns=columns) {
+duView <- function(x, columns=NULL,ignoreColumns=columns, title=NULL) {
   dt.tmp <<- x;
   if (nrow(dt.tmp)==0) {warning('No records in the input table!'); return(NULL);}
   dt.tmp <- deluselesscol(setcolorderV(dt.tmp,columns), ignoreColumns = ignoreColumns)
   if (nrow(dt.tmp)==0) {warning('No records left in the table!'); return(NULL);}
-  View(dt.tmp, title = deparse(substitute(x)))
+  if (is.null(title)) title <- deparse(substitute(x));
+  View(dt.tmp, title = title)
 }
 
 tView <- function(x) {
