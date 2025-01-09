@@ -277,7 +277,7 @@ gg_labNb <- function(inpPlot, yPos=Inf, vjust=0, ...){
 #  inpPlot + geom_text(aes(label=lblN,y=yPos), data = data1, ...)
 }
 
-gg_pie <- function(inp, colTitle='Var', colNum='Count'){
+gg_pie <- function(inp, colTitle='Var', colNum='Count', startAngle=0){
   if (! 'data.frame' %in% class(inp)){
     inp <- tab(inp, inpName=colTitle)
     setnames(inp,'Count',colNum)
@@ -289,7 +289,7 @@ gg_pie <- function(inp, colTitle='Var', colNum='Count'){
 #  ggplot(inp, aes(x="", y=tmp.Freq, fill=tmp.Fill)) +
   ggplot(inp, aes_string(x="1", y=colNum, fill=colTitle)) +
     geom_bar(stat="identity", width=1, color="white") +
-    coord_polar("y", start=0) +
+    coord_polar("y", start=startAngle) +
     theme_void()
 }
 

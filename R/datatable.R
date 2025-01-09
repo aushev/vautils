@@ -292,7 +292,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
 
   if (clean.names == T) names(rez) <- cleannames(names(rez));
-  if (deluseless == T) rez <- deluselesscol(rez);
+  if (deluseless == T) rez <- dt_deluselesscols(rez);
 
   if (trimspaces==T){
     for (i in seq_len(ncol(rez))){
@@ -815,8 +815,9 @@ deluselesscol0 <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, pa
   invisible(dtIn);
 } # e. deluselesscol()
 
-deluselesscol <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignNA=F, silent = F, padON=F, padW=NULL, padSide='right', verbose=F) {
+dt_deluselesscols <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignNA=F, silent = F, padON=F, padW=NULL, padSide='right', copy=F, verbose=F) {
   catV <- ifelse(verbose,cat,function(...){})
+  if (copy==T) dtIn <- copy(dtIn)
   if (nrow(dtIn)==0) {
     if (!silent) warning("Table is empty (0 rows).");
     return(dtIn)
@@ -865,7 +866,7 @@ deluselesscol <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignN
   #if (!is.null(cols2del)) dtIn[, (cols2del):=NULL];
   if (!is.null(colNs2del)) dtIn[, c(colNs2del):=NULL];
   invisible(dtIn);
-} # e. deluselesscol()
+} # e. dt_deluselesscols()
 
 
 mrgcols <- function(dtInput, f_scan, csep="; ", f_ndx="id", delold=T, noNA=T, noE=T) {
@@ -1667,6 +1668,7 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL){ #inDT=dt.P
     if (re.is(cols)){
       cols <- grep(cols, names(inDT), value=T)
     } else cols <- cols %&% names(inDT)
+    cols <- cols %-% key
 
     cols.unq <- names(inDT) %-% cols
     if (length(cols.unq)>0) message('These columns will not be checked: ' %+% paste0(bold(cols.unq),collapse = ','))
@@ -2099,7 +2101,7 @@ dt_analyze_dup_records <- function(inpDT,bycol=key(inpDT), fast=T, silent=F, ret
   cat('\n',bold(length(list.dup)),' / ', bold(unqN(list.dup)))
   for (i in list.dup){
     catV('\n',bold(i),': ')
-    .this.dt <- inpDT[get(bycol)==i,] %>% deluselesscol(silent = T)
+    .this.dt <- inpDT[get(bycol)==i,] %>% dt_deluselesscols(silent = T)
     if (fast==F) lst.dup[[as.character(i)]] <- .this.dt
     .dup.colnames %<>% c(names(.this.dt))
     catV(cs1(names(.this.dt)))
@@ -2252,12 +2254,12 @@ dt_set <- function(inputDT, newColName, condition=NA, construction){
 
 
 dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requireTable=T){
-
+  # browser()
   mode.work.multi <- NA
   if ('data.frame' %in% class(input)){
     mode.work.multi <- FALSE
     message('Input is a single table. Working in Single-Table mode.')
-  } else if ('list' %in% class(input)){
+  } else if ('list' %in% class(input) | 'environment' %in% class(input)){
     mode.work.multi <- TRUE
     message('Input is a list. Working in Multi-Table mode.')
   } else {

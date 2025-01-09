@@ -40,18 +40,28 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
   if (useNA==T | na.rm==F) useNA <- 'ifany';
 
   name1 <- deparse(substitute(input));
-  df1 <- data.frame(table(input, useNA = useNA, ...));
-  setnames(df1,'Freq','Count')
-  if (nrow(df1)==0) return(NULL);
+  if (is.data.table(input)){
+    vec.by <- names(input)
+    dt.ret <- input[,.(Count=.N),by=vec.by]
+    if (do.sort) dt.ret <- dt.ret[order(-Count),];
+    colVal <- first(names(dt.ret))
+    colFreq <- last(names(dt.ret))
 
-  df1 <- df1[df1$Count!=0,]
+  } else {
+    df1 <- data.frame(table(input, useNA = useNA, ...));
+    setnames(df1,'Freq','Count')
+    if (nrow(df1)==0) return(NULL);
 
-  if (do.sort) df1 <- df1[order(-df1$Count),];
-  if (!keepN) {row.names(df1) <- NULL;}
+    df1 <- df1[df1$Count!=0,]
 
-  dt.ret <- data.table(df1);
-  colVal <- first(names(dt.ret))
-  colFreq <- last(names(dt.ret))
+    if (do.sort) df1 <- df1[order(-df1$Count),];
+    if (!keepN) {row.names(df1) <- NULL;}
+
+    dt.ret <- data.table(df1);
+    colVal <- first(names(dt.ret))
+    colFreq <- last(names(dt.ret))
+  }
+
 
 #      browser()
 
