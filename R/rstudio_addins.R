@@ -129,7 +129,7 @@ flexread_clip <- function(fnOri=fromClip(), obj_open='dt1', write_code=T){
 duView <- function(x, columns=NULL,ignoreColumns=columns, title=NULL) {
   dt.tmp <<- x;
   if (nrow(dt.tmp)==0) {warning('No records in the input table!'); return(NULL);}
-  dt.tmp <- deluselesscol(setcolorderV(dt.tmp,columns), ignoreColumns = ignoreColumns)
+  dt.tmp <- dt_deluselesscols(setcolorderV(dt.tmp,columns), ignoreColumns = ignoreColumns)
   if (nrow(dt.tmp)==0) {warning('No records left in the table!'); return(NULL);}
   if (is.null(title)) title <- deparse(substitute(x));
   View(dt.tmp, title = title)

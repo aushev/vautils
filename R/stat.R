@@ -120,9 +120,12 @@ dt4mosaic <- function(inpDT, byX, byY){
   inpDT <- copy(inpDT)
   inpDT <- inpDT[,c(byX,byY),with=F]
   dt.stat <- as.data.table(tab(inpDT))
-  dt.stat[,rel:=Count/sum(Count),by=get(byX)]
-  dt.stat[,grpSize:=sum(Count), by=get(byX)]
-  dt.stat[,grpN:=sum(Count),    by=get(byX)]
+  # dt.stat[,rel:=Count/sum(Count),by=get(byX)]
+  # dt.stat[,grpSize:=sum(Count), by=get(byX)]
+  # dt.stat[,grpN:=sum(Count),    by=get(byX)]
+  dt.stat[,rel:=Count/sum(Count),by=c(byX)]
+  dt.stat[,grpSize:=sum(Count), by=c(byX)]
+  dt.stat[,grpN:=sum(Count),    by=c(byX)]
   dt.stat[,nP:=Count %+% '/' %+% grpN]
   dt.stat[,relP:=percent(rel)]
   dt.stat %<>% setorderv(c(byX,byY),na.last=T)
@@ -141,7 +144,11 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
   if (is.null(byY)) byY <- names(inpDTmosaic)[2]
   inpDTmosaic[,grpSize:=grpSize/del]
 
-  inpDTmosaic[,grpN:=sum(get(colFreq)),by=get(byX)]
+  # browser()
+
+
+  #inpDTmosaic[,grpN:=sum(get(colFreq)),by=get(byX)]
+  inpDTmosaic[,grpN:=sum(get(colFreq)),by=c(byX)]
   inpDTmosaic[, xN:=as.character(get(byX))]
   inpDTmosaic[, xN:=sprintf('%s\n%s%s',xN,prefix,grpN), by=.(xN,grpN)]
 
@@ -150,12 +157,14 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
   inpDTmosaic %<>% setorderv(c(byX,byY),na.last=T)
   # dt.stat4mosaic %<>% setorderv(c('Location','Stage'),na.last=T)
 
-  inpDTmosaic[, yPrev:=shift(rel, fill=0),by=get(byX)]
-  inpDTmosaic[, y0:=cumsum(yPrev),by=get(byX)]
+  #  inpDTmosaic[, yPrev:=shift(rel, fill=0),by=get(byX)]
+  inpDTmosaic[, yPrev:=shift(rel, fill=0),by=c(byX)]
+  #inpDTmosaic[, y0:=cumsum(yPrev),by=get(byX)]
+  inpDTmosaic[, y0:=cumsum(yPrev),by=c(byX)]
   inpDTmosaic[, y1:=1-(y0+rel/2)]
 
 
-#  browser()
+  #  browser()
 
   #inpDTmosaic$byY.fill <- inpDTmosaic[[byY]]   #
   inpDTmosaic[,byY.fill:=get(byY)]
@@ -163,7 +172,7 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
   p <-
     ggplot(inpDTmosaic,
            aes(x=factor(xN),y=rel,fill=byY.fill,width=grpSize)  #aes_string(x='xN',y='rel',fill=byY,width='grpSize')
-           ) +
+    ) +
     geom_bar(stat='identity') +
     scale_x_discrete(expand = c(0, 0)) +
     scale_y_continuous(labels = scales::percent_format(scale = 100))+
@@ -172,12 +181,12 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
     facet_grid(as.formula('~ ' %+% byX), scales = "free", space = "free")
   if (!is.null(colors)) p <- p + scale_fill_manual(values = colors, name=byY)
   if (scaleY==F) p <- p + theme(axis.text.y = element_blank())
-#  browser()
+  #  browser()
   if (showN=='N')  p <- p + geom_text(aes(label=Count, y=y1))
   if (showN=='%')  p <- p + geom_text(aes(label=percent(rel,ndig=1), y=y1))
 
   if (not.na(compare)){
-#    browser()
+    #    browser()
     dt.stat1 <- inpDTmosaic[get(byY)==compare,c(byX,'Count','grpN','nP','relP'),with=F]
     print(dt.stat1)
 
@@ -357,7 +366,7 @@ contingency <- function(inpDT, colTest, colReal, valsNeg=NULL, valsPos=NULL, per
   message('Test column: ' %+% bold(colTest) %+% '; negative value: ' %+% bold(valNegTest)%+% '; positive value: ' %+% bold(valPosTest));
   message('Real column: ' %+% bold(colReal) %+% '; negative value: ' %+% bold(valNegReal)%+% '; positive value: ' %+% bold(valPosReal));
 
-  # browser()
+#  browser()
 
 
   inpDT[, .tmp.Test:=get(colTest)]
@@ -380,6 +389,8 @@ contingency <- function(inpDT, colTest, colReal, valsNeg=NULL, valsPos=NULL, per
 
   inpDT[.tmp.Test %!in% c(valNegTest, valPosTest), .tmp.Test:=valOther]
   inpDT[.tmp.Real %!in% c(valNegReal, valPosReal), .tmp.Real:=valOther]
+
+  # browser()
 
   tab1 <- data.table(tab(inpDT[,.(Test=.tmp.Test,Real=.tmp.Real,class=rez)]))
   tab1$Test %<>% factor(levels = c(valNegTest, valPosTest, valOther))

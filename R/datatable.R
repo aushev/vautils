@@ -868,6 +868,8 @@ dt_deluselesscols <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, 
   invisible(dtIn);
 } # e. dt_deluselesscols()
 
+deluselesscol <- function(...){warning('Deprecated!!! renamed to dt_deluselesscols()!'); dt_deluselesscols(...);}
+
 
 mrgcols <- function(dtInput, f_scan, csep="; ", f_ndx="id", delold=T, noNA=T, noE=T) {
   #dtInput <- copy(dtInput);
