@@ -169,7 +169,24 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     cat('  ',flexread.counter,'   ')
   }
 
-  if(is.na(fnRead)) stop(bold(italic('NA'))%+%' provided as input file name.');
+  if (length(fnRead)>1){
+    #browser()
+    for (this.fnRead in fnRead){
+      retTry <- tryCatch(
+        expr = {
+          flexread(this.fnRead, sheetIndex=sheetIndex, sheetName=sheetName, silent=silent, keyby=keyby, char=char, num=num, filetype=filetype,
+                   clean.names=clean.names, trimspaces=trimspaces, deluseless=deluseless,rename.from=rename.from, rename.to=rename.to, fcounter=fcounter,
+                   fixV1=fixV1,...)
+        },
+        error = function(cond) {warning(cond);}
+      )
+    } # e. for
+    return(retTry)
+  } # e. if()
+
+
+  if (is.na(fnRead))
+    stop(bold(italic('NA')) %+% ' provided as input file name.');
 
 
   msgOp <- ' Opening ' %+% bold(fnRead)
@@ -237,7 +254,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     rez <- as.data.table(rez);
   }
   else {
-    cat(' with fread... '); #########################################################################################################################
+    cat(' with fread... ');
     flag1 <- 1
     rez <- withCallingHandlers(
       fread(fnRead, ...),

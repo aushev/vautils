@@ -160,11 +160,11 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
   #  inpDTmosaic[, yPrev:=shift(rel, fill=0),by=get(byX)]
   inpDTmosaic[, yPrev:=shift(rel, fill=0),by=c(byX)]
   #inpDTmosaic[, y0:=cumsum(yPrev),by=get(byX)]
-  inpDTmosaic[, y0:=cumsum(yPrev),by=c(byX)]
-  inpDTmosaic[, y1:=1-(y0+rel/2)]
+  inpDTmosaic[, y0 := cumsum(yPrev),by=c(byX)]
+  inpDTmosaic[, y1 := 1-(y0+rel/2)]
 
 
-  #  browser()
+  # browser()
 
   #inpDTmosaic$byY.fill <- inpDTmosaic[[byY]]   #
   inpDTmosaic[,byY.fill:=get(byY)]
