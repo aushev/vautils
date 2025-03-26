@@ -431,7 +431,7 @@ tryRdat <- function(fnRdat, FUN, nEnv=1L, resnames=NA,...){
 
 } # e. try_rdat
 
-lazyBuild <- function(objNames,fnRdat=NULL, object=NULL, verbose=F, unlist=F){
+lazyBuild <- function(objNames, fnRdat=NULL, object=NULL, verbose=F, unlist=F){
   #browser()
   obj.return <- NULL
 

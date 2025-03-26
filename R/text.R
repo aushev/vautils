@@ -474,6 +474,23 @@ shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, f
 
 shrink_values1 <- shrink_values
 
+shrink_values_any <- function(values, fun_char=shrink_values, fun_numeric=meanI, fun_other=shrink_values, ...){
+  dots <- list(...)
+  f_args_num  <- names(formals(fun_numeric))
+  f_args_char <- names(formals(fun_char))
+  f_args_othr <- names(formals(fun_other))
+  args_num  <- dots[names(dots) %in% f_args_num]
+  args_char <- dots[names(dots) %in% f_args_char]
+  args_othr <- dots[names(dots) %in% f_args_othr]
+
+
+  if (is.character(values)) {return(do.call(fun_char,    c(list(values), args_char)))} # cat('\t Running fun_numeric with ' %+% cs1(args_num));
+  if (is.numeric(values))   {return(do.call(fun_numeric, c(list(values), args_num)))}
+
+  return(do.call(fun_other, c(list(values), args_othr)))
+}
+
+
 # cs('+ - - - + +') => '+-+'
 # cs('+ - - - ') => '+-'
 str_shrink_rle <- function(x, sep='', dropNA=T){

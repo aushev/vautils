@@ -178,7 +178,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                    clean.names=clean.names, trimspaces=trimspaces, deluseless=deluseless,rename.from=rename.from, rename.to=rename.to, fcounter=fcounter,
                    fixV1=fixV1,...)
         },
-        error = function(cond) {warning(cond);}
+        error = function(cond) {warning(cond); cat('\n')}
       )
     } # e. for
     return(retTry)
@@ -189,7 +189,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     stop(bold(italic('NA')) %+% ' provided as input file name.');
 
 
-  msgOp <- ' Opening ' %+% bold(fnRead)
+  msgOp <- '\nOpening ' %+% bold(fnRead)
   if (!is.null(sheetName)) msgOp <- msgOp %+% ' ' %+% bold(green(sheetName))
   message(msgOp);
 
@@ -212,6 +212,13 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
 
   if (!file.exists(fnRead)){stop('... File not found!\n');return(NULL);}
+
+  file_info <- fs::file_info(fnRead)
+  file_size <- fs::file_size(fnRead)
+
+  cat('\t',yellow(bold(file_info$modification_time)))
+  cat('\t',blue(bold(file_size)),'\t')
+
 
   if (is.null(filetype)){
     #cat('Trying to guess filetype... ');
@@ -856,7 +863,7 @@ dt_deluselesscols <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, 
   cols2del <- NULL;
   colNs2del <- NULL;
   if (padON==T & is.null(padW)) padW <- max(nchar(icolnames));
-
+  cat('\n');
   for (colN in seq_len(length(names(dtIn)))) {
     colname <- names(dtIn)[colN];
     if (! colname %in% icolnames) next;
@@ -1558,13 +1565,13 @@ shrink.col <- function(inpDT, cols, sep=';'){
 }
 
 
-shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';', force.char=T, ...) {
+shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';', force.char=T, FUN=shrink_values_any, ...) {
   for (this.col in cols){ # this.col='Chr'
     cat('\n', bold(this.col))
     if (this.col %!in% names(inpDT)) {warning(' Column ',this.col, ' not found within names of input table. '); next;}
     # browser()
     if (force.char==T) inpDT[[this.col]] %<>% as.character()
-    inpDT[, c(this.col):=shrink_values(get(this.col), force.char=force.char,...), by=c(col_by)]
+    inpDT[, c(this.col) := FUN(get(this.col), force.char=force.char,...), by=c(col_by)]
   }
   invisible(inpDT)
 }
@@ -1942,9 +1949,10 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 # browser()
 # warning('Function not tested thoroughly!')
 # warning('resulting table is re-keyed!')
-mergeR <- function(dtX, dtY, by.x=key(dtX), by.y=key(dtY), by=NULL, all=F, all.x=T, all.y=all, columns=NULL, columns.ignore=NULL, uniqueY=TRUE,...){
+mergeR <- function(dtX, dtY, by.x=key(dtX), by.y=key(dtY), by=NULL, all=F, all.x=T, all.y=all, columns=NULL, columns.ignore=NULL, uniqueY=TRUE, force.char=T, ...){
 #   browser()
 
+  # remember original columns and key column:
   ori.keyX <- key(dtX)
   ori.columns <- columns; # needed if columns is passed as a named vector
 
@@ -1995,6 +2003,21 @@ mergeR <- function(dtX, dtY, by.x=key(dtX), by.y=key(dtY), by=NULL, all=F, all.x
   }
 
   if (uniqueY==TRUE) dtY %<>% unique()
+
+  if (force.char){
+    for (i in seq_along(by.x)){
+      this_key_x <- by.x[i]
+      this_key_y <- by.y[i]
+      if (is.character(dtX[[this_key_x]]) & !is.character(dtY[[this_key_y]])) {
+        cat('\nCasting character to the second table key: ' %+% bold(this_key_y))
+        dtY[[this_key_y]] %<>% as.character();
+        }
+      if (is.character(dtY[[this_key_y]]) & !is.character(dtX[[this_key_x]])) {
+        cat('\nCasting character to the first table key: ' %+% bold(this_key_x))
+        dtX[[this_key_x]] %<>% as.character();
+        }
+    }
+  }
 
   ret <- ifelse1(
     is.null(by),
