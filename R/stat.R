@@ -136,7 +136,7 @@ dt4mosaic <- function(inpDT, byX, byY){
   return(dt.stat)
 }
 
-plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Count', prefix='n=', scaleY=F, showN='N', leg.title=NA, compare=NA){
+plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Count', prefix='n=', scaleY=F, showN='N', leg.title=NA, compare=NA, thr=0){
   if (!is.null(byX) & !is.null(byY)){
     inpDTmosaic %<>% dt4mosaic(byX, byY)
   }
@@ -163,6 +163,7 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
   inpDTmosaic[, y0 := cumsum(yPrev),by=c(byX)]
   inpDTmosaic[, y1 := 1-(y0+rel/2)]
 
+  inpDTmosaic[rel>=thr, `:=`(relLabel=percent(rel,ndig=1), CountLabel=Count)]
 
   # browser()
 
@@ -182,8 +183,8 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
   if (!is.null(colors)) p <- p + scale_fill_manual(values = colors, name=byY)
   if (scaleY==F) p <- p + theme(axis.text.y = element_blank())
   #  browser()
-  if (showN=='N')  p <- p + geom_text(aes(label=Count, y=y1))
-  if (showN=='%')  p <- p + geom_text(aes(label=percent(rel,ndig=1), y=y1))
+  if (showN=='N')  p <- p + geom_text(aes(label=CountLabel, y=y1))
+  if (showN=='%')  p <- p + geom_text(aes(label=relLabel, y=y1))
 
   if (not.na(compare)){
     #    browser()
@@ -585,4 +586,81 @@ getmode <- function(x, all=F, na.rm=T, noNULL=T) {
   if (noNULL==T & is.null(retval)) retval <- NA
   return(retval)
 }
+
+
+phi_coefficient <- function(tab1) {
+  if (!all(dim(tab1) == c(2, 2))) return(NA)
+  n11 <- as.numeric(tab1[2, 2])  # TRUE, TRUE
+  n10 <- as.numeric(tab1[2, 1])  # TRUE, FALSE
+  n01 <- as.numeric(tab1[1, 2])  # FALSE, TRUE
+  n00 <- as.numeric(tab1[1, 1])  # FALSE, FALSE
+
+  # Compute numerator and denominator safely
+  numerator <- (n11 * n00) - (n10 * n01)
+  denominator <- sqrt((n11 + n10) * (n01 + n00) * (n11 + n01) * (n10 + n00))
+
+  # Avoid division by zero or undefined cases
+  if (is.nan(denominator) || denominator == 0) return(NA_real_)
+
+  return(numerator / denominator)
+}
+
+
+
+corr_pair <- function(pair, dtIn){
+  var1 <- pair[1]
+  var2 <- pair[2]
+
+  # Build contingency table
+  tab1 <- table(dtIn[[var1]], dtIn[[var2]])
+
+  # Ensure 2x2 table
+  if (!all(dim(tab1) == c(2, 2)) ) {
+    # Pad missing TRUE/FALSE combinations if necessary
+    all_levels <- list(c(FALSE, TRUE), c(FALSE, TRUE))
+    tab1 <- table(factor(dtIn[[var1]], levels = all_levels[[1]]),
+                  factor(dtIn[[var2]], levels = all_levels[[2]]))
+  }
+
+  stopifnot(dimnames(tab1) %===% structure(list(c("FALSE", "TRUE"), c("FALSE", "TRUE")), names = c("","")))
+
+#  browser()
+
+  n00 <- tab1[1,1]
+  n01 <- tab1[1,2]
+  n10 <- tab1[2,1]
+  n11 <- tab1[2,2]
+
+  whenTrue  <- n11/(n11+n10)
+  whenFalse <- n01/(n01+n00)
+
+  # Fisher's exact test (one-sided)
+  pval.excl <- fisher.test(tab1, alternative = "less")$p.value    # for mutual exclusivity
+  pval.cooc <- fisher.test(tab1, alternative = "greater")$p.value # for co-occurrence
+
+  # Phi coefficient (binary correlation)
+  phi <- phi_coefficient(tab1)
+  if (is.null(phi)) phi <- NA
+
+  # Return result row
+  data.table(
+    var1 = var1,
+    var2 = var2,
+    whenTrue=whenTrue,
+    whenFalse=whenFalse,
+    pval.excl = pval.excl,
+    pval.cooc = pval.cooc,
+    phi = phi
+  )
+
+}
+# Usage example1:
+# corr_pair(c('mut_TP53','mut_APC'), dt.pat)
+
+# Usage example2:
+# vec.genes2test <- cs('APC TP53 KRAS PIK3CA BRAF')
+# gene_pairs <- combn('mut_' %+% vec.genes2test, 2, simplify=FALSE)
+# dt.corr <- rbindlist(lapply(gene_pairs, FUN=corr_pair, dtIn=dt.pat))
+
+
 

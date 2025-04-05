@@ -762,7 +762,7 @@ va_txt_dominant_case <- function(inpVec){
 }
 
 re.class <- function(x) {class(x) <- c(class(x), 'regex'); return(x)}
-re.is    <- function(x) {'regex' %in% class(x);}
+is.re    <- function(x) {'regex' %in% class(x);}
 
 
 

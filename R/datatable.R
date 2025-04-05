@@ -768,22 +768,22 @@ cleandupflds <- function(dtIn, f1=names(dtIn), f2=NA, scanall=T, guess2=T, verbo
 }
 
 
-dt_combinecomplete <- function(inpDT, colsFrom, colTo, delFrom=F){
-  colsNotFound <- colsFrom %-% names(inpDT)
+dt_combinecomplete <- function(dtIn, colsFrom, colTo, delFrom=F){
+  colsNotFound <- colsFrom %-% names(dtIn)
   if (length(colsNotFound)>0) cat('Columns not found: ', colsNotFound);
-  colsFrom <- colsFrom %&% names(inpDT)
-  if (length(colsFrom)==0) {return(invisible(inpDT));}
-  result <- inpDT[[colsFrom[1]]]
+  colsFrom <- colsFrom %&% names(dtIn)
+  if (length(colsFrom)==0) {return(invisible(dtIn));}
+  result <- dtIn[[colsFrom[1]]]
   for (colFrom in colsFrom){
-    this.vals <- inpDT[[colFrom]]
+    this.vals <- dtIn[[colFrom]]
     notNAboth <- !is.na(result) & !is.na(this.vals)
     if (!identical(result[notNAboth], this.vals[notNAboth])) stop(colFrom %+% ': Discrepancy found!')
     compl <- is.na(result) & !is.na(this.vals)
     result[compl] <- this.vals[compl]
   }
-  inpDT[[colTo]] <- result
-  if (delFrom) inpDT[,(colsFrom):=NULL]
-  invisible(inpDT)
+  dtIn[[colTo]] <- result
+  if (delFrom) dtIn[,(colsFrom):=NULL]
+  invisible(dtIn)
 }
 
 
@@ -1275,15 +1275,15 @@ mergefiletabs2 <- function(
 # result of mergefiletabs():   V1-CHROM-POS-REF-ALT-ffn,
 # so we run fixLastCol(dt1,colName='comment',addcols=0)
 # or        fixLastCol(dtMerged,colName='comment',addcols=1)
-fixLastCol <- function(inpDT, colName=NULL, addcols=0){
-  if (is.null(colName)) colName <- names(inpDT)[1]
-  lastcolnames <- tail(names(inpDT),addcols)
-  names(inpDT) <- c(
-    names(inpDT)[2:(length(names(inpDT))-addcols)],
+fixLastCol <- function(dtIn, colName=NULL, addcols=0){
+  if (is.null(colName)) colName <- names(dtIn)[1]
+  lastcolnames <- tail(names(dtIn),addcols)
+  names(dtIn) <- c(
+    names(dtIn)[2:(length(names(dtIn))-addcols)],
     colName,
     lastcolnames
   )
-  invisible(inpDT)
+  invisible(dtIn)
 }
 
 
@@ -1485,17 +1485,17 @@ setcolorderV <- function(dtIn, newcols, ellipsis='...'){
 names.comm <- function(dt1,dt2) {return(intersect(names(dt1),names(dt2)))}
 names.diff <- function(dt1,dt2) {return(setdiff(names(dt1),names(dt2)))}
 
-findnamesrange <- function(inpDT,name1,name2, values=F){
-  col1 <- which(names(inpDT)==name1)
-  col2 <- which(names(inpDT)==name2)
-  if (values==T) {return(names(inpDT)[col1:col2]);}
+findnamesrange <- function(dtIn,name1,name2, values=F){
+  col1 <- which(names(dtIn)==name1)
+  col2 <- which(names(dtIn)==name2)
+  if (values==T) {return(names(dtIn)[col1:col2]);}
   else return(col1:col2);
 }
 
 
 
 cast.fun <- function(inp.dt, cols2cast=names(inp.dt), FUN, ...){
-  if (re.is(cols2cast)) cols2cast <- grep(cols2cast,names(inp.dt),value = T)
+  if (is.re(cols2cast)) cols2cast <- grep(cols2cast,names(inp.dt),value = T)
 
   cols2castY <- intersect(cols2cast,names(inp.dt))
   list.notfound <- cols2cast %-% names(inp.dt)
@@ -1536,47 +1536,51 @@ compare.df <- function(df1,df2) {
 }
 
 
-split_vers <- function(inpDT, col_format, col_content, sep=':'){
-  for (this.format in unique(inpDT[[col_format]])){
-    inpDT[get(col_format)==this.format, unlist(strsplit(this.format,sep)):=tstrsplit(get(col_content),sep)]
+split_vers <- function(dtIn, col_format, col_content, sep=':'){
+  for (this.format in unique(dtIn[[col_format]])){
+    dtIn[get(col_format)==this.format, unlist(strsplit(this.format,sep)):=tstrsplit(get(col_content),sep)]
   }
-  invisible(inpDT)
+  invisible(dtIn)
 }
 
-split_vers2 <- function(inpDT, col_format, col_content, sep=':', prefix=''){
+split_vers2 <- function(dtIn, col_format, col_content, sep=':', prefix=''){
   allnewnames <- c()
-  for (this.format in unique(inpDT[[col_format]])){
+  for (this.format in unique(dtIn[[col_format]])){
     newnames <- unlist(strsplit(this.format,sep))
     allnewnames <- unique(c(allnewnames, newnames))
-    inpDT[get(col_format)==this.format, (newnames):=tstrsplit(get(col_content),sep)]
+    dtIn[get(col_format)==this.format, (newnames):=tstrsplit(get(col_content),sep)]
   }
-  setnames(inpDT, allnewnames, paste0(prefix, allnewnames))
-  invisible(inpDT)
+  setnames(dtIn, allnewnames, paste0(prefix, allnewnames))
+  invisible(dtIn)
 }
 
 
 
-shrink.col <- function(inpDT, cols, sep=';'){
+shrink.col <- function(dtIn, cols, sep=';'){
   # 'chrX;chrX;chrX;chrX' => 'chrX'
   for (this.col in cols){ # this.col='Chr'
-    inpDT[, c(this.col):=paste0( unique(unlist(strsplit(get(this.col),sep,fixed = T))), collapse = sep) , by=c(this.col)]
+    dtIn[, c(this.col):=paste0( unique(unlist(strsplit(get(this.col),sep,fixed = T))), collapse = sep) , by=c(this.col)]
   }
-  invisible(inpDT)
+  invisible(dtIn)
 }
 
 
-shrink_cols <- function(inpDT, col_by, cols=setdiff(names(inpDT),col_by), sep=';', force.char=T, FUN=shrink_values_any, ...) {
+shrink_cols <- function(dtIn, col_by, cols=setdiff(names(dtIn),col_by), sep=';', force.char=T, FUN=shrink_values_any, ...) {
+  if (is.re(cols)) cols <- grep(cols, names(dtIn), value=T)
+  nTot <- length(cols)
+  ndx <- 0L
   for (this.col in cols){ # this.col='Chr'
-    cat('\n', bold(this.col))
-    if (this.col %!in% names(inpDT)) {warning(' Column ',this.col, ' not found within names of input table. '); next;}
+    ndx <- ndx +1L
+    cat('\n', ndx,'/',nTot,'\t', bold(this.col))
+    if (this.col %!in% names(dtIn)) {warning(' Column ',this.col, ' not found within names of input table. '); next;}
     # browser()
-    if (force.char==T) inpDT[[this.col]] %<>% as.character()
-    inpDT[, c(this.col) := FUN(get(this.col), force.char=force.char,...), by=c(col_by)]
+    if (force.char==T) dtIn[[this.col]] %<>% as.character()
+    dtIn[, c(this.col) := FUN(get(this.col), force.char=force.char,...), by=c(col_by)]
   }
-  invisible(inpDT)
+  invisible(dtIn)
 }
 
-dt_addcols <- function(inpDT, cols, defval=NA, silent=F){
+dt_addcols <- function(dtIn, cols, defval=NA, silent=F){
 # adding column if it is not in the table yet
 # dt_addcols(dt, cols = cs('colA colB colC')) - adds columns as NA
 # dt_addcols(dt, cols = list(colA=NA_integer_, colB=NA_real_, 'colC') )
@@ -1590,31 +1594,31 @@ dt_addcols <- function(inpDT, cols, defval=NA, silent=F){
     this.colname <- names(cols)[i]
     this.colval  <- cols[[i]]
     if (this.colname=='') {this.colname <- this.colval; this.colval <- defval;}
-    if (this.colname %in% names(inpDT)) {message(bold(this.colname), ' already exists.');next;}
-    if (nrow(inpDT)==0) this.colval <- this.colval[0]
-    inpDT[[this.colname]] <- this.colval
+    if (this.colname %in% names(dtIn)) {message(bold(this.colname), ' already exists.');next;}
+    if (nrow(dtIn)==0) this.colval <- this.colval[0]
+    dtIn[[this.colname]] <- this.colval
   }
 
-  invisible(inpDT)
+  invisible(dtIn)
 }
 
 # getfldFrom <- 'aaa; level 32; transcript_support_level "4";'
 
-extract.fld <- function(inpDT,fldFrom,fldTo,regex1,regex2='\\1',regex3='',pos=1L,remove=T){
+extract.fld <- function(dtIn,fldFrom,fldTo,regex1,regex2='\\1',regex3='',pos=1L,remove=T){
   str.wide <- paste0('.*',regex1,'.*')
-  inpDT[grepl(regex1,get(fldFrom)), (fldTo):=gsub(str.wide, regex2, get(fldFrom))]
+  dtIn[grepl(regex1,get(fldFrom)), (fldTo):=gsub(str.wide, regex2, get(fldFrom))]
   if (remove==T){
-    inpDT[grepl(regex1,get(fldFrom)), (fldFrom):=gsub(regex1, regex3,get(fldFrom))]
+    dtIn[grepl(regex1,get(fldFrom)), (fldFrom):=gsub(regex1, regex3,get(fldFrom))]
   }
 
-  invisible(inpDT)
+  invisible(dtIn)
 }
 
 
-setDF_my <- function(inpDT, col2rownames){
-  setDF(inpDT)
-  row.names(inpDT) <- inpDT[[col2rownames]]
-  invisible(inpDT)
+setDF_my <- function(dtIn, col2rownames){
+  setDF(dtIn)
+  row.names(dtIn) <- dtIn[[col2rownames]]
+  invisible(dtIn)
 }
 
 
@@ -1632,51 +1636,51 @@ mergemulti <- function(dlist,key,...){
 
 
 
-get_top_via_ranks <- function(inpDT,colVal,inpConditions,rankNum=5L,side=c('top','btm')) {
+get_top_via_ranks <- function(dtIn,colVal,inpConditions,rankNum=5L,side=c('top','btm')) {
   for (this.condition in inpConditions){
     if ('top' %in% side){
-      inpDT[eval(parse(text = this.condition)),newRankCol:=frank(-get(colVal), ties.method =  'average')]
-      #eff.thr <- ifelse(rankNum>min(inpDT$newRankCol,na.rm=T),rankNum,)
-      inpDT[newRankCol<=rankNum,selected:=TRUE]
+      dtIn[eval(parse(text = this.condition)),newRankCol:=frank(-get(colVal), ties.method =  'average')]
+      #eff.thr <- ifelse(rankNum>min(dtIn$newRankCol,na.rm=T),rankNum,)
+      dtIn[newRankCol<=rankNum,selected:=TRUE]
     }
     if ('btm' %in% side){
-      inpDT[eval(parse(text = this.condition)),newRankCol:=frank(get(colVal), ties.method =  'average')]
-      inpDT[newRankCol<=max(rankNum,min(newRankCol)),selected:=TRUE]
+      dtIn[eval(parse(text = this.condition)),newRankCol:=frank(get(colVal), ties.method =  'average')]
+      dtIn[newRankCol<=max(rankNum,min(newRankCol)),selected:=TRUE]
     }
   }
-  inpDT[,newRankCol:=NULL]
-  return(inpDT)
+  dtIn[,newRankCol:=NULL]
+  return(dtIn)
 }
 
-get_top_via_headtail <- function(inpDT,colVal,inpConditions,rankNum=5L,side='both') {
+get_top_via_headtail <- function(dtIn,colVal,inpConditions,rankNum=5L,side='both') {
   ht <- function(x, n=5L) unique(c(head(x, n), tail(x, n)))
-  inpDT[, rn := .I]
+  dtIn[, rn := .I]
   for (this.condition in inpConditions){
     if (side=='top') {
-      inpDT[rn %in% inpDT[order(get(colVal)),head(rn[eval(parse(text = this.condition))], rankNum)],selected:=TRUE]
+      dtIn[rn %in% dtIn[order(get(colVal)),head(rn[eval(parse(text = this.condition))], rankNum)],selected:=TRUE]
     } else if (side=='btm'){
-      inpDT[rn %in% inpDT[order(get(colVal)),tail(rn[eval(parse(text = this.condition))], rankNum)],selected:=TRUE]
-    } else inpDT[rn %in% inpDT[order(get(colVal)),ht(rn[eval(parse(text = this.condition))], rankNum)],selected:=TRUE]
+      dtIn[rn %in% dtIn[order(get(colVal)),tail(rn[eval(parse(text = this.condition))], rankNum)],selected:=TRUE]
+    } else dtIn[rn %in% dtIn[order(get(colVal)),ht(rn[eval(parse(text = this.condition))], rankNum)],selected:=TRUE]
   }
-  return(inpDT)
+  return(dtIn)
 }
 
 
 
 # search for pair of columns with identical names and delete one if equal
-del.dupflds.dupnames <- function(inpDT, verbose=T){
-  for (this.f in names(inpDT)){
-    this.is <- which(this.f == names(inpDT)); # indices of occurrences
+del.dupflds.dupnames <- function(dtIn, verbose=T){
+  for (this.f in names(dtIn)){
+    this.is <- which(this.f == names(dtIn)); # indices of occurrences
     if (length(this.is)>1) {
       if (verbose) cat('\n', length(this.is), this.f);
-      if (all(inpDT[,(this.is[1]), with=F] == inpDT[,(this.is[2]), with=F])){
+      if (all(dtIn[,(this.is[1]), with=F] == dtIn[,(this.is[2]), with=F])){
         if (verbose) cat('!!!');
-        set(inpDT, , this.is[2], NULL)
+        set(dtIn, , this.is[2], NULL)
         if (verbose) cat('+');
       }
     }# e. if >1
   } # e. for
- invisible(inpDT)
+ invisible(dtIn)
 }
 
 
@@ -1691,7 +1695,7 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL){ #inDT=dt.P
   cols.unq <- c()
 
   if (!is.null(cols)){
-    if (re.is(cols)){
+    if (is.re(cols)){
       cols <- grep(cols, names(inDT), value=T)
     } else cols <- cols %&% names(inDT)
     cols <- cols %-% key
@@ -1765,34 +1769,34 @@ dedup.colnames <- function(...){
 
 
 
-dt_names_dedup_pre <- function(inpDT, cols=NULL){
-  if (is.null(cols)) cols <- which(allDuplicated(names(inpDT))) # 9 10 12 13 15 16 68 74 76
-  nondups <- seq_along(names(inpDT)) %-% cols
+dt_names_dedup_pre <- function(dtIn, cols=NULL){
+  if (is.null(cols)) cols <- which(allDuplicated(names(dtIn))) # 9 10 12 13 15 16 68 74 76
+  nondups <- seq_along(names(dtIn)) %-% cols
   for (i in cols){
     .prev <- max(nondups[nondups<i])
-    .nm.prev <- names(inpDT)[.prev] # Preoeprative chemotherapy
-    .nm.this <- names(inpDT)[i]     # start.date
+    .nm.prev <- names(dtIn)[.prev] # Preoeprative chemotherapy
+    .nm.this <- names(dtIn)[i]     # start.date
     .nm.new  <-  .nm.prev %+% '.' %+% .nm.this
     .nm.new.str  <-  bold(red(.nm.prev) %+% '.' %+% blue(.nm.this))
 
     cat('\nRenaming duplicated ', red(i), bold(.nm.this),' to \t', red(.prev), .nm.new.str)
-    names(inpDT)[i] <- .nm.new
+    names(dtIn)[i] <- .nm.new
   }
-  return(inpDT)
+  return(dtIn)
 }
 
 
 
 
 
-dt_del_columns <- function(inpDT, cols2del){
+dt_del_columns <- function(dtIn, cols2del){
 #  browser()
-  if (re.is(cols2del)){
-    vec.match <- which(names(inpDT) %~~~% cols2del)
-  } else vec.match <- which(names(inpDT) %in% cols2del)
+  if (is.re(cols2del)){
+    vec.match <- which(names(dtIn) %~~~% cols2del)
+  } else vec.match <- which(names(dtIn) %in% cols2del)
 
-  if (length(vec.match)>0) inpDT[, c(vec.match):=NULL]
-  invisible(inpDT)
+  if (length(vec.match)>0) dtIn[, c(vec.match):=NULL]
+  invisible(dtIn)
 }
 
 
@@ -1836,12 +1840,12 @@ build_cum_table <- function(inp_dt_sum,colDate='earliestBlood',colType='Type'){
   #            #Location='Cancer location'
   # )
 
-build_stat_table_N <- function(inpDT,categories, do.sort = F, thrRank=15, ...){
+build_stat_table_N <- function(dtIn,categories, do.sort = F, thrRank=15, ...){
   dt.N <- NULL
 #  browser()
   for (this.cat in names(categories)){
     this.label <- categories[[this.cat]]
-    this.vals  <- inpDT[[this.cat]]
+    this.vals  <- dtIn[[this.cat]]
     if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
     this.stat  <- tab(this.vals, thrRank = thrRank, do.sort = do.sort, ...)
     this.title <- data.table(Category=this.label)
@@ -1853,11 +1857,11 @@ build_stat_table_N <- function(inpDT,categories, do.sort = F, thrRank=15, ...){
   invisible(dt.N)
 }
 
-build_stat_table_med <- function(inpDT,categories){
+build_stat_table_med <- function(dtIn,categories){
   dt.med <- NULL
   for (this.cat in names(categories)){
     this.label <- categories[[this.cat]]
-    this.vals  <- as.numeric(inpDT[[this.cat]])
+    this.vals  <- as.numeric(dtIn[[this.cat]])
     if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
     this.vals %<>% as.numeric()
     this.med <- median(this.vals, na.rm=T)
@@ -1876,20 +1880,20 @@ build_stat_table_med <- function(inpDT,categories){
 # relabel(dt.mosaic,
 # list(cs('postMRD,postMRD_ctDNA_positivity,Negative,Positive'),
 #                cs('Relapsed,Recurred,Not recurred,Recurred') ) )
-relabel <- function(inpDT,inpList){
+relabel <- function(dtIn,inpList){
   for (item in inpList){
     colFrom <- item[1]
     colTo   <- item[2]
     newLevels <- item[-(1:2)]
     message('Renaming ',bold(colFrom),' to ',bold(colTo),' with levels: ',paste(bold(newLevels),collapse=','))
-    #inpDT[, newCol:=get(colFrom)]
-    inpDT$newCol <- inpDT[[colFrom]]
-    setnames(inpDT,colFrom, colTo)
-    setnames(inpDT,'newCol',colFrom)
-    if (!is.factor(inpDT[[colTo]])) inpDT[[colTo]] %<>% factor()
-    if (length(newLevels)>0) levels(inpDT[[colTo]]) <- newLevels
+    #dtIn[, newCol:=get(colFrom)]
+    dtIn$newCol <- dtIn[[colFrom]]
+    setnames(dtIn,colFrom, colTo)
+    setnames(dtIn,'newCol',colFrom)
+    if (!is.factor(dtIn[[colTo]])) dtIn[[colTo]] %<>% factor()
+    if (length(newLevels)>0) levels(dtIn[[colTo]]) <- newLevels
   }
-  return(inpDT)
+  return(dtIn)
 }
 
 
@@ -2039,10 +2043,10 @@ mergeR <- function(dtX, dtY, by.x=key(dtX), by.y=key(dtY), by=NULL, all=F, all.x
 dtshift <- data.table::shift
 
 
-dt_dict <- function(inpDT, keys=names(inpDT)[1], vals=names(inpDT)[2], check=T){
+dt_dict <- function(dtIn, keys=names(dtIn)[1], vals=names(dtIn)[2], check=T){
   error <- FALSE
-  dict <- inpDT[[vals]]
-  names(dict) <- inpDT[[keys]]
+  dict <- dtIn[[vals]]
+  names(dict) <- dtIn[[keys]]
 
   if (anyDuplicated(names(dict))) {warning('Duplicated keys!'); error=T;}
 
@@ -2089,9 +2093,9 @@ rbindV <- function(...,fill=T){
 }# e. rbindV
 
 
-dt_ttest <- function(inpDT,grpCol,grpLevels,valCol){
-  values1 <- inpDT[get(grpCol)==grpLevels[1],][[valCol]]
-  values2 <- inpDT[get(grpCol)==grpLevels[2],][[valCol]]
+dt_ttest <- function(dtIn,grpCol,grpLevels,valCol){
+  values1 <- dtIn[get(grpCol)==grpLevels[1],][[valCol]]
+  values2 <- dtIn[get(grpCol)==grpLevels[2],][[valCol]]
   t.test(values1, values2)
 }
 
@@ -2100,11 +2104,11 @@ dt_ttest <- function(inpDT,grpCol,grpLevels,valCol){
 # "multiplies" template table N times,
 # where N is the length of provided list of IDs
 # dt1 <- dt_multiply(dt.template,'pID',list.IDs)
-dt_multiply <- function(inpDT,colname,listIDs) {
+dt_multiply <- function(dtIn,colname,listIDs) {
   N <- length(listIDs)
   stopifnot(N>0)
-  dt.multiplied <- inpDT[rep(seq_len(nrow(inpDT)), N)]
-  dt.multiplied[[colname]] <- rep(listIDs, each=nrow(inpDT))
+  dt.multiplied <- dtIn[rep(seq_len(nrow(dtIn)), N)]
+  dt.multiplied[[colname]] <- rep(listIDs, each=nrow(dtIn))
   invisible(dt.multiplied)
 }
 
@@ -2123,27 +2127,27 @@ dt_match_shrink <- function(dtTo, dtFrom, col.To, col.from, match.on){
 
 # if we opened a table where the header is not in the first row,
 # i.e. first n rows are filled with some other info and header is in the n+1-th row
-dt_reheader <- function(inpDT, n=1, dedup=T, clean.names=T){
-  names_dt <- inpDT[n,] %>% unname() %>% unlist()
-  inpDT <- inpDT[-seq_len(n),]
-  names(inpDT) <- names_dt
-  if (dedup==T) inpDT %<>% dt_names_dedup_n()
-  if (clean.names==T) inpDT %<>% dtcleannames()
-  inpDT
+dt_reheader <- function(dtIn, n=1, dedup=T, clean.names=T){
+  names_dt <- dtIn[n,] %>% unname() %>% unlist()
+  dtIn <- dtIn[-seq_len(n),]
+  names(dtIn) <- names_dt
+  if (dedup==T) dtIn %<>% dt_names_dedup_n()
+  if (clean.names==T) dtIn %<>% dtcleannames()
+  dtIn
 }
 
 
 
-dt_analyze_dup_records <- function(inpDT,bycol=key(inpDT), fast=T, silent=F, ret='names'){
+dt_analyze_dup_records <- function(dtIn,bycol=key(dtIn), fast=T, silent=F, ret='names'){
   catV <- cat
   if (silent==T) catV <- function(...){}
   lst.dup <- list();
   .dup.colnames <- c();
-  list.dup <- inpDT[,.N,bycol][N>1,get(bycol)]
+  list.dup <- dtIn[,.N,bycol][N>1,get(bycol)]
   cat('\n',bold(length(list.dup)),' / ', bold(unqN(list.dup)))
   for (i in list.dup){
     catV('\n',bold(i),': ')
-    .this.dt <- inpDT[get(bycol)==i,] %>% dt_deluselesscols(silent = T)
+    .this.dt <- dtIn[get(bycol)==i,] %>% dt_deluselesscols(silent = T)
     if (fast==F) lst.dup[[as.character(i)]] <- .this.dt
     .dup.colnames %<>% c(names(.this.dt))
     catV(cs1(names(.this.dt)))
@@ -2208,28 +2212,28 @@ dt_setup_key <- function(dtIn, key.from, key.to=key.from){
   invisible(dtIn)
 }
 
-dt_set_header <- function(inpDT, headerLine=2){
+dt_set_header <- function(dtIn, headerLine=2){
   if (!is.integer(headerLine)) stop('headerLine must be integer!')
   if (!(headerLine>0)) stop('headerLine must be a positive integer!')
   if (length(headerLine)>1) stop('headerLine must be a single number!')
-  tmp.names <- unlist(inpDT[headerLine,], use.names = F)
-  #  tmp.names <- as.character(inpDT[headerLine,]) # faster?
-  setnames(inpDT, tmp.names)
+  tmp.names <- unlist(dtIn[headerLine,], use.names = F)
+  #  tmp.names <- as.character(dtIn[headerLine,]) # faster?
+  setnames(dtIn, tmp.names)
 
-  inpDT <- inpDT[-(1:headerLine),]
+  dtIn <- dtIn[-(1:headerLine),]
 
-  invisible(inpDT)
+  invisible(dtIn)
 }
 
-dt_del_NA_columns <- function(inpDT){
-  na_cols <- which(colSums(is.na(inpDT)) == nrow(inpDT))
-  inpDT[, c(na_cols) := NULL]
-  invisible(inpDT)
+dt_del_NA_columns <- function(dtIn){
+  na_cols <- which(colSums(is.na(dtIn)) == nrow(dtIn))
+  dtIn[, c(na_cols) := NULL]
+  invisible(dtIn)
 }
 
 
 
-dt_process <- function(inpDT,
+dt_process <- function(dtIn,
                        dedup=T, cleannames=T,
                        rename.from=NULL, rename.to=NULL,
                        transform=list(),
@@ -2240,35 +2244,35 @@ dt_process <- function(inpDT,
   # 1. Deduplicate columns
   if (dedup==T) {
     cat('\n  Deduplicating columns. ')
-    inpDT %<>% dt_names_dedup_n()
+    dtIn %<>% dt_names_dedup_n()
   }
 
 
   # 2. Clean column names
   if (cleannames==T) {
     cat('\n  Cleaning column names. ')
-    inpDT %<>% dtcleannames()
+    dtIn %<>% dtcleannames()
   }
 
   # 3. Rename columns
   if (!is.null(rename.from)) {
     cat('\n  Renaming columns. ')
-    inpDT %<>% setnamessp(rename.from, rename.to)
+    dtIn %<>% setnamessp(rename.from, rename.to)
   }
 
   # 4. Apply functions to columns
   for (this.fun in names(transform)){
     this.cols <- transform[[this.fun]]
     message('\n   Casting function ' %+% bold(this.fun %+% '()') %+% ' to columns ' %+% paste(bold(this.cols, collapse = ', ')))
-    inpDT %<>% cast.fun(this.cols, as.name(this.fun))
+    dtIn %<>% cast.fun(this.cols, as.name(this.fun))
   }
 
   # 5. Add columns
   if (length(add.cols)>0) {
-    inpDT %<>% dt_addcols(add.cols)
+    dtIn %<>% dt_addcols(add.cols)
   }
 
-  invisible(inpDT)
+  invisible(dtIn)
 }
 
 `%hascol%` <- function(dtInp, cols2search) cols2search %in% names(dtInp);
@@ -2391,15 +2395,15 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requ
 
 
 
-dt_difftime_num <- function(inpDT){
-  for (this.col in names(inpDT)){
-    if ('difftime' %in% class(inpDT[[this.col]])) {
+dt_difftime_num <- function(dtIn){
+  for (this.col in names(dtIn)){
+    if ('difftime' %in% class(dtIn[[this.col]])) {
 #      cat('\n',bold(this.col),' was difftime. ')
       cat(bold(this.col),' ')
-      inpDT[[this.col]] %<>% as.numeric()
+      dtIn[[this.col]] %<>% as.numeric()
     }
   }
-  return(inpDT)
+  return(dtIn)
 }
 
 
@@ -2511,7 +2515,7 @@ tab_explore <- function(dtIn, columns.on=T, columns.off=F, tests.on=T, tests.off
 
 
 
-dt_addlabels <- function(inpDT, vec.labels, vec.names=NULL){
+dt_addlabels <- function(dtIn, vec.labels, vec.names=NULL){
   # browser()
   vec.indices <- NULL
   if (!is.null(vec.names) & length(vec.names)!=length(vec.labels)) stop('Column names should be either NULL or the same length as column labels.')
@@ -2519,9 +2523,9 @@ dt_addlabels <- function(inpDT, vec.labels, vec.names=NULL){
     vec.indices <- vec.names
   } else if (is.null(vec.names)) {
     vec.names   <- names(vec.labels)
-    vec.indices <- match(vec.names, names(inpDT))
+    vec.indices <- match(vec.names, names(dtIn))
   } else {
-    vec.indices <- match(vec.names, names(inpDT))
+    vec.indices <- match(vec.names, names(dtIn))
   }
 
   if (is.null(vec.indices)) stop('Columns should be provided as (character) column names or (numeric) column indices.')
@@ -2531,16 +2535,32 @@ dt_addlabels <- function(inpDT, vec.labels, vec.names=NULL){
     this.ndx   <- vec.indices[i]
     this.name  <- vec.names[i]
     this.label <- vec.labels[i]
-    if (is.numeric(this.name)) this.name <- names(inpDT)[this.name]
+    if (is.numeric(this.name)) this.name <- names(dtIn)[this.name]
     cat('\n',i,'\t',bold(this.name),'\t')
     if (is.na(this.ndx)) {cat(italic('Not found')); next;}
     cat(' <=>',this.label)
-    setattr(inpDT[[this.ndx]], "label", this.label)
+    setattr(dtIn[[this.ndx]], "label", this.label)
   }
-  invisible(inpDT)
+  invisible(dtIn)
 }
 
 # dt.iris <- data.table(iris)
 # dt.iris %<>% dt_addlabels(c(Sepal.Length='Sep Length',Species='Speciessss'))
 # dt.iris %<>% dt_addlabels(vec.labels = cs('Sep Length,Speciessss'),vec.names = cs('Sepal.Length,Species'))
 # dt.iris %<>% dt_addlabels(vec.labels = cs('Sep Length,Speciessss'),vec.names = c(1,5))
+
+
+dt_sample <- function(dtIn, size, fun_sample=sample, ...){
+  vecIn  <- seq_len(nrow(dtIn))
+  vecOut <- fun_sample(vecIn, size, ...)
+  return(dtIn[vecOut])
+}
+
+
+
+dt_last_record <- function(dtIn, by, cols.order=NA, na.last=F) {
+  dtOut <- copy(dtIn)
+  if (not.na(cols.order)) setorderv(dtOut, cols.order, na.last=na.last)
+  dtOut <- dtOut[, .SD[.N], by = by]
+  return(dtOut)
+}

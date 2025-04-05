@@ -432,7 +432,7 @@ tryRdat <- function(fnRdat, FUN, nEnv=1L, resnames=NA,...){
 } # e. try_rdat
 
 lazyBuild <- function(objNames, fnRdat=NULL, object=NULL, verbose=F, unlist=F){
-  #browser()
+#   browser()
   obj.return <- NULL
 
   objName1 <- objNames[[1]]
@@ -440,35 +440,41 @@ lazyBuild <- function(objNames, fnRdat=NULL, object=NULL, verbose=F, unlist=F){
   obj_find <- sapply(objNames,exists)
 
   if (all(obj_find)) {
-    message('Objects ', paste(bold(objNames), collapse=', '),' already exists in the current environment.');
-    return(get(objName1));
+    message('Objects ', paste(bold(objNames), collapse=', '),' already exist in the current environment.');
+    if (length(objNames)==1) {invisible(get(objName1));} else {invisible(NULL)}
   } else {
     message('Objects ', paste(bold(objNames[obj_find==F]), collapse=', '),' not found in the current environment.');
     if (!is.null(fnRdat)){
       message(' Trying to load from Rdat file ', bold(fnRdat),'. ');
       if (!file.exists(fnRdat)) {
-        message(' Rdat file not found! Will try to rebuild.');
+        message(' Rdat file not found! Will try to build.');
       } else { # Rdat file exists
-        obj.names <- load(fnRdat, verbose=verbose)
-        #obj.names <- loadv(fnRdat, envir = parent.frame(n=1L))
+        obj.names <- load(fnRdat, verbose=verbose, envir = parent.frame(n=1L))
         if (length(obj.names)==0) {
           message(' No objects loaded! ');
         } else {
           message(length(obj.names) %+% ' objects loaded! ' %+% paste(obj.names, collapse = ', '));
-          if (objNames %in% obj.names) {
-            obj.return <- get(objName1)
-          } else obj.return <- get(obj.names[1])
+          obj.return <- get(obj.names[1])
+          if (length(obj.names)>1) {
+            message('Multiple objects loaded into environment, hence returning NULL.')
+            invisible(NULL)
+          }
         }
       }
     } # e. if (!is.null(fnRdat))
 
     if (is.null(obj.return)){
-      message(' Rebuilding... ');
+      message(' Building object... ');
       obj.return <- object
       if (is.null(object)) stop('No object definition provided, or NULL provided.')
       if (!is.null(fnRdat)) {
-        message(' Saving to ',bold(fnRdat),'...');
-        saveas(obj.return, names2save = objName1, file = fnRdat)
+        if (unlist==T){
+          message('\n Saving ', bold(cs1(names(obj.return))), ' to ',bold(fnRdat),'...');
+          save(list = names(obj.return), file = fnRdat, envir = list2env(obj.return))
+        } else {
+          message('\n Saving ', bold(cs1(objName1)), ' to ',bold(fnRdat),'...');
+          saveas(obj.return, names2save = objName1, file = fnRdat)
+        }
       }
     }
 
