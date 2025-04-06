@@ -148,9 +148,11 @@ plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, co
 
 
   #inpDTmosaic[,grpN:=sum(get(colFreq)),by=get(byX)]
-  inpDTmosaic[,grpN:=sum(get(colFreq)),by=c(byX)]
-  inpDTmosaic[, xN:=as.character(get(byX))]
-  inpDTmosaic[, xN:=sprintf('%s\n%s%s',xN,prefix,grpN), by=.(xN,grpN)]
+  inpDTmosaic[,grpN := sum(get(colFreq)),by=c(byX)]
+  inpDTmosaic[, lbl_byX := as.character(get(byX))][, lbl_xN := '']
+  if (not.na(prefix)) inpDTmosaic[, lbl_xN := '\n' %+% prefix %+% grpN]
+  #inpDTmosaic[, xN := sprintf('%s\n%s%s',lbl_byX,prefix,grpN), by=.(xN,grpN)]
+  inpDTmosaic[, xN := lbl_byX %+% lbl_xN, by=.(lbl_byX,grpN)]
 
 
 

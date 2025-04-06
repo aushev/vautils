@@ -2564,3 +2564,5 @@ dt_last_record <- function(dtIn, by, cols.order=NA, na.last=F) {
   dtOut <- dtOut[, .SD[.N], by = by]
   return(dtOut)
 }
+
+dtprint <- DT::datatable
