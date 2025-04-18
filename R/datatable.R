@@ -161,6 +161,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                      rename.from=NULL,rename.to=NULL, fcounter=F,
                      fixV1=NA,
                      ...){
+  cat('\nSTARTING ' %+% cs1(fnRead) %+% '\n')
   flags <- c()
   if (fcounter==T){
     if (!exists('flexread.counter')) flexread.counter <- 0L
@@ -170,19 +171,23 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
   }
 
   if (length(fnRead)>1){
-    #browser()
+   #  browser()
     for (this.fnRead in fnRead){
       retTry <- tryCatch(
         expr = {
-          flexread(this.fnRead, sheetIndex=sheetIndex, sheetName=sheetName, silent=silent, keyby=keyby, char=char, num=num, filetype=filetype,
+          rez <- flexread(this.fnRead, sheetIndex=sheetIndex, sheetName=sheetName, silent=silent, keyby=keyby, char=char, num=num, filetype=filetype,
                    clean.names=clean.names, trimspaces=trimspaces, deluseless=deluseless,rename.from=rename.from, rename.to=rename.to, fcounter=fcounter,
                    fixV1=fixV1,...)
+          return(rez)
         },
-        error = function(cond) {warning(cond); cat('\n')}
+        error = function(cond) {warning(cond); cat('\n'); NULL;}
       )
     } # e. for
-    return(retTry)
-  } # e. if()
+#    message('\nok!!!\n')
+    if (!is.null(retTry)) return(retTry)
+    # message('\nNO!!!\n')
+    stop("All file paths in fnRead failed to open.")
+  } # e. if(length(fnRead)>1)
 
 
   if (is.na(fnRead))

@@ -37,7 +37,8 @@ lsos <- function(..., n=10) {
 }
 
 
-stopifnotunique <- function(x) {
+stopifnotunique <- function(x, allowNULL=F) {
+  if (is.null(x) & allowNULL==F) stop('input is NULL!')
   if (anyDuplicated(x)==0) return(invisible());
   dt.tab <- tab(x)
   dt.show <- dt.tab[dt.tab$Freq>1,]
