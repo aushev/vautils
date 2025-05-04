@@ -405,104 +405,119 @@ mtx.distance <- function(inpDist){
 na.allow <- function(input) return(is.na(input) | input);
 
 
-tryRdat <- function(fnRdat, FUN, nEnv=1L, resnames=NA,...){
-# This function tries to load data from the indicated Rdat file
-# if it doesn't exist, it will call indicated function, and save the results to the file
-# Function must return named objects in a list
-  cat('Checking pre-existing Rdat file:', fnRdat, '... ');
-  if (file.exists(fnRdat)) {
-    cat(' found. ');
-    load(fnRdat, verbose = T, envir = parent.frame(n=nEnv));
+
+
+
+
+
+#' Lazy Load or Build Objects with Optional Caching
+#'
+#' This function checks whether the specified object(s) already exist in the calling environment.
+#' If not, it optionally loads them from an `.RData` file. If the file does not exist or does not
+#' contain all requested objects, the function will call a user-supplied builder function to
+#' create the object(s), assign them into the environment, and optionally save them to the file.
+#'
+#' @param obj_names A character vector of object names to check and/or load into the environment.
+#' @param file Optional character string giving the path to an `.RData` file used for caching.
+#' @param builder A function that creates the desired object(s). If \code{unpack_list = TRUE},
+#'        it must return a named list.
+#' @param assign_env The environment in which to assign the created or loaded objects.
+#'        Defaults to \code{parent.frame()}.
+#' @param unpack_list Logical; if \code{TRUE}, the result of \code{builder()} is assumed to be
+#'        a named list and each element is assigned individually. If \code{FALSE}, the entire
+#'        result is assigned to the first name in \code{obj_names}.
+#' @param verbose Logical; if \code{TRUE}, messages will be printed describing what the function is doing.
+#'
+#' @return Invisibly returns the built or loaded object (or list of objects), but primarily
+#'         used for its side effect of assigning objects into the environment.
+#'
+#' @examples
+#' \dontrun{
+#' # Case 1: Single object
+#' lazyObject("my_data", file = "cache.RData", builder = function() rnorm(100))
+#'
+#' # Case 2: Named list of multiple objects
+#' lazyObject(
+#'   obj_names = c("data1", "data2"),
+#'   file = "multi_cache.RData",
+#'   builder = list(data1 = head(iris), data2 = head(mtcars)),
+#'   unpack_list = TRUE
+#' )
+#' }
+#'
+#' @export
+lazyObject <- function(obj_names,
+                       fnRdat = NULL,
+                             builder = NULL,
+                             assign_env = parent.frame(),
+                             unpack_list = FALSE,
+                             verbose = TRUE) {
+  if (verbose==F) message <- function(...){invisible()}
+
+  obj_found <- sapply(obj_names, exists, envir = assign_env, inherits = FALSE)
+  # If all requested objects already exist, return silently
+  if (all(obj_found)) {
+    message("✅ Objects already exist: ", paste(obj_names, collapse = ", "))
+    return(invisible(mget(obj_names, envir = assign_env)))
   } else {
-    cat(' not found. Will be generated and saved.\n');
-    result <- do.call(FUN, args = list(...))
-
-    names_to_save <- c()
-    for(this_name in names(result)){
-      new_name <- resnames[[this_name]];
-      if (is.na(new_name)) new_name <- this_name;
-      assign(x=new_name, value=result[[this_name]]) # , envir = parent.frame()
-      names_to_save <- c(names_to_save,new_name)
-    }
-
-    save(list = names_to_save, file = fnRdat);
-    load(fnRdat, verbose = T, envir = parent.frame(n=2));
-  } # e. else
-
-} # e. try_rdat
-
-lazyBuild <- function(objNames, fnRdat=NULL, object=NULL, verbose=F, unlist=F){
-#   browser()
-  obj.return <- NULL
-
-  objName1 <- objNames[[1]]
-
-  obj_find <- sapply(objNames,exists)
-
-  if (all(obj_find)) {
-    message('Objects ', paste(bold(objNames), collapse=', '),' already exist in the current environment.');
-    if (length(objNames)==1) {invisible(get(objName1));} else {invisible(NULL)}
-  } else {
-    message('Objects ', paste(bold(objNames[obj_find==F]), collapse=', '),' not found in the current environment.');
-    if (!is.null(fnRdat)){
-      message(' Trying to load from Rdat file ', bold(fnRdat),'. ');
-      if (!file.exists(fnRdat)) {
-        message(' Rdat file not found! Will try to build.');
-      } else { # Rdat file exists
-        obj.names <- load(fnRdat, verbose=verbose, envir = parent.frame(n=1L))
-        if (length(obj.names)==0) {
-          message(' No objects loaded! ');
-        } else {
-          message(length(obj.names) %+% ' objects loaded! ' %+% paste(obj.names, collapse = ', '));
-          obj.return <- get(obj.names[1])
-          if (length(obj.names)>1) {
-            message('Multiple objects loaded into environment, hence returning NULL.')
-            invisible(NULL)
-          }
-        }
-      }
-    } # e. if (!is.null(fnRdat))
-
-    if (is.null(obj.return)){
-      message(' Building object... ');
-      obj.return <- object
-      if (is.null(object)) stop('No object definition provided, or NULL provided.')
-      if (!is.null(fnRdat)) {
-        if (unlist==T){
-          message('\n Saving ', bold(cs1(names(obj.return))), ' to ',bold(fnRdat),'...');
-          save(list = names(obj.return), file = fnRdat, envir = list2env(obj.return))
-        } else {
-          message('\n Saving ', bold(cs1(objName1)), ' to ',bold(fnRdat),'...');
-          saveas(obj.return, names2save = objName1, file = fnRdat)
-        }
-      }
-    }
-
-    if (unlist==T) {
-      message(' Unfolding list of ' %+% bold(length(obj.return)) %+% ' objects: ' %+% paste(bold(blue(names(obj.return))),collapse = ', ') %+% '.\n')
-      list2env(obj.return, envir = parent.frame(n=1L))
-      invisible(obj.return[[1]]);
-    } else invisible(obj.return);
+    message("Some or all objects not found in the environment.");
   }
 
-} # e. lazyBuild()
+  # Try to load from RData fnRdat if provided
+  if (!is.null(fnRdat)) {
+    message("📦 Loading from ", fnRdat)
 
-tryRdat1 <- function(fnRdat, lazyobj, objname='result', saveResult=TRUE){
-# This function tries to load data from the indicated Rdat file
-# if it doesn't exist, it will call indicated function, and save the results to the file
-  cat('Checking pre-existing Rdat file:', fnRdat, '... ');
-  if (file.exists(fnRdat)) {
-    cat(' found. ');
-    result <- loadv1(fnRdat);
-  } else {
-      cat(' not found. Will be generated.\n');
-      result <- lazyobj;
-      assign(value = result, x=objname);
-      if (saveResult==T) save(list = objname, file = fnRdat);
+    loadv(fnRdat, envir = assign_env)
+
+    # Re-check existence after loading
+    obj_found <- sapply(obj_names, exists, envir = assign_env, inherits = FALSE)
+    if (all(obj_found)) {
+      message("All objects loaded from the file.");
+      return(invisible(mget(obj_names, envir = assign_env)))
+    } else {
+      message("⚠️ Not all objects loaded from file. Will try to build.")
     }
+  } # e. if(!is.null(fnRdat))
 
-  invisible(result);
-} # e. try_rdat
+  # Build using provided function
+  if (is.null(builder)) stop("No builder provided and objects not found or loaded.")
+
+  result <- builder
+
+  if (unpack_list) {
+    if (!is.list(result) || is.null(names(result))) stop("Builder must return a named list when unpacking.")
+    for (nm in names(result)) {
+      message("  Assigning ", nm)
+      assign(nm, result[[nm]], envir = assign_env)
+    }
+    if (!is.null(fnRdat)) save(list = names(result), file = fnRdat, envir = assign_env)
+  } else {
+    obj_name <- obj_names[[1]]
+    assign(obj_name, result, envir = assign_env)
+    if (!is.null(fnRdat)) save(list = obj_name, file = fnRdat, envir = assign_env)
+  }
+
+  return(invisible(result))
+} # e. lazyObject()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 compare.lists <- function(list1,list2) {
