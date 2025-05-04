@@ -363,7 +363,12 @@ geom_box_custom <- function(inpDT, byX, colY, q=0.25, barwidth=0.5, ...){
 }
 
 
-gghist <- function(inpDT,val.col,col.mean='red',col.med='darkgreen',lg10=NA,col.line='grey30',col.fill='grey80', xlab=val.col,...){
+gghist <- function(inpDT,val.col,col.mean='red',col.med='darkgreen',lg10=NA,col.line='grey30',col.fill='grey80', xlab=val.col, showCI=T,...){
+#   browser()
+  if (!is.data.frame(inpDT) & is.null(dim(inpDT)) & length(inpDT)>0 ){
+    inpDT <- data.table(value=inpDT)
+    val.col <- 'value'
+  }
   values <- as.numeric(inpDT[[val.col]])
   val.median <- median(values,na.rm=T)
   val.mean <- mean(values,na.rm=T)
@@ -373,15 +378,24 @@ gghist <- function(inpDT,val.col,col.mean='red',col.med='darkgreen',lg10=NA,col.
   pHist <-
     inpDT %>%
     ggplot(aes(x=values)) +
-    geom_histogram(colour=col.line,fill=col.fill,...) +
+    geom_histogram(colour=col.line,fill=col.fill,...)+
+    xlab(xlab) + ylab('Counts')
+
+
+  if (showCI==T) pHist <-
+    pHist +
     geom_vline(xintercept = c(val.05,val.95), linetype='dashed', col='darkgrey')+
     annotate('text', x=val.05, y=Inf, label=round(val.05,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)+
-    annotate('text', x=val.95, y=Inf, label=round(val.95,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)+
+    annotate('text', x=val.95, y=Inf, label=round(val.95,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)
 
+  if (not.na(col.med)) pHist <-
+    pHist +
     geom_vline(xintercept = val.median, linetype='dashed', col=col.med)+
-    annotate('text', x=val.median, y=0, label=round(val.median,2), col=col.med, angle=90, vjust=-0.5, hjust=-0.2)+
+    annotate('text', x=val.median, y=0, label=round(val.median,2), col=col.med, angle=90, vjust=-0.5, hjust=-0.2)
+
+  if (not.na(col.mean)) pHist <-
+    pHist +
     geom_vline(xintercept =   val.mean, linetype='dashed', col=col.mean)+
-    xlab(xlab) + ylab('Counts')+
     annotate('text', x=val.mean, y=0, label=round(val.mean,2), col=col.mean, angle=90, vjust=-0.5,hjust=-0.2)
 
   if (lg10 %~~% 'x' | lg10 %==% T) pHist <- pHist+scale_x_log10()
