@@ -129,6 +129,7 @@ show.envs.plus <- function(){
 '%>>%' = function(leftHS, rightHS, ...) UseMethod('%>>%')
 
 # Binary Operator
+#' @export
 '%<<%.leftbunch' = function(leftHS, rightHS, ...) {
   #browser()
   Envir = as.environment(-1)
@@ -278,6 +279,7 @@ time2 <- function() {
 
 # Total incomprehensible magic ####
 list <- structure(NA,class="result")
+#' @export
 "[<-.result" <- function(x,...,value) {
   args <- as.list(match.call())
   args <- args[-c(1:2,length(args))]
@@ -312,7 +314,7 @@ roundC <- function(x){
 }
 
 # checks if all elements are equal to one another
-all.same <- function(input, na.rm=FALSE){
+all_same <- function(input, na.rm=FALSE){
   if (length(input)<2)   {return(TRUE);}
   if (all(is.na(input))) {return(TRUE);}
   return(isTRUE(all(input==input[1], na.rm = na.rm)));
@@ -358,7 +360,7 @@ orderby <- function(x,y){
 }
 
 
-melt.distance <- function(inpDist){
+melt_distance <- function(inpDist){
   L <- length(inpDist)
   N <- length(labels(inpDist))
   df.melted <- data.frame(i=1:L,X=NA,Y=NA,dist=NA)

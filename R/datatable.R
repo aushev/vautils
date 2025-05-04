@@ -1486,9 +1486,8 @@ setcolorderV <- function(dtIn, newcols, ellipsis='...'){
   setcolorder(dtIn, c(firstcols, (names(dtIn) %-% newcols), lastcols))
 }
 
-
-names.comm <- function(dt1,dt2) {return(intersect(names(dt1),names(dt2)))}
-names.diff <- function(dt1,dt2) {return(setdiff(names(dt1),names(dt2)))}
+names_comm <- function(dt1,dt2) {return(intersect(names(dt1),names(dt2)))}
+names_diff <- function(dt1,dt2) {return(setdiff(names(dt1),names(dt2)))}
 
 findnamesrange <- function(dtIn,name1,name2, values=F){
   col1 <- which(names(dtIn)==name1)

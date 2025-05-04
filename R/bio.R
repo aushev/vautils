@@ -1,4 +1,4 @@
-update.gene.symbols <- function(inpGenes, db=org.Hs.eg.db, from="ENSEMBL", to='SYMBOL'){
+update_gene_symbols <- function(inpGenes, db=org.Hs.eg.db, from="ENSEMBL", to='SYMBOL'){
   stopifnot(duplicated(inpGenes)==0L)
 
   conv.genesymbols <- select(db, keys = inpGenes, columns=to, keytype=from, multiVals=T)

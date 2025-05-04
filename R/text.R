@@ -102,10 +102,15 @@ paste0ignNA <- function(arg1, arg2){
 }
 
 `%+%` <- function(...) UseMethod("%+%")
+#' @export
 `%+%.character` <- paste0ignNA
+#' @export
 `%+%.numeric`   <- paste0ignNA
+#' @export
 `%+%.logical`   <- paste0ignNA
+#' @export
 `%+%.NULL`      <- paste0ignNA
+#' @export
 `%+%.default` <- function (arg1, arg2){
   if (is.character(arg2)) {return(paste0ignNA(arg1,arg2));}
   message('\n Running %+%.default! \n ');
@@ -142,12 +147,14 @@ paste0notNA <- function(arg1, arg2){
   stop('Unexpected error!');
 }
 
-
+#' @export
 `%++%` <- function(...) UseMethod("%++%")
 `%++%.character` <- paste0notNA
 `%++%.numeric`   <- paste0notNA
 `%++%.logical`   <- paste0notNA
+#' @export
 `%++%.NULL`      <- paste0notNA
+#' @export
 `%++%.default` <- function (arg1, arg2){
 #  browser()
   if (all(is.na(arg1)) & is.character(arg2)) return(paste0notNA(arg1,arg2));
