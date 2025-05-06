@@ -1694,7 +1694,7 @@ del.dupflds.dupnames <- function(dtIn, verbose=T){
 # and fields that can be "reduced"
 # usage:
 # g(dt.patients, dt.plasmas) %<<% dt_normalize(dt1a.a, 'pID')
-dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL){ #inDT=dt.PMCC; key='Patient_ID';
+dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL, cols.skip=c()){ #inDT=dt.PMCC; key='Patient_ID';
   cols.gen <- c()
   cols.unq <- c()
 
@@ -1705,10 +1705,12 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL){ #inDT=dt.P
     cols <- cols %-% key
 
     cols.unq <- names(inDT) %-% cols
-    if (length(cols.unq)>0) message('These columns will not be checked: ' %+% paste0(bold(cols.unq),collapse = ','))
 
   } else cols <- names(inDT) %-% key
 
+  cols.unq <- unique(c(cols.unq, cols.skip))
+  if (length(cols.unq)>0) message('These columns will not be checked: ' %+% paste0(bold(cols.unq),collapse = ','))
+  cols <- cols %-% cols.unq
 
   if (verbose==T) cat('\n Checking columns...')
   for (this.f in cols ){ # this.f='Primary_Institute_Patient_ID'

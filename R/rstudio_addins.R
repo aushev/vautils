@@ -135,6 +135,55 @@ duView <- function(x, columns=NULL,ignoreColumns=columns, title=NULL) {
   View(dt.tmp, title = title)
 }
 
+duView <- function(dtIn, ..., ignoreColumns=NULL, title = NULL) {
+  dots_raw <- substitute(list(...))[-1]  # capture unevaluated ...
+  # browser()
+
+  dt.duView <<- copy(dtIn)
+  if (nrow(dt.duView) == 0) {
+    warning("No records in the input table!")
+    return(NULL)
+  }
+
+  # CASE 1: No columns specified
+  if (length(dots_raw) == 0) {
+    col_names <- NULL
+
+    # CASE 2: Single character vector like c("a", "b")
+  } else {
+    # Evaluate the first argument to see if it's a character vector
+    first_eval <- try(eval(dots_raw[[1]], envir = parent.frame()), silent = TRUE)
+    if (length(dots_raw) == 1 && !inherits(first_eval, "try-error") && is.character(first_eval)) {
+      # Single character vector: quoted column names
+      col_names <- first_eval
+
+    } else if (all(sapply(dots_raw, is.name))) {
+      # Unquoted column names
+      col_names <- sapply(dots_raw, deparse)
+
+    } else stop("Invalid column specification: use unquoted names or a single character vector.")
+  }
+
+
+  col_names %<>% unique()
+  cols_notfound <- col_names %-% names(dt.duView)
+
+  col_names <- col_names %&% names(dt.duView)
+
+  if (!is.null(col_names)) {
+    setcolorder(dt.duView, neworder = col_names)
+  }
+
+  ignoreColumns %<>% c(col_names)
+  dt.duView %<>% dt_deluselesscols(ignoreColumns = ignoreColumns)
+
+  if (is.null(title)) {
+    title <- deparse(substitute(dtIn))
+  }
+
+  View(dt.duView, title = title)
+} # e. duView()
+
 tView <- function(x) {
   dt.tmp <<-  as.data.table(t(x), keep.rownames=T);
   title <- deparse(substitute(x));
