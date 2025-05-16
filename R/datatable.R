@@ -1415,10 +1415,6 @@ myread <- function(fnInput){
   check1 <- testnames(dtIn)
 }
 
-
-tmp <- myread(fn$germline_data)
-
-
 # setnamessp ####################################
 # usual setnames() requires that all old names are present in the table,
 # this dt_setnames() tolerates missing names
