@@ -123,7 +123,7 @@ dt4mosaic <- function(inpDT, byX, byY){
   # dt.stat[,rel:=Count/sum(Count),by=get(byX)]
   # dt.stat[,grpSize:=sum(Count), by=get(byX)]
   # dt.stat[,grpN:=sum(Count),    by=get(byX)]
-  dt.stat[,rel:=Count/sum(Count),by=c(byX)]
+  dt.stat[,rel := Count/sum(Count),by=c(byX)]
   dt.stat[,grpSize:=sum(Count), by=c(byX)]
   dt.stat[,grpN:=sum(Count),    by=c(byX)]
   dt.stat[,nP:=Count %+% '/' %+% grpN]
@@ -136,73 +136,7 @@ dt4mosaic <- function(inpDT, byX, byY){
   return(dt.stat)
 }
 
-plot4mosaic <- function(inpDTmosaic, byX=NULL, byY=NULL, del=10, colors=NULL, colFreq='Count', prefix='n=', scaleY=F, showN='N', leg.title=NA, compare=NA, thr=0){
-  if (!is.null(byX) & !is.null(byY)){
-    inpDTmosaic %<>% dt4mosaic(byX, byY)
-  }
-  if (is.null(byX)) byX <- names(inpDTmosaic)[1]
-  if (is.null(byY)) byY <- names(inpDTmosaic)[2]
-  inpDTmosaic[,grpSize:=grpSize/del]
 
-  # browser()
-
-
-  #inpDTmosaic[,grpN:=sum(get(colFreq)),by=get(byX)]
-  inpDTmosaic[,grpN := sum(get(colFreq)),by=c(byX)]
-  inpDTmosaic[, lbl_byX := as.character(get(byX))][, lbl_xN := '']
-  if (not.na(prefix)) inpDTmosaic[, lbl_xN := '\n' %+% prefix %+% grpN]
-  #inpDTmosaic[, xN := sprintf('%s\n%s%s',lbl_byX,prefix,grpN), by=.(xN,grpN)]
-  inpDTmosaic[, xN := lbl_byX %+% lbl_xN, by=.(lbl_byX,grpN)]
-
-
-
-  inpDTmosaic %<>% setorderv(c(byX,byY),na.last=T)
-  # dt.stat4mosaic %<>% setorderv(c('Location','Stage'),na.last=T)
-
-  #  inpDTmosaic[, yPrev:=shift(rel, fill=0),by=get(byX)]
-  inpDTmosaic[, yPrev:=shift(rel, fill=0),by=c(byX)]
-  #inpDTmosaic[, y0:=cumsum(yPrev),by=get(byX)]
-  inpDTmosaic[, y0 := cumsum(yPrev),by=c(byX)]
-  inpDTmosaic[, y1 := 1-(y0+rel/2)]
-
-  inpDTmosaic[rel>=thr, `:=`(relLabel=percent(rel,ndig=1), CountLabel=Count)]
-
-  # browser()
-
-  #inpDTmosaic$byY.fill <- inpDTmosaic[[byY]]   #
-  inpDTmosaic[,byY.fill:=get(byY)]
-  if (is.na(leg.title)) leg.title <- byY;
-  p <-
-    ggplot(inpDTmosaic,
-           aes(x=factor(xN),y=rel,fill=byY.fill,width=grpSize)  #aes_string(x='xN',y='rel',fill=byY,width='grpSize')
-    ) +
-    geom_bar(stat='identity') +
-    scale_x_discrete(expand = c(0, 0)) +
-    scale_y_continuous(labels = scales::percent_format(scale = 100))+
-    theme(axis.text = element_text(face="bold") ) +
-    guides(fill=guide_legend(title=leg.title))+
-    facet_grid(as.formula('~ ' %+% byX), scales = "free", space = "free")
-  if (!is.null(colors)) p <- p + scale_fill_manual(values = colors, name=byY)
-  if (scaleY==F) p <- p + theme(axis.text.y = element_blank())
-  #  browser()
-  if (showN=='N')  p <- p + geom_text(aes(label=CountLabel, y=y1))
-  if (showN=='%')  p <- p + geom_text(aes(label=relLabel, y=y1))
-
-  if (not.na(compare)){
-    #    browser()
-    dt.stat1 <- inpDTmosaic[get(byY)==compare,c(byX,'Count','grpN','nP','relP'),with=F]
-    print(dt.stat1)
-
-    dt.stat2 <- inpDTmosaic[,.(byX=get(byX),byY=get(byY),Count)]
-    tab2 <- dcast(as.data.table(dt.stat2),byX~byY,value.var = 'Count', fill=0)
-    mtx4fisher <- as.matrix(tab2[,],rownames = 'byX')
-    # mtx4fisher <- as.matrix(tab2[Test!=valOther,],rownames = 'Test')
-    print(fisher.test(mtx4fisher))
-
-  }
-
-  p + xlab(byX) + ylab(NULL)
-}
 
 # test1 <- function(input){
 #   name1 <- deparse(substitute(input));

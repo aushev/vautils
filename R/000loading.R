@@ -194,7 +194,7 @@ trylocs <- function(..., req=F, all=F){
   return(NULL);
 }
 
-loadv <- function(file=NULL, envir = parent.frame(n=1L),...){
+loadv <- function(file=NULL, envir = parent.frame(n=1L), verbose=T){
   if (is.null(file)) {file <- askfilename();}
   #load(file, verbose=T, envir = parent.frame(n=1L), ...)
 
@@ -211,7 +211,7 @@ loadv <- function(file=NULL, envir = parent.frame(n=1L),...){
   }
 
   message('Loading file: ' %+% bold(file))
-  returned.objects <- load(file, verbose=T, envir = envir, ...)
+  returned.objects <- base::load(file, envir = envir, verbose=verbose)
   if ('run_on_load_dat' %in% returned.objects) {
     cat('\n Running', italic('run_on_load_dat()'))
     run_on_load_dat()
@@ -222,12 +222,14 @@ loadvc <- function()loadv(fromClip(), envir = parent.frame(n=1L))
 
 loadv1 <- function(fnRdat, index=1, verbose=T){
   message('Loading file: ' %+% bold(fnRdat))
-  obj.names <- load(fnRdat, verbose=verbose)
+  obj.names <- base::load(fnRdat, verbose=verbose)
   if (length(obj.names)>1 & verbose) warning('Multiple objects loaded! Only first one will be returned.')
   obj.name <- obj.names[index]
   obj.return <- get(obj.name)
   return(obj.return)
 }
+
+load <- loadv
 
 
 getvloc <- function(){

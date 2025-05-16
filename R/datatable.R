@@ -158,7 +158,8 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                      silent=T, keyby = NA, char=NULL, num=NULL, filetype=NULL,
                      clean.names = T, trimspaces=F, deluseless=F,
-                     rename.from=NULL,rename.to=NULL, fcounter=F,
+                     rename.from=NULL, rename.to=NULL,
+                     fcounter=F,
                      fixV1=NA,
                      ...){
   cat('\nSTARTING ' %+% cs1(fnRead) %+% '\n')
@@ -330,10 +331,10 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
     }
   } # e. trimspaces
 
-  if (!is.null(rename.from) & !is.null(rename.to)){
-    stopifnot(length(rename.from)==length(rename.to));
+  if (!is.null(rename.to)){
+    # stopifnot(length(rename.from)==length(rename.to));
     cat('\n')
-    rez %<>% setnamessp(rename.from,rename.to, verbose=!silent);
+    rez %<>% dt_setnames(rename.from, rename.to, verbose=!silent);
   }
 
   cat('\n')
@@ -1403,10 +1404,27 @@ loadOrBuild <- function (fnDT, inDT, saveResult=TRUE, ...){
 }
 
 
+testnames <- function(dtIn1, old=names(dtIn1), new){
+  browser()
+  foundOld <- old %in% names(dtIn1);
+  return(foundOld)
+}
+
+myread <- function(fnInput){
+  dtIn <- fread(fnInput, header=F)
+  check1 <- testnames(dtIn)
+}
+
+
+tmp <- myread(fn$germline_data)
+
+
 # setnamessp ####################################
 # usual setnames() requires that all old names are present in the table,
-# setnamessp() tolerates missing names
-setnamessp <- function(dtIn, old, new, verbose=T){
+# this dt_setnames() tolerates missing names
+dt_setnames <- function(dtIn, old=names(dtIn), new, verbose=T){
+  # browser()
+  if (is.null(old)) old <- names(dtIn)
   foundOld <- old %in% names(dtIn);
 
   if (length(new)==1) new <- rep(new, length(old))
@@ -1426,6 +1444,7 @@ setnamessp <- function(dtIn, old, new, verbose=T){
   invisible(dtIn);
 }
 
+setnamessp <- dt_setnames
 
 
 # combines all values from selected columns and returns set of unique
@@ -1693,8 +1712,8 @@ del.dupflds.dupnames <- function(dtIn, verbose=T){
 # selects fields which are unique multiple within same ID, i.e. can't be "reduced"
 # and fields that can be "reduced"
 # usage:
-# g(dt.patients, dt.plasmas) %<<% dt_normalize(dt1a.a, 'pID')
-dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL, cols.skip=c()){ #inDT=dt.PMCC; key='Patient_ID';
+# g(dt.patients, dt.samples) %<<% dt_normalize(dt1a.a, 'pID')
+dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL, cols.skip=c()){
   cols.gen <- c()
   cols.unq <- c()
 
@@ -1713,7 +1732,7 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL, cols.skip=c
   cols <- cols %-% cols.unq
 
   if (verbose==T) cat('\n Checking columns...')
-  for (this.f in cols ){ # this.f='Primary_Institute_Patient_ID'
+  for (this.f in cols ){ #
     if (verbose==T) cat('   ', blue(this.f))
     this.subdt <- inDT[,.(xN=.N, xU=nrow(unique(.SD))), by=key, .SDcols=this.f]
 
@@ -1743,6 +1762,93 @@ dt_normalize <- function(inDT, key, verbose=F, nCol=NULL, cols=NULL, cols.skip=c
   invisible(list(dt.master=dt.master, dt.detail=dt.detail))
 
 }
+
+
+dt_normalize_fast <- function(dtIn, key, cols=NULL, cols.skip=character(), rekey=T, verbose=FALSE, nCol=NULL) {
+  stopifnot(is.data.table(dtIn))
+
+  cols_all <- names(dtIn) %-% key
+
+  setkeyv(dtIn, key)
+
+  if (!is.null(cols)) {
+    if (!is.character(cols)) stop("Provided cols is not of character type")
+    if (is.re(cols) | (length(cols) == 1 && grepl("^\\^|\\$", cols))) {
+      cols <- grep(cols, cols_all, value=TRUE)
+    }
+    cols <- cols %&% cols_all
+  } else cols <- cols_all
+
+  cols <- cols %-% cols.skip
+  cols_unq <- cols_all %-% cols
+
+  if (length(cols_unq)>0) {
+    message("These columns will not be checked: ", paste0(bold(cols_unq), collapse = ", "))
+  }
+
+  if (verbose) cat("\n Pre-splitting groups by key...\n")
+
+  #  browser()
+
+  # ⚡ Pre-split data into groups once
+  # ## Solution A:
+  # ## SEEMS WRONG !!!
+  # group_index <- dtIn[, .I, by = key]$I
+  # group_list  <- split(group_index, dtIn[, interaction(.SD, drop=TRUE), .SDcols = key])
+
+  ## Solution B:
+  ## SEEMS WRONG !!!
+  # group_ids <- dtIn[, rleidv(.SD), .SDcols = key]
+  # group_list <- split(seq_len(nrow(dtIn)), group_ids)
+
+  ## Solution C:
+  group_info <- dtIn[, .(row_idx = .I, grp = .GRP), by = key]
+  group_list <- split(group_info$row_idx, group_info$grp)
+
+  if (verbose) cat("\n Checking columns...\n")
+
+  # ⚡ Apply uniqueN once per group, once per column
+  unique_cols <- lapply(cols, function(this_col) {
+    if (verbose) cat("   ", blue(this_col), '\t')
+
+    col_data <- dtIn[[this_col]]
+    counts <- vapply(group_list, function(idx) data.table::uniqueN(col_data[idx]), integer(1L))
+    counts <- vapply(group_list, function(idx) data.table::uniqueN(col_data[idx]), integer(1L))
+
+    constant <- all(counts == 1L)
+
+    if (verbose) {
+      ndx <- match(this_col, cols)
+      cat(ndx,'/',length(cols),"\t", if (constant) green("constant") else brown("variable"), "\n")
+    }
+
+    list(name = this_col, constant = constant)
+  })
+
+  cols_const <- vapply(unique_cols, function(x) if (x$constant) x$name else NA_character_, character(1))
+  cols_var   <- vapply(unique_cols, function(x) if (!x$constant) x$name else NA_character_, character(1))
+  cols_const <- na.omit(cols_const)
+  cols_var   <- unique(c(na.omit(cols_var), cols_unq))
+
+  cat("\nGen:\n ", paste(cols_const, collapse = "\n "))
+  cat("\n\nUnq:\n ", paste(cols_var, collapse = "\n "), "\n")
+
+  # Build result tables
+  dt.master <- dtIn[, c(key, cols_const), with = FALSE]
+  if (!is.null(nCol)) {
+    dt.master[, (nCol) := .N, by=key]
+  }
+  dt.master <- unique(dt.master)
+
+  dt.detail <- dtIn[, c(key, cols_var), with=FALSE]
+  setkeyv(dt.master, key)
+  setkeyv(dt.detail, key)
+  invisible(list(dt.master=dt.master, dt.detail=dt.detail))
+}
+
+
+
+
 
 
 
@@ -1866,13 +1972,16 @@ build_stat_table_N <- function(dtIn,categories, do.sort = F, thrRank=15, ...){
 build_stat_table_med <- function(dtIn,categories){
   dt.med <- NULL
   for (this.cat in names(categories)){
+    cat('\n',this.cat,'\t')
     this.label <- categories[[this.cat]]
-    this.vals  <- as.numeric(dtIn[[this.cat]])
+    this.vals  <- dtIn[[this.cat]]
     if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
     this.vals %<>% as.numeric()
+    if (length(this.vals)==0) warning('')
+
     this.med <- median(this.vals, na.rm=T)
-    this.sd  <- sd(this.vals, na.rm = T)
-    this.rng <- range(this.vals, na.rm = T)
+    this.sd  <- sd(    this.vals, na.rm=T)
+    this.rng <- range( this.vals, na.rm=T)
 
 #    this.title <- data.table(Category=this.label)
 #    this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Freq, `%`=this.stat$FreqP), fill=T)
@@ -1891,7 +2000,7 @@ relabel <- function(dtIn,inpList){
     colFrom <- item[1]
     colTo   <- item[2]
     newLevels <- item[-(1:2)]
-    message('Renaming ',bold(colFrom),' to ',bold(colTo),' with levels: ',paste(bold(newLevels),collapse=','))
+    message('Renaming ',bold(colFrom),' to ',bold(colTo),' with levels: ',paste(bold(newLevels),collapse=',') )
     #dtIn[, newCol:=get(colFrom)]
     dtIn$newCol <- dtIn[[colFrom]]
     setnames(dtIn,colFrom, colTo)
@@ -2572,3 +2681,69 @@ dt_last_record <- function(dtIn, by, cols.order=NA, na.last=F) {
 }
 
 dtprint <- DT::datatable
+
+#' Get First Row per Group from a data.table
+#'
+#' Returns the first row of each group in a data.table, based on grouping columns.
+#'
+#' @param dtIn A \code{data.table} object.
+#' @param by A character vector of column names to group by. Defaults to the key columns of \code{dtIn}, if any.
+#'
+#' @return A \code{data.table} containing the first row of each group defined by \code{by}.
+#'
+#' @examples
+#' library(data.table)
+#' dt1 <- data.table(grp = c("A", "A", "B", "B"), val = 1:4)
+#' setkey(dt, grp)
+#' dt_first(dt1)  # returns first row from each group A and B
+#'
+#' # Without key
+#' dt_first(dt, by = "grp")
+#'
+#' @export
+dt_first <- function(dtIn, by=key(dtIn), orderby=NULL){
+ if (is.null(by)) warning('No key provided!')
+  if (!is.null(orderby))
+    dtIn %<>% setorderv(orderby) # ,order=-1
+ return(dtIn[,.SD[1], by=c(by)])
+}
+
+
+
+#' Get Last Row per Group from a data.table
+#'
+#' Returns the last row of each group in a data.table, based on grouping columns.
+#'
+#' @param dtIn A \code{data.table} object.
+#' @param by A character vector of column names to group by. Defaults to the key columns of \code{dtIn}, if any.
+#'
+#' @return A \code{data.table} containing the last row of each group defined by \code{by}.
+#'
+#' @examples
+#' library(data.table)
+#' dt1 <- data.table(grp = c("A", "A", "B", "B"), val = 1:4)
+#' setkey(dt1, grp)
+#' dt_last(dt1)  # returns last row from each group A and B
+#'
+#' # Without key
+#' dt_last(dt1, by = "grp")
+#'
+#' @export
+dt_last <- function(dtIn, by = key(dtIn), orderby=NULL){
+  if (is.null(by)) warning('No key provided!')
+  if (!is.null(orderby))
+    dtIn %<>% setorderv(orderby) # ,order=-1
+  dtIn[ , .SD[.N], by = c(by)]
+}
+
+dt_addvalues <- function(dtIn, col2add, values, col2comment=NA, comment=NULL){
+  # browser()
+  vals.existing <- dtIn[[col2add]]
+  vals.add <- values %-% vals.existing
+  dt.add <- data.table(mycol=vals.add) %>% setnamessp('mycol', col2add)
+  dtIn %<>% rbindV(dt.add)
+  if (not.na(col2comment)){
+
+  }
+  invisible(dtIn)
+}
