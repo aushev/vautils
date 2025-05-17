@@ -216,6 +216,7 @@ loadv <- function(file=NULL, envir = parent.frame(n=1L), verbose=T){
     cat('\n Running', italic('run_on_load_dat()'))
     run_on_load_dat()
   }
+  invisible(returned.objects)
 }
 
 loadvc <- function()loadv(fromClip(), envir = parent.frame(n=1L))

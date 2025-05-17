@@ -16,6 +16,7 @@ lazyBuild <- function(objNames, fnRdat=NULL, object=NULL, verbose=F, unlist=F){
       if (!file.exists(fnRdat)) {
         message(' Rdat file not found! Will try to build.');
       } else { # Rdat file exists
+        # browser()
         obj.names <- load(fnRdat, verbose=verbose, envir = parent.frame(n=1L))
         if (length(obj.names)==0) {
           message(' No objects loaded! ');
