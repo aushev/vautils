@@ -261,3 +261,16 @@ checkPlus <- function(){
 #   reqq('data.table magrittr');
 # }
 
+
+computer_user_names <- function() {
+  shrink_values(
+    c(
+      Sys.info()[["nodename"]],
+      Sys.info()[["login"]],
+      Sys.info()[["user"]],
+      Sys.info()[["effective_user"]],
+      Sys.getenv("COMPUTERNAME"),
+      Sys.getenv("HOSTNAME")
+    ), exclude = '', do.sort = T
+  )
+}
