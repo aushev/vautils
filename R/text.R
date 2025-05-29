@@ -850,6 +850,64 @@ dedup_vals <- function(inpvec, sep='.'){
 
 
 
+#' Count Unique Substring Matches from Delimited Strings
+#'
+#' This function takes a character vector where each element contains one or more items
+#' separated by a specified delimiter. It returns a table with the count of how many
+#' times each unique item appears as a substring match across all elements.
+#'
+#' @param input A character vector with delimited entries (e.g., "A; B; C").
+#' @param sep A character string used as the delimiter between items (default: `";"`).
+#'
+#' @return A `data.table` with two columns:
+#'   \describe{
+#'     \item{value}{The unique trimmed values extracted from the input}
+#'     \item{count}{The number of elements in `input` that contain the value}
+#'   }
+#'
+#' @details
+#' This function performs substring matching using `grepl`.
+#' Matching is case-sensitive.
+#'
+#' @examples
+#' input <- c("apple; banana", "banana; cherry", "apple", "banana")
+#' split_count(input)
+#'
+#' @seealso \code{\link{strsplit}}, \code{\link[data.table]{data.table}}
+#' @export
+split_count <- function(input, sep=';'){
+  #  browser()
+  split_values <-
+    input %>%
+    strsplit(split=sep, fixed=T) %>%
+    unlist %>%
+    trimws %>%
+    unique %>%
+    na.omitva
+
+  dt.stat <- data.table(value=split_values, count=0L) %>% setkey(value)
+
+  tmp <- sapply(split_values, function(val) dt.stat[val, count := sum(grepl(val, input, fixed=T))])
+
+  return(dt.stat)
+}
+# faster version:
+split_count <- function(input, sep=";") {
+  split_list <- strsplit(input, split=sep, fixed=TRUE)
+  # browser()
+  dt_long <- data.table(
+    row_id = rep(seq_along(split_list), lengths(split_list)),
+    value = trimws(unlist(split_list))
+  )
+  dt_long[, .(count = uniqueN(row_id)), by = value][order(value)]
+}
+
+
+
+
+
+
+
 # nbspace <- rawToChar(as.raw(0xA0))
 nbspace <- "\u00A0"
 

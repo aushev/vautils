@@ -1,15 +1,15 @@
 Package: vautils
 Type: Package
-Title: handy little functions
-Date: 2025-05-22
-Version: 0.1.1.210
+Title: data processing routines
+Date: 2025-05-29
+Version: 0.1.2.001
 Author: Vasily Aushev
 Maintainer: Vasily Aushev <vasily@aushev.name>
-Description: bunch of stuff under development
+Description: helper functions. under development
 License: to be defined
 Encoding: UTF-8
 LazyData: true
 Imports: magrittr, data.table, BiocManager, ggplot2, crayon, roxygen2
 Roxygen: list(markdown = TRUE)
-Suggests: WGCNA, quantmod
+Suggests: quantmod
 RoxygenNote: 7.3.2
