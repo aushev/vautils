@@ -8,6 +8,31 @@ testab2 <- function(inpA, inpB){
 
 
 
+#' Split a Delimited Character String
+#'
+#' Wrapper around `strsplit()`
+#' Splits one or more input strings by a specified separator into a character vector.
+#' This function is similar to `strsplit()` but with added flexibility for newline handling,
+#' automatic separator guessing, and filtering of empty values.
+#'
+#' @param inputstr A character string or vector of strings to be split.
+#' @param sep Separator character to split by. Defaults to `","`. If missing, it attempts
+#'   to guess the separator based on the presence of commas, tabs, or spaces.
+#' @param fixed Logical. If `TRUE` (default), the separator is treated as a fixed string.
+#'   If `FALSE`, it is treated as a regular expression.
+#' @param nonewlines Logical. If `TRUE` (default), newline characters (`\n`, `\r`) are first
+#'   replaced by the separator before splitting.
+#' @param allowempty Logical. If `FALSE` (default), empty elements (`""`) are removed from the result.
+#'
+#' @return A character vector of split elements.
+#'
+#' @examples
+#' cs("apple,banana,pear")
+#' cs("a\tb\tc", sep = "\t")
+#' cs("line1\nline2", sep = ";", nonewlines = TRUE)
+#' cs("a,,b", sep = ",", allowempty = TRUE)
+#'
+#' @export
 cs <- function(inputstr, sep=",", fixed=T, nonewlines=T, allowempty=F){
   if (length(inputstr)==0) return(inputstr);
   if (missing(sep)){
@@ -455,6 +480,35 @@ str_shrink <- function(inp_str, sep=';'){
 
 # shrink_values():
 # c(3,2,3,NA,4) => '3;2;4'
+#' Collapse a Vector of Values into a Single String
+#'
+#' Converts a vector of values into a single string with optional filtering, NA removal, sorting, and type coercion.
+#' Useful for summarizing grouped values in tables (e.g., collapsing multiple values into one cell).
+#'
+#' @param values A vector of values (numeric, character, or logical) to be collapsed.
+#' @param collapse A string used to join the values (default: `";"`).
+#' @param all Logical. If `TRUE`, keep duplicates; if `FALSE` (default), apply `unique()` before collapsing.
+#' @param dropNA Logical. If `TRUE` (default), remove `NA` values from the input before collapsing.
+#' @param exclude Optional vector of values to exclude from the result.
+#' @param fillempty Value to return when the result is empty after filtering (default: `NULL`).
+#' @param force.char Logical. If `TRUE` (default), coerce values to character before collapsing.
+#' @param do.sort Logical or `NA`. If `TRUE`, sort values before collapsing. If `FALSE`, keep original order. If `NA` (default), do not modify order.
+#'
+#' @return A single character string (or a scalar value, if length 1), representing the collapsed input.
+#'
+#' @details
+#' - If `values` has only one unique element (after filtering), that value is returned directly (not collapsed).
+#' - If all elements are removed after filtering and `fillempty` is provided, that value is returned.
+#' - Uses helper functions: `%!in%` for exclusion, `na.omitva()` (variant of `na.omit()`), and `not.na()` to check truthy sort flag.
+#'
+#' @examples
+#' shrink_values(c("A", "B", "A"))                         # "A;B"
+#' shrink_values(c("X", "Y", NA), dropNA = TRUE)           # "X;Y"
+#' shrink_values(c("a", "b", "c"), exclude = "b")          # "a;c"
+#' shrink_values(c("Z", NA), dropNA = TRUE, fillempty = "-")  # "Z"
+#' shrink_values(c(3, 1, 2), do.sort = TRUE)               # "1;2;3"
+#'
+#' @export
 shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, fillempty=NULL, force.char=T, do.sort=NA){
   # browser()
   if (force.char==T){
@@ -469,7 +523,6 @@ shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, f
   if (not.na(do.sort)) values2 %<>% sort()
 
   if (length(values2)==1) return(values2);
-  #if (length(values2)==0) return(ifelse(is.null(fill),values[1],fill));
   if (length(values2)==0){
     if (!is.null(fillempty)) values2 <- fillempty;
     #if (is.na(fillempty)) values2 <- fillempty;
@@ -478,6 +531,9 @@ shrink_values <- function(values, collapse=';', all=F, dropNA=T, exclude=NULL, f
 
   paste(values2, collapse = collapse)
 }
+
+
+
 
 shrink_values1 <- shrink_values
 

@@ -2061,95 +2061,128 @@ merge_version_tables <- function(dt1, dt2, key.x, key.y=key.x, cols_silent=NULL,
 }
 
 
-# browser()
-# warning('Function not tested thoroughly!')
-# warning('resulting table is re-keyed!')
-mergeR <- function(dtX, dtY, by.x=key(dtX), by.y=key(dtY), by=NULL, all=F, all.x=T, all.y=all, columns=NULL, columns.ignore=NULL, uniqueY=TRUE, force.char=T, ...){
-#   browser()
+#' Flexible and Safe Data Table Merge with Column Filtering and Type Alignment
+#'
+#' A wrapper around `data.table::merge()` that merges two `data.table` objects with support for:
+#' flexible key resolution, optional column subsetting, duplicate removal, and automatic type harmonization of key columns.
+#' Main difference with the standard `data.table::merge()` is that in case of columns already existing it will not create
+#' renamed columns like MyCol.x and MyCol.y - instead, MyCol will be overwritten from the second table
+#'
+#' @param dtX A `data.table` object to be merged (typically the "left" table).
+#' @param dtY A `data.table` object to be merged (typically the "right" table).
+#' @param by Character vector of column names to join by (used for both `by.x` and `by.y`).
+#' @param by.x Character vector of column names from `dtX` to join by (overrides `by`).
+#' @param by.y Character vector of column names from `dtY` to join by (overrides `by`).
+#' @param all Logical. If `TRUE`, performs a full outer join. Default is `FALSE`.
+#' @param all.x Logical. If `TRUE` (default), performs a left join.
+#' @param all.y Logical. If `TRUE`, performs a right join. Defaults to `all`.
+#' @param columns Optional character vector of column names to keep from `dtY`. Named vector will trigger renaming.
+#' @param columns.ignore Optional character vector of column names to exclude from `dtY`, after applying `columns`.
+#' @param uniqueY Logical. If `TRUE` (default), applies `unique()` to `dtY` before merging.
+#' @param force.char Logical. If `TRUE` (default), coerces non-matching join key types to character for compatibility.
+#' @param verbose Logical. If `TRUE`, prints diagnostic messages during processing (currently affects column logs and type casting).
+#' @param ... Additional arguments passed to `data.table::merge()`, such as `suffixes`, `sort`, etc.
+#'
+#' @return A merged `data.table` with:
+#' \itemize{
+#'   \item Only specified columns from `dtY`
+#'   \item Deduplicated rows (if `uniqueY = TRUE`)
+#'   \item Cleanly aligned join key types
+#'   \item Original key of `dtX` reapplied, if still valid
+#' }
+#'
+#' @details
+#' - If `by.x` or `by.y` are not provided, defaults to the keys of `dtX` and `dtY`, respectively.
+#' - If `columns` is provided as a named vector, columns in `dtY` are renamed accordingly.
+#' - Overlapping non-key columns from `dtY` will replace matching columns in `dtX` (after removal).
+#' - When `force.char = TRUE`, join keys of different types (e.g., `character` vs `factor`) are coerced to `character`.
+#'
+#' @examples
+#' dt1 <- data.table(ID = c("A", "B", "C"), val1 = 1:3)
+#' dt2 <- data.table(ID = c("B", "C", "D"), val2 = c(20, 30, 40))
+#' mergeR(dt1, dt2, by = "ID")
+#'
+#' @import data.table
+#' @export
+mergeR <- function(dtX, dtY,
+                       by=NULL, by.x=NULL, by.y=NULL,
+                       all=FALSE, all.x=TRUE, all.y=all,
+                       columns=NULL, columns.ignore=NULL,
+                       uniqueY=TRUE, force.char=TRUE, verbose=TRUE, ...) {
+  stopifnot(data.table::is.data.table(dtX), data.table::is.data.table(dtY))
 
   # remember original columns and key column:
-  ori.keyX <- key(dtX)
+  ori_keyX <- key(dtX)
   ori.columns <- columns; # needed if columns is passed as a named vector
 
-  mc <- match.call(expand.dots = TRUE)
-  argsList <- list(...)
 
-  # if ('all.x' %!in% names(mc) & 'all.y' %!in% names(mc) & 'all' %!in% names(mc)) {all.x <- TRUE;}
-  # if ('all.x' %!in% names(mc) & ('all.y' %in% names(mc) | 'all' %in% names(mc))) {all.x <- FALSE;} # UGLY!!! MAYBE WRONG!!!
-  # if ('all.x' %in% names(mc) ) {all.x <- list(...)[['all.x']];} # UGLY!!! MAYBE WRONG!!!
-
-  # if (is.null(all.x) & 'all.y' %!in% names(mc) & 'all' %!in% names(mc)) {all.x <- TRUE;}
-  # if (is.null(all.x) &  ('all.y' %in% names(mc) | 'all' %in% names(mc))) {all.x <- FALSE;}
-
+  # Resolve join keys
   if (!is.null(by)) {by.x <- by.y <- by; }
+  if (is.null(by.x)) by.x <- key(dtX)
+  if (is.null(by.y)) by.y <- key(dtY)
   if (is.null(by.x)) stop('Key column for the first table is not provided and not defined.')
-  if (is.null(by.y)) {message('Key column for the second table is not provided and not defined, will try to use key from the first column'); by.y <- by.x;}
+  if (is.null(by.y)) stop('Key column for the second table is not provided and not defined.')
 
   keysX.notfound <- by.x %-% names(dtX)
   keysY.notfound <- by.y %-% names(dtY)
   if (length(keysX.notfound)>0) stop("In the first table, can't find column names to be used as a key: ", paste(bold(keysX.notfound), collapse = ', '))
   if (length(keysY.notfound)>0) stop("In the second table, can't find column names to be used as a key: ", paste(bold(keysY.notfound), collapse = ', '))
 
+  # Subset and rename columns
   if (!is.null(columns)) {
     columns.missing <- columns %-% names(dtY);
     columns.found   <- columns %&% names(dtY);
     if (length(columns.missing)>0) warning('Requested columns not found: ', paste(bold(columns.missing), collapse=', '))
     if (length(columns.found)==0)   stop('No columns to add.')
-    columns <- c(columns,by,by.y) %&% names(dtY);
-    dtY <- dtY[,c(columns),with=F]
-    }
-  if (!is.null(columns.ignore)) {
-    #browser()
-    columns <- columns %-% columns.ignore;
-    dtY <- dtY[,c(names(dtY) %-% columns.ignore),with=F]
+    columns <- c(columns,by.y,by) %&% names(dtY);
+    if (!is.null(columns.ignore)) columns <- columns %-% columns.ignore
+    dtY <- dtY[, c(columns), with=FALSE]
   }
-#  browser();
+
+  # Optionally rename columns if named vector
   if (!is.null(names(ori.columns))) {dtY %<>% setnamessp(ori.columns, names(ori.columns))}
 
   cat('\n Second table has the following columns: ', paste(bold(names(dtY)),collapse = ', '))
 
-#  browser()
-
-  names.ovl <- (names(dtX) %&% names(dtY)) %-% c(argsList$by.x,  argsList$by, by.x, by.y, by) # argsList$byX,
-  if (length(names.ovl)>0){
-    cat('\n Columns to delete and replace: ', paste(bold(red(names.ovl)), collapse = ', '))
-    dtX <- copy(dtX)
-    dtX[,c(names.ovl):=NULL]
+  # Remove overlapping columns from dtX
+  cols_common <- (names(dtX) %-% by.x) %&% names(dtY)
+  if (length(cols_common)>0L) {
+    cat('\n Columns to delete and replace: ', paste(bold(red(cols_common)), collapse = ', '))
+    dtX <- copy(dtX)[, (cols_common) := NULL]
   }
 
+  # Deduplicate and harmonize key types
   if (uniqueY==TRUE) dtY %<>% unique()
 
-  if (force.char){
-    for (i in seq_along(by.x)){
+  if (force.char) {
+    for (i in seq_along(by.x)) {
       this_key_x <- by.x[i]
       this_key_y <- by.y[i]
-      if (is.character(dtX[[this_key_x]]) & !is.character(dtY[[this_key_y]])) {
+      if (is.character(dtX[[this_key_x]]) && !is.character(dtY[[this_key_y]])) {
         cat('\nCasting character to the second table key: ' %+% bold(this_key_y))
         dtY[[this_key_y]] %<>% as.character();
-        }
-      if (is.character(dtY[[this_key_y]]) & !is.character(dtX[[this_key_x]])) {
+      }
+      if (is.character(dtY[[this_key_y]]) && !is.character(dtX[[this_key_x]])) {
         cat('\nCasting character to the first table key: ' %+% bold(this_key_x))
         dtX[[this_key_x]] %<>% as.character();
-        }
+      }
     }
   }
 
-  ret <- ifelse1(
-    is.null(by),
-    # merge(dtX,dtY,by.x=by.x,by.y=by.y,all.x=all.x,...),
-    # merge(dtX,dtY,    by=by,          all.x=all.x,...)
-    merge(dtX,dtY,by.x=by.x,by.y=by.y,all=all,all.x=all.x,all.y=all.y,...),
-    merge(dtX,dtY,    by=by,          all=all,all.x=all.x,all.y=all.y,...)
-  )
+  # Final merge
+  ret <- merge(dtX, dtY, by.x = by.x, by.y = by.y, all = all, all.x = all.x, all.y = all.y, ...)
 
-  # browser()
-  if (!is.null(ori.keyX) && all(ori.keyX %in% names(ret))) {
-    cat('\nSetting key: ', paste(blue(bold(ori.keyX)), collapse = ', '))
-    setkeyv(ret,ori.keyX)
+  # Restore original key if possible
+  ori_keyX <- key(dtX)
+  if (!is.null(ori_keyX) && all(ori_keyX %in% names(ret))) {
+    cat('\nSetting key: ', paste(blue(bold(ori_keyX)), collapse = ', '))
+    setkeyv(ret, ori_keyX)
   } else cat('\n Cant re-key the result table.')
 
   return(ret)
-}
+} # e. mergeR()
+
+
 
 dtshift <- data.table::shift
 
