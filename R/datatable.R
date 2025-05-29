@@ -162,7 +162,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                      fcounter=F,
                      fixV1=NA,
                      ...){
-  cat('\nSTARTING ' %+% cs1(fnRead) %+% '\n')
+#   cat('\nSTARTING ' %+% cs1(fnRead) %+% '\n')
   flags <- c()
   if (fcounter==T){
     if (!exists('flexread.counter')) flexread.counter <- 0L
@@ -2121,7 +2121,10 @@ mergeR <- function(dtX, dtY,
   if (is.null(by.x)) by.x <- key(dtX)
   if (is.null(by.y)) by.y <- key(dtY)
   if (is.null(by.x)) stop('Key column for the first table is not provided and not defined.')
-  if (is.null(by.y)) stop('Key column for the second table is not provided and not defined.')
+  if (is.null(by.y)) {
+    message('Key column for the second table is not provided and not defined, will try to use key from the first column: ' %+% bold(by.x));
+    by.y <- by.x;
+  }
 
   keysX.notfound <- by.x %-% names(dtX)
   keysY.notfound <- by.y %-% names(dtY)
