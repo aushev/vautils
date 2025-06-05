@@ -406,22 +406,6 @@ mtx.distance <- function(inpDist){
 
 na.allow <- function(input) return(is.na(input) | input);
 
-
-#' Lazy Load or Build Objects with Optional Caching
-#'
-#' Lazily checks for existing objects in the environment or .RData file,
-#' and builds and caches them if not found.
-#'
-#' ...
-#' @export
-lazyLoadOrCreate <- function(...) {
-  ...
-}
-
-
-
-
-
 #' Lazy Load or Build Objects with Optional Caching
 #'
 #' This function checks whether the specified object(s) already exist in the calling environment.
@@ -478,8 +462,10 @@ lazyObject <- function(obj_names,
   # Try to load from RData fnRdat if provided
   if (!is.null(fnRdat)) {
     message("📦 Loading from ", fnRdat)
+    # browser()
 
     if (file.exists(fnRdat)) {
+      message(" Rdat file found.")
       loadv(fnRdat, envir = assign_env)
     } else {
       message("⚠️ Rdat file not found.")
@@ -515,25 +501,6 @@ lazyObject <- function(obj_names,
 
   return(invisible(result))
 } # e. lazyObject()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 compare.lists <- function(list1,list2) {

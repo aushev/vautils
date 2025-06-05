@@ -2148,7 +2148,7 @@ mergeR <- function(dtX, dtY,
   cat('\n Second table has the following columns: ', paste(bold(names(dtY)),collapse = ', '))
 
   # Remove overlapping columns from dtX
-  cols_common <- (names(dtX) %-% by.x) %&% names(dtY)
+  cols_common <- (names(dtX) %-% c(by.x,by.y)) %&% names(dtY)
   if (length(cols_common)>0L) {
     cat('\n Columns to delete and replace: ', paste(bold(red(cols_common)), collapse = ', '))
     dtX <- copy(dtX)[, (cols_common) := NULL]
@@ -2560,23 +2560,43 @@ dt_compare_tables_A <- function(dt1, dt2, cols=names(dt1) %&% names(dt2)){
   cat('\n Comparing ', bold(length(cols)), ' columns.\n')
 
   for (f in names(dt1)){
-    cat('\n', bold(f), '\t')
-    levels1 <- unique(dt1[[f]])
-    levels2 <- unique(dt2[[f]])
+#    cat('\n', bold(f), '\t')
+
+    values1 <- dt1[[f]]
+    values2 <- dt2[[f]]
+
+    diffV <- (values1 %===% values2)
+    if (diffV==TRUE) {
+      # cat(green(bold(' === ')))
+      next;
+    } else {
+      cat(red(bold(' !!! ')))
+      cat('\n', bold(f), '\t')
+
+    }
+
+    cat('\t')
+
+    levels1 <- unique(values1)
+    levels2 <- unique(values2)
 
     n1 <- length(levels1)
     n2 <- length(levels2)
 
-    cat(red(n1),' ',red(n2))
+    cat(silver(n1))
+    if (n1!=n2) cat('\t',red(n2))
 
-    if (n1>1000 | n2>1000) next;
+    if (n1>1000 | n2>1000) {cat(red(' ?')); next;}
     cat('.\t')
 
     diff1 <- levels1 %-% levels2
     diff2 <- levels2 %-% levels1
 
     if (length(diff1)<20) cat(paste(green(diff1), collapse = '; '),'\t')
-    if (length(diff2)<20) cat(paste(blue(diff2), collapse = '; '))
+    if (length(diff2)<20) cat(paste(blue(diff2), collapse = '; '), '\t')
+
+
+
 
   }
 
