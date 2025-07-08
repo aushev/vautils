@@ -449,7 +449,7 @@ lazyObject <- function(obj_names,
                              unpack_list = FALSE,
                              verbose = TRUE) {
   if (verbose==F) message <- function(...){invisible()}
-
+  # browser()
   obj_found <- sapply(obj_names, exists, envir = assign_env, inherits = FALSE)
   # If all requested objects already exist, return silently
   if (all(obj_found)) {
@@ -461,14 +461,14 @@ lazyObject <- function(obj_names,
 
   # Try to load from RData fnRdat if provided
   if (!is.null(fnRdat)) {
-    message("📦 Loading from ", fnRdat)
+    message("📦 Trying to load from ", fnRdat)
     # browser()
 
     if (file.exists(fnRdat)) {
-      message(" Rdat file found.")
+      message("  Rdat file found.")
       loadv(fnRdat, envir = assign_env)
     } else {
-      message("⚠️ Rdat file not found.")
+      message(" ⚠️ Rdat file not found.")
     }
 
     # Re-check existence after loading
@@ -477,7 +477,7 @@ lazyObject <- function(obj_names,
       message("All objects loaded from the file.");
       return(invisible(mget(obj_names, envir = assign_env)))
     } else {
-      message("⚠️ Not all objects loaded from file. Will try to build.")
+      message(" ⚠️ Not all objects loaded from file. Will try to build.")
     }
   } # e. if(!is.null(fnRdat))
 
@@ -644,7 +644,6 @@ most_frequent <- function(inpVals, n=1){
   return(rez[1:n])
 }
 
-topX <- function(x,thr){sort(unique(x))[1:thr]}
 firstX <- function(x,thr){unique(x)[1:thr]}
 is.empty <- function(x) length(x)==0; # remove!
 

@@ -375,9 +375,20 @@ scaleInt <- function(x){
 
 unqN <- function(x) length(unique(x))
 empty <- function(x) length(x)==0;
-topN <- function(x,thr){sort(unique(x), decreasing = T)[1:thr]}
-btmN <- function(x,thr){sort(unique(x), decreasing = F)[1:thr]}
+topN <- function(x,thr=3){sort(unique(x), decreasing = T)[1:thr]}
+btmN <- function(x,thr=3){sort(unique(x), decreasing = F)[1:thr]}
 
+
+
+topNf <- function(x, thr=3) {
+  dt1 <- data.table(x)
+  dt1[, .N, by = x][order(-N, x)][1:thr, x]
+}
+
+topNf1 <- function(x, pos=1) {
+  dt1 <- data.table(x)
+  dt1[, .N, by = x][order(-N, x)][pos, x]
+}
 
 # `%bw%`   <- function(x,rng){return(x>rng[1]  & x<rng[2])}
 # `%bbw%`  <- function(x,rng){return(x>=rng[1] & x<rng[2])}

@@ -650,6 +650,18 @@ grepl_mult <- function(y, patterns){
   apply(X=sapply(X=patterns, FUN=grepl, x=y),MARGIN=1,FUN=any)
 }
 
+
+grepl_mult <- function(y, patterns) {
+  if (length(patterns) == 1) {
+    return(grepl(patterns, y))
+  }
+  # Combine patterns into one regex with OR
+  combined_pattern <- paste0("(", paste(patterns, collapse = ")|("), ")")
+  grepl(combined_pattern, y)
+}
+
+
+
 grepl_mult_ic <- function(y, patterns){
   if (length(y)==1) {return(any(sapply(patterns, grepl, x=y, ignore.case=T)))}
   apply(X=sapply(X=patterns, FUN=grepl, x=y, ignore.case=T),MARGIN=1,FUN=any)
@@ -680,6 +692,36 @@ wrap_add <- function(inpStr, width=100){
     stringi::stri_wrap(width = width) %>%
     paste(collapse = '\n')
 }
+
+
+wrap1_htmlsafe <- function(line, width = 100) {
+  tag_expr <- gregexpr("(<[^>]+>)", line, perl = TRUE)
+  tags <- regmatches(line, tag_expr)[[1]]
+  texts <- regmatches(line, tag_expr, invert = TRUE)[[1]]
+
+  # Interleave wrapped text and tags
+  result <- character()
+  for (i in seq_along(texts)) {
+    txt <- texts[i]
+    # Wrap text but preserve leading/trailing space explicitly
+    lead_space <- grepl("^\\s", txt)
+    trail_space <- grepl("\\s$", txt)
+    wrapped <- stringi::stri_wrap(trimws(txt), width = width)
+    if (lead_space) wrapped[1] <- paste0(" ", wrapped[1])
+    if (trail_space) wrapped[length(wrapped)] <- paste0(wrapped[length(wrapped)], " ")
+    result <- c(result, paste(wrapped, collapse = "\n"))
+    if (i <= length(tags)) result <- c(result, tags[i])
+  }
+
+  paste(result, collapse = "")
+} # e. wrap1_htmlsafe()
+
+wrap_add_htmlsafe <- function(inpStr, width = 100) {
+  lines <- strsplit(inpStr, "\r?\n")[[1]]
+  wrapped_lines <- vapply(lines, wrap1_htmlsafe, width=width, character(1))
+  paste(wrapped_lines, collapse = "\n")
+} # e. wrap_add_htmlsafe()
+
 
 
 strsplitS <- function(input,split=';',...){

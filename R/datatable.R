@@ -1069,7 +1069,7 @@ cleannames <- function(inputnames,
 
 
 
-dtcleannames <- function(dtIn, worknames=names(dtIn),...){
+dt_cleannames <- function(dtIn, worknames=names(dtIn),...){
   setnames(dtIn, worknames, cleannames(worknames,...));
   invisible(dtIn);
 }
@@ -1815,7 +1815,7 @@ dt_normalize_fast <- function(dtIn, key, cols=NULL, cols.skip=character(), rekey
 
     if (verbose) {
       ndx <- match(this_col, cols)
-      cat(ndx,'/',length(cols),"\t", if (constant) green("constant") else brown("variable"), "\n")
+      cat(ndx,'/',length(cols),"\t", if (constant) green("constant") else red("variable"), "\n")
     }
 
     list(name = this_col, constant = constant)
@@ -2725,12 +2725,6 @@ dt_sample <- function(dtIn, size, fun_sample=sample, ...){
 
 
 
-dt_last_record <- function(dtIn, by, cols.order=NA, na.last=F) {
-  dtOut <- copy(dtIn)
-  if (not.na(cols.order)) setorderv(dtOut, cols.order, na.last=na.last)
-  dtOut <- dtOut[, .SD[.N], by = by]
-  return(dtOut)
-}
 
 dtprint <- DT::datatable
 
@@ -2781,12 +2775,13 @@ dt_first <- function(dtIn, by=key(dtIn), orderby=NULL){
 #' dt_last(dt1, by = "grp")
 #'
 #' @export
-dt_last <- function(dtIn, by = key(dtIn), orderby=NULL){
+dt_last <- function(dtIn, by = key(dtIn), orderby=NULL){ # dt_last_record
   if (is.null(by)) warning('No key provided!')
   if (!is.null(orderby))
     dtIn %<>% setorderv(orderby) # ,order=-1
   dtIn[ , .SD[.N], by = c(by)]
 }
+
 
 dt_addvalues <- function(dtIn, col2add, values, col2comment=NA, comment=NULL){
   # browser()
@@ -2798,4 +2793,67 @@ dt_addvalues <- function(dtIn, col2add, values, col2comment=NA, comment=NULL){
 
   }
   invisible(dtIn)
+}
+
+
+
+#' Rename duplicated column in a data.table
+#'
+#' Renames all instances of a specified column name in a data.table object. Useful when duplicate column names exist,
+#' and a one-to-one replacement is needed for each instance.
+#'
+#' @param dtIn A `data.table` object in which column names will be modified.
+#' @param searchFor A `character` scalar indicating the name of the column to search for. All columns with this exact name will be targeted.
+#' @param renameTo A `character` vector of replacement names. Must have the same length as the number of matching columns.
+#'
+#' @return The modified `data.table`, invisibly.
+#'
+#' @details
+#' This function is intended for cases where the same column name appears multiple times in a `data.table`. It finds all
+#' columns matching `searchFor` and renames them according to the elements of `renameTo`. It prints the renaming
+#' operations to the console for clarity.
+#'
+#' An error is thrown if:
+#' - `searchFor` is not found in any column names;
+#' - The number of matches does not match the length of `renameTo`.
+#'
+#' @examples
+#' dt <- data.table::data.table(a = 1:3, b = 4:6, a = 7:9)
+#' dt <- dt_rename_dup(dt, "a", c("a1", "a2"))
+#' names(dt)
+#'
+#' @importFrom crayon bold
+#' @export
+dt_rename_dup <- function(dtIn, searchFor, renameTo){
+  matches <- which(names(dtIn)==searchFor)
+  if (length(matches)==0) stop('Column ' %+% searchFor %+% ' not found in the input table.')
+  if (length(matches)!=length(renameTo)) stop('Column ' %+% searchFor %+% ' found ' %+% length(matches) %+% ' times, while replacement vector has length ' %+% length(renameTo));
+  for (this_i in seq_along(matches)){
+    this_n <- matches[this_i]
+    this_from <- names(dtIn)[this_n]
+    this_to   <- renameTo[this_i]
+    cat('\n',bold(this_from),'\t=>\t',bold(this_to))
+    names(dtIn)[this_n] <- this_to
+  }
+  invisible(dtIn)
+}
+
+
+
+
+
+first <- function(x, ...) {
+  if (inherits(x, c("GAlignmentPairs", "Pairs"))) {
+    S4Vectors::first(x, ...)
+  } else {
+    data.table::first(x, ...)
+  }
+}
+
+last <- function(x, ...) {
+  if (inherits(x, c("GAlignmentPairs", "Pairs"))) {
+    S4Vectors::last(x, ...)
+  } else {
+    data.table::last(x, ...)
+  }
 }

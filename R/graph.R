@@ -150,10 +150,11 @@ annotation_compass <- function(label,position='N',
 
 
 
-ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, device=NULL, ...){
+ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, device=NULL, dir=NULL,...){
   if (exists('OUT') & OUT==0) {message("Skipping. "); return(FALSE);}
   fn <- trimws(fn)
-  fn_dir  <- fs::path_dir(fn)
+  fn_dir  <- dir
+  if (is.null(fn_dir)) fn_dir <- fs::path_dir(fn)
   fn_name <- fs::path_sanitize(fs::path_file(fn))
 
   fn <- ifelse(fn_dir=='.',fn_name,fs::path(fn_dir,fn_name))
@@ -508,4 +509,37 @@ plot4mosaic <- function(
   }
 
   p + xlab(byX) + ylab(NULL)
+}
+
+
+
+
+euler_plot <- function(inpList){
+  reqq(eulerr)
+  if (!is.list(inpList)) stop('Input must be a list!')
+
+  # Deduplicate:
+  for (i in seq_along(inpList)){
+    this_in <- inpList[[i]]
+    if (anyDuplicated(this_in)){
+      cat('\n  Element #', bold(i), '(', names(inpList)[i], ') had duplicates. ')
+      n_old <- length(this_in)
+      this_in %<>% unique()
+      n_new <- length(this_in)
+      inpList[[i]] <- this_in
+      cat(bold(n_old), '->', bold(n_new))
+    }
+  }# e. deduplicate
+
+  ppv <-
+    inpList %>%
+    euler(shape='ellipse') %>%
+    plot(fills=gg_color_hue(length(inpList)),
+         edges=FALSE,
+         #labels=list(fontsize=10*2),
+         labels=NULL,
+         quantities=list(fontsize=18))
+  cat('\n\n')
+  print(ppv$data$original.values)
+  ppv
 }
