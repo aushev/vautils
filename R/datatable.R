@@ -241,7 +241,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
       filetype <- 'zip';
     }
     else {filetype <- 'auto';}
-    cat(' as ', filetype);
+    cat(' as ', bold(filetype);
   }
 
   flag1 <- 0
@@ -1897,12 +1897,13 @@ dt_names_dedup_pre <- function(dtIn, cols=NULL){
 
 
 
-dt_del_columns <- function(dtIn, cols2del){
+dt_del_columns <- function(dtIn, cols2del, do_copy=F){
 #  browser()
   if (is.re(cols2del)){
     vec.match <- which(names(dtIn) %~~~% cols2del)
   } else vec.match <- which(names(dtIn) %in% cols2del)
 
+  if (do_copy==T) dtIn <- copy(dtIn)
   if (length(vec.match)>0) dtIn[, c(vec.match):=NULL]
   invisible(dtIn)
 }
@@ -1938,53 +1939,6 @@ build_cum_table <- function(inp_dt_sum,colDate='earliestBlood',colType='Type'){
   dt3 %<>% setnames(c('internal__Date','internal__Type'),c(colDate,colType))
 
   invisible(dt3)
-}
-
-  # cat.N <- c(Gender='Gender',
-  #            Cancer.Stage='Overall pathologic stage',
-  #            hadNeoB='Neoadjuvant therapy given',
-  #            Resectability='Resectable status'
-  #            # stageT='Pathologic T stage',
-  #            #Location='Cancer location'
-  # )
-
-build_stat_table_N <- function(dtIn,categories, do.sort = F, thrRank=15, ...){
-  dt.N <- NULL
-#  browser()
-  for (this.cat in names(categories)){
-    this.label <- categories[[this.cat]]
-    this.vals  <- dtIn[[this.cat]]
-    if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
-    this.stat  <- tab(this.vals, thrRank = thrRank, do.sort = do.sort, ...)
-    this.title <- data.table(Category=this.label)
-    this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Count, `%`=this.stat$FreqP), fill=T)
-    dt.N %<>% rbind(this.tab, fill=T)
-  }
-
-  dt.N[is.na(Value) & is.na(Category),Value:='N/A']
-  invisible(dt.N)
-}
-
-build_stat_table_med <- function(dtIn,categories){
-  dt.med <- NULL
-  for (this.cat in names(categories)){
-    cat('\n',this.cat,'\t')
-    this.label <- categories[[this.cat]]
-    this.vals  <- dtIn[[this.cat]]
-    if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
-    this.vals %<>% as.numeric()
-    if (length(this.vals)==0) warning('')
-
-    this.med <- median(this.vals, na.rm=T)
-    this.sd  <- sd(    this.vals, na.rm=T)
-    this.rng <- range( this.vals, na.rm=T)
-
-#    this.title <- data.table(Category=this.label)
-#    this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Freq, `%`=this.stat$FreqP), fill=T)
-    dt.med %<>% rbind(data.table(Category=this.label, Median=round(this.med, 2), SD=round(this.sd,2), range=paste(round(this.rng,2),collapse = ' .. ')), fill=T)
-  }
-
-  invisible(dt.med)
 }
 
 # usage:
@@ -2145,8 +2099,6 @@ mergeR <- function(dtX, dtY,
   # Optionally rename columns if named vector
   if (!is.null(names(ori.columns))) {dtY %<>% setnamessp(ori.columns, names(ori.columns))}
 
-  cat('\n Second table has the following columns: ', paste(bold(names(dtY)),collapse = ', '))
-
   # Remove overlapping columns from dtX
   cols_common <- (names(dtX) %-% c(by.x,by.y)) %&% names(dtY)
   if (length(cols_common)>0L) {
@@ -2171,6 +2123,8 @@ mergeR <- function(dtX, dtY,
       }
     }
   }
+
+  cat('\n The following columns will be added from the second table: ', paste(bold(names(dtY) %-% by.y),collapse = ', '))
 
   # Final merge
   ret <- merge(dtX, dtY, by.x = by.x, by.y = by.y, all = all, all.x = all.x, all.y = all.y, ...)

@@ -126,16 +126,17 @@ flexread_clip <- function(fnOri=fromClip(), obj_open='dt1', write_code=T){
 
 
 
-duView <- function(x, columns=NULL,ignoreColumns=columns, title=NULL) {
-  dt.tmp <<- x;
+duView <- function(x, columns=NULL,ignoreColumns=columns, title=NULL, n=0) {
+  dt.tmp <- x;
   if (nrow(dt.tmp)==0) {warning('No records in the input table!'); return(NULL);}
+
   dt.tmp <- dt_deluselesscols(setcolorderV(dt.tmp,columns), ignoreColumns = ignoreColumns)
   if (nrow(dt.tmp)==0) {warning('No records left in the table!'); return(NULL);}
   if (is.null(title)) title <- deparse(substitute(x));
   View(dt.tmp, title = title)
 }
 
-duView <- function(dtIn, ..., ignoreColumns=NULL, title = NULL) {
+duView <- function(dtIn, ..., ignoreColumns=NULL, title = NULL, n=0) {
   dots_raw <- substitute(list(...))[-1]  # capture unevaluated ...
   # browser()
 
@@ -144,6 +145,10 @@ duView <- function(dtIn, ..., ignoreColumns=NULL, title = NULL) {
     warning("No records in the input table!")
     return(NULL)
   }
+
+  if (n>0) dt.duView %<>% head(n)
+  if (n<0) dt.duView %<>% tail(-n)
+
 
   # CASE 1: No columns specified
   if (length(dots_raw) == 0) {
@@ -163,7 +168,6 @@ duView <- function(dtIn, ..., ignoreColumns=NULL, title = NULL) {
 
     } else stop("Invalid column specification: use unquoted names or a single character vector.")
   }
-
 
   col_names %<>% unique()
   cols_notfound <- col_names %-% names(dt.duView)

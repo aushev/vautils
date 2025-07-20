@@ -611,3 +611,85 @@ corr_pair <- function(pair, dtIn){
 
 
 
+
+# cat.N <- c(Gender='Gender',
+#            Cancer.Stage='Overall pathologic stage',
+#            hadNeoB='Neoadjuvant therapy given',
+#            Resectability='Resectable status'
+#            # stageT='Pathologic T stage',
+#            #Location='Cancer location'
+# )
+
+build_stat_table_N <- function(dtIn, categories, do.sort = F, thrRank=15, ...){
+  dt.N <- NULL
+  #  browser()
+  for (this.cat in names(categories)){
+    this.label <- categories[[this.cat]]
+    this.vals  <- dtIn[[this.cat]]
+    if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
+    this.stat  <- tab(this.vals, thrRank = thrRank, do.sort = do.sort, ...)
+    this.title <- data.table(Category=this.label)
+    this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Count, `%`=this.stat$FreqP), fill=T)
+    dt.N %<>% rbind(this.tab, fill=T)
+  }
+
+  dt.N[is.na(Value) & is.na(Category),Value:='N/A']
+  invisible(dt.N)
+}
+
+build_stat_table_med <- function(dtIn,categories){
+  dt.med <- NULL
+  for (this.cat in names(categories)){
+    cat('\n',this.cat,'\t')
+    this.label <- categories[[this.cat]]
+    this.vals  <- dtIn[[this.cat]]
+    if (is.null(this.vals)) {message(' Not found: ', this.cat, ' - ', this.label); next;}
+    this.vals %<>% as.numeric()
+    if (length(this.vals)==0) warning('')
+
+    this.med <- median(this.vals, na.rm=T)
+    this.sd  <- sd(    this.vals, na.rm=T)
+    this.rng <- range( this.vals, na.rm=T)
+
+    #    this.title <- data.table(Category=this.label)
+    #    this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Freq, `%`=this.stat$FreqP), fill=T)
+    dt.med %<>% rbind(data.table(Category=this.label, Median=round(this.med, 2), SD=round(this.sd,2), range=paste(round(this.rng,2),collapse = ' .. ')), fill=T)
+  }
+
+  invisible(dt.med)
+}
+
+build_stat_table_both <- function(dtIn, categories.N, categories.med, ...){
+  dt.demo.N    <- build_stat_table_N(dtIn, categories.N, ...)
+  dt.demo.cont <- build_stat_table_med(dtIn, categories.med)
+  dt.demo.cont1 <- dt.demo.cont[,.(Category, Value='(median±SD, range)', N=NA_integer_, `%`=(Median %+% '±' %+% SD %+% ', ' %+% range))]
+  dt.demo.both <- rbindV(dt.demo.cont1, dt.demo.N)
+  return(dt.demo.both)
+}
+
+stat_cbind <- function(inpList){
+  dt.wide <- NULL
+  for (i in names(inpList)){
+    cat('\n\n', i)
+    #browser()
+    this_dt <- inpList[[i]]
+    this_dt[, Category1 := zoo::na.locf(Category)]
+    this_dt %<>% dt_del_columns('Category', do_copy = T)
+
+    this_dt %<>% dt_setnames(cs('N %'), cs('N %') %+% '_' %+% i, verbose = F)
+
+    if (is.null(dt.wide)) {
+      this_dt[, orderCategory := .GRP, by=Category1]
+      this_dt[, orderValue := .GRP, by=.(Category1,Value)]
+      dt.wide <- this_dt
+
+    } else {dt.wide %<>% merge(this_dt, by=cs('Category1,Value'), all=T)}
+  } # e. for (i)
+
+  dt.wide[is.na(Value), Category := Category1]
+  dt.wide %<>%
+    setorderv(cs('orderCategory,orderValue')) %>%
+    setcolorderV(cs('Category')) %>%
+    dt_del_columns(cs('orderCategory,orderValue,Category1'))
+  invisible(dt.wide)
+}

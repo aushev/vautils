@@ -63,9 +63,17 @@ fitsum <- function(inpFit, cox.fun=coxph){
   #   sumcox <- cox.obj.sum
   # }
 
+  p_str <- ifelse(
+    sumcox$p < 0.001,
+    sprintf('%.2e', sumcox$p),
+    sprintf('%.6f', sumcox$p)
+  )
 
-  lab.s <- sprintf('HR=%.1f, 95%% CI: %.1f-%.1f, p=%.2e', sumcox$`exp(coef)`, sumcox$CIl, sumcox$CIh, sumcox$p)
-  sumcox$label <- lab.s
+  sumcox$label <- sprintf(
+    'HR=%.2f, 95%% CI: %.1f–%.1f, p=%s',
+    sumcox$`exp(coef)`, sumcox$CIl, sumcox$CIh, p_str
+  )
+
   return(sumcox)
 }
 

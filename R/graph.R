@@ -514,7 +514,7 @@ plot4mosaic <- function(
 
 
 
-euler_plot <- function(inpList){
+euler_plot <- function(inpList, pal=gg_color_hue(length(inpList)) ){
   reqq(eulerr)
   if (!is.list(inpList)) stop('Input must be a list!')
 
@@ -534,7 +534,7 @@ euler_plot <- function(inpList){
   ppv <-
     inpList %>%
     euler(shape='ellipse') %>%
-    plot(fills=gg_color_hue(length(inpList)),
+    plot(fills=pal,
          edges=FALSE,
          #labels=list(fontsize=10*2),
          labels=NULL,

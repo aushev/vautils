@@ -1,8 +1,8 @@
 Package: vautils
 Type: Package
 Title: data processing routines
-Date: 2025-07-07
-Version: 0.1.2.6
+Date: 2025-07-20
+Version: 0.1.2.7
 Author: Vasily Aushev
 Maintainer: Vasily Aushev <vasily@aushev.name>
 Description: helper functions. under development
