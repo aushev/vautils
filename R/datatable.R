@@ -241,7 +241,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
       filetype <- 'zip';
     }
     else {filetype <- 'auto';}
-    cat(' as ', bold(filetype);
+    cat(' as ', bold(filetype));
   }
 
   flag1 <- 0
