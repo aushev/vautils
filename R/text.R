@@ -517,11 +517,11 @@ shrink_values <- function(values, collapse=';', all='unique', dropNA=T, exclude=
   }
   values2 <- values;
 
-  if (dropNA==T) values2 <- na.omitva(values2);
+  if (dropNA==T)         values2 <- na.omitva(values2);
   if (length(exclude)>0) values2 <- values2[values2 %!in% exclude];
-  if (all=='unique') values2 <- unique(values);
-  if (all=='rle')    values2 <- rle(values)$values;
-  if (not.na(do.sort)) values2 %<>% sort()
+  if (all=='unique')     values2 <- unique(values2);
+  if (all=='rle')        values2 <- rle(values)$values;
+  if (not.na(do.sort))   values2 %<>% sort()
 
   if (length(values2)==1) return(values2);
   if (length(values2)==0){
