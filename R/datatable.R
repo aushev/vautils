@@ -2195,7 +2195,8 @@ rbindV <- function(...,fill=T){
     } # e. error function
   ) # e. tryCatch
   if (!is.null(key1)) data.table::setkeyv(catch_ret, key1)
-}# e. rbindV
+  return(catch_ret)
+} # e. rbindV()
 
 
 dt_ttest <- function(dtIn,grpCol,grpLevels,valCol){
@@ -2494,12 +2495,14 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requ
 
     dt.this.dat[, .tmp.PostCondition:=T]
     if (not.na(this.row$PostCondition)) dt.this.dat[, .tmp.PostCondition := eval(expr = parse(text=this.row$PostCondition), envir=dt.this.dat)]
-    #browser()
+    # browser()
     dt.add <- dt.this.dat[.tmp.PreCondition==T & .tmp.PostCondition==T, c(cols.keep.this %&% names(dt.this.dat)),with=F]
+    cat(red('+' %+% nrow(dt.add)))
     dt.ret %<>% rbindV(dt.add)
-  }
+    cat(red(' = ' %+% nrow(dt.ret)))
+  } # e. for (i)
   return(dt.ret)
-}
+} # e. dt_melt_complex()
 
 
 
