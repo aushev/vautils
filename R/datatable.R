@@ -2167,6 +2167,9 @@ rbindV <- function(...,fill=T){
   #   fill<-T;
   #   } else fill <- arglist[['fill']];
   re.attr <- 'Class attribute on column (.*) of item (.*) does not match with column (.*) of item (.*).'
+
+  key1 <- if (is.data.table(arglist[[1]])) data.table::key(arglist[[1]]) else NULL
+
   catch_ret <- tryCatch(
     rbind(fill=fill,...),
 #    rbind(...),
@@ -2191,6 +2194,7 @@ rbindV <- function(...,fill=T){
       return(NULL);
     } # e. error function
   ) # e. tryCatch
+  if (!is.null(key1)) data.table::setkeyv(catch_ret, key1)
 }# e. rbindV
 
 
@@ -2381,6 +2385,10 @@ dt_process <- function(dtIn,
 
 
 dt_set <- function(inputDT, newColName, condition=NA, construction){
+
+  if (!is.data.table(inputDT)){
+    if (is.data.frame(inputDT)) inputDT %<>% data.table()
+  }
 
   ret_i <- NULL
   ret_val <- eval(expr = parse(text = construction), envir=inputDT)

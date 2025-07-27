@@ -516,6 +516,7 @@ plot4mosaic <- function(
 
 euler_plot <- function(inpList, pal=gg_color_hue(length(inpList)) ){
   reqq(eulerr)
+  reqq(splitstackshape)
   if (!is.list(inpList)) stop('Input must be a list!')
 
   # Deduplicate:
@@ -541,5 +542,18 @@ euler_plot <- function(inpList, pal=gg_color_hue(length(inpList)) ){
          quantities=list(fontsize=18))
   cat('\n\n')
   print(ppv$data$original.values)
+
+  dt.stat1 <- ppv$data$original.values %>% as.data.table(keep.rownames = T)
+  names(dt.stat1) <- cs('Drug_group Count')
+  dt.stat1[, Drug := Drug_group]
+
+  dt.stat1 %<>% cSplit(splitCols='Drug', sep='&', direction='long', fixed=T, drop=F, stripWhite=T, type.convert=F)
+  dt.stat2 <- dt.stat1[,.(Count=sumI(Count)),by=Drug]
+
+  print(dt.stat2)
+
+  ppv$stat <- dt.stat2
+
+
   ppv
 }
