@@ -2936,7 +2936,7 @@ dt_parse_kv <- function(dt_input,
   dt_input[, (row_id_col) := NULL]
   if (delete) dt_input[, (col2split) := NULL]
 
-  return(dt_combined)
+  return(dt_input)
 }
 
 
