@@ -140,7 +140,7 @@ duView <- function(dtIn, ..., ignoreColumns=NULL, title = NULL, n=0) {
   dots_raw <- substitute(list(...))[-1]  # capture unevaluated ...
   # browser()
 
-  dt.duView <<- copy(dtIn)
+  dt.duView <- copy(dtIn)
   if (nrow(dt.duView) == 0) {
     warning("No records in the input table!")
     return(NULL)

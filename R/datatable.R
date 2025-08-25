@@ -2822,3 +2822,122 @@ last <- function(x, ...) {
     data.table::last(x, ...)
   }
 }
+
+
+filterC <- function(input, ...){
+  sizeOld <- length(input)
+  if (is.data.table(input) | is.data.frame(input)) sizeOld <- nrow(input)
+  cat('\n Before filter:\t', red(sizeOld))
+  input <- filter(input, ...)
+  sizeNew <- length(input)
+  if (is.data.table(input) | is.data.frame(input)) sizeNew <- nrow(input)
+  cat('. After filter:\t', red(sizeNew))
+  return(input)
+}
+
+
+
+#' Parse and Expand Key-Value Column in a data.table
+#'
+#' Splits a column of key-value pairs (e.g. `INFO` from VCF-like data) into multiple columns,
+#' using efficient string operations and data.table reshaping. Supports optional prefixing,
+#' key filtering, and in-place or copy behavior.
+#'
+#' @param dt_input A `data.table` containing the column to be parsed.
+#' @param col2split A character string giving the name of the column in `dt_input` that contains key-value strings.
+#' @param split1 Character to split key-value pairs (default is `";"`).
+#' @param split2 Character to split key from value (default is `"="`).
+#' @param delete Logical. If `TRUE`, the original column (`col2split`) will be removed from the output (default `TRUE`).
+#' @param verbose Logical. If `TRUE`, prints progress messages (default `FALSE`).
+#' @param byref Logical. If `TRUE`, modifies the input `data.table` by reference; if `FALSE`, works on a copy (default `TRUE`).
+#' @param keep_keys Optional character vector of key names to keep. If `NULL`, all parsed keys will be retained.
+#' @param prefix Optional string to prefix all new column names (default `NULL`).
+#'
+#' @return A `data.table` with the same rows as `dt_input`, with parsed key-value pairs added as new columns.
+#' If `byref = TRUE`, the input is modified by reference and also returned.
+#'
+#' @examples
+#' dt <- data.table(ID = 1:2,
+#'                  INFO = c("A=1;B=2;C=3", "B=20;C=30;D=40"))
+#' dt_parsed <- dt_parse_kv(dt, col2split = "INFO", keep_keys = c("B", "C"))
+#'
+#' @export
+dt_parse_kv <- function(dt_input,
+                               col2split,
+                               split1=';', split2='=',
+                               delete=TRUE,
+                               verbose=FALSE,
+                               byref=TRUE,
+                               keep_keys = NULL,
+                               prefix = NULL){
+
+  # Verbose helper
+  vcat <- function(...) if (verbose) cat(..., "\n")
+
+  if (byref==TRUE){
+    vcat("Input table will be modified by-reference. Use `byref=FALSE` to avoid.")
+  } else dt_input <- copy(dt_input)
+
+
+  if (!(col2split %in% names(dt_input))) {
+    stop("Column '", col2split, "' not found in input data.table.")
+  }
+
+  # Step 1: Create a unique row ID (to preserve association after splitting)
+  vcat("Step 1/6: Add row ID")
+  # Generate a unique row ID column name (in case row_id exists)
+  row_id_col <- ".tmp_row_id__"
+  while (row_id_col %in% names(dt_input)) {
+    row_id_col <- paste0(row_id_col, sample(letters, 1))
+  }
+  dt_input[, (row_id_col) := .I]
+
+  # Step 2: Split each [column] string by `;` into one long vector
+  #         Use `strsplit()` over the full column (faster)
+  vcat("Step 2/6: Split source column.")
+  info_flat <- strsplit(dt_input[[col2split]], split=split1, fixed = TRUE)
+
+  # Step 3: Create a long data.table: one row per key=value pair
+  vcat("Step 3/6: Expand into long data.table")
+  dt_long <- data.table(
+    row_id = rep(dt_input[[row_id_col]], lengths(info_flat)),
+    kv = unlist(info_flat, use.names = FALSE)
+  )
+
+  # Step 4: Split kv into key and value columns
+  vcat("Step 4/6: Split kv into key-value pairs")
+  dt_long[, c("key", "value") := tstrsplit(kv, split2, fixed=TRUE)]
+  dt_long[, kv := NULL]  # drop intermediate column
+
+  # Step 5: Cast back to wide format using dcast
+  vcat("Step 5/6: Cast back to wide format")
+  dt_info <- dcast(dt_long, row_id ~ key, value.var = "value", fill = NA)
+
+  # Optionally filter specific keys
+  if (!is.null(keep_keys)) {
+    keep_keys <- intersect(keep_keys, names(dt_info))
+    dt_info <- dt_info[, c("row_id", keep_keys), with = FALSE]
+  }
+
+  # Optionally prefix new column names
+  if (!is.null(prefix)) {
+    new_cols <- setdiff(names(dt_info), "row_id")
+    setnames(dt_info, new_cols, paste0(prefix, new_cols))
+  }
+
+  # Step 6: Join back to dt_input
+  vcat("Step 6/6: Join back, i.e. merge with original table")
+  dt_input <- merge(dt_input, dt_info, by.x = row_id_col, by.y = "row_id", all.x = TRUE)
+  # dt_input[, c(names(dt_info)[-1]) := dt_info[.SD, on = setNames("row_id", row_id_col), .SD, .SDcols = -1]]
+
+
+  # Step 7: Cleanup
+  vcat("Step 7: Cleanup temporary columns")
+  dt_input[, (row_id_col) := NULL]
+  if (delete) dt_input[, (col2split) := NULL]
+
+  return(dt_combined)
+}
+
+
+
