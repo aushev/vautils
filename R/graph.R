@@ -513,7 +513,7 @@ plot4mosaic <- function(
 
 
 
-
+#' @export
 euler_plot <- function(inpList, pal=gg_color_hue(length(inpList)) ){
   reqq(eulerr)
   reqq(splitstackshape)

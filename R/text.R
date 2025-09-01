@@ -126,6 +126,7 @@ paste0ignNA <- function(arg1, arg2){
   stop('Unexpected error!');
 }
 
+#' @export
 `%+%` <- function(...) UseMethod("%+%")
 #' @export
 `%+%.character` <- paste0ignNA
@@ -174,8 +175,11 @@ paste0notNA <- function(arg1, arg2){
 
 #' @export
 `%++%` <- function(...) UseMethod("%++%")
+#' @export
 `%++%.character` <- paste0notNA
+#' @export
 `%++%.numeric`   <- paste0notNA
+#' @export
 `%++%.logical`   <- paste0notNA
 #' @export
 `%++%.NULL`      <- paste0notNA

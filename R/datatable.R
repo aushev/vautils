@@ -1,3 +1,5 @@
+#' @import crayon
+NULL
 
 load_DT <- function(dtVar, fnVar, fnDef, refresh=T, colsIncl, colsExcl=NULL, ...) {
   varnameDT <- deparse(substitute(dtVar));
@@ -75,7 +77,7 @@ inexcel <- function(dtIn, row.names=F, na='', name_dt=NA, quotize=c(), ...){
   return(fn_save);
 }
 
-
+#' @export
 inexcel2 <- function(dtIn, row.names=F, na='', name_dt=NA, ...){
 #  browser()
   reqq(openxlsx)
@@ -163,6 +165,7 @@ is_char_drive_id <- function(input){
 }
 
 #######################################################################################################################################
+#' @export
 flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                      silent=T, keyby = NA, char=NULL, num=NULL, filetype=NULL,
                      clean.names = T, trimspaces=F, deluseless=F,
@@ -851,6 +854,7 @@ deluselesscol0 <- function (dtIn, icolnames=names(dtIn), ignNA=F, silent = F, pa
   invisible(dtIn);
 } # e. deluselesscol()
 
+#' @export
 dt_deluselesscols <- function (dtIn, icolnames=names(dtIn), ignoreColumns=NULL, ignNA=F, silent = F, padON=F, padW=NULL, padSide='right', copy=F, verbose=F) {
   catV <- ifelse(verbose,cat,function(...){})
   if (copy==T) dtIn <- copy(dtIn)
@@ -1424,6 +1428,7 @@ myread <- function(fnInput){
 # setnamessp ####################################
 # usual setnames() requires that all old names are present in the table,
 # this dt_setnames() tolerates missing names
+#' @export
 dt_setnames <- function(dtIn, old=names(dtIn), new, verbose=T){
   # browser()
   if (is.null(old)) old <- names(dtIn)
@@ -1902,7 +1907,7 @@ dt_names_dedup_pre <- function(dtIn, cols=NULL){
 
 
 
-
+#' @export
 dt_del_columns <- function(dtIn, cols2del, do_copy=F){
 #  browser()
   if (is.re(cols2del)){
@@ -2165,7 +2170,7 @@ dt_dict <- function(dtIn, keys=names(dtIn)[1], vals=names(dtIn)[2], check=T){
 
 
 
-
+#' @export
 rbindV <- function(...,fill=T){
 #  browser()
   arglist <- list(...)
@@ -2813,7 +2818,7 @@ dt_rename_dup <- function(dtIn, searchFor, renameTo){
 
 
 
-
+#' @export
 first <- function(x, ...) {
   if (inherits(x, c("GAlignmentPairs", "Pairs"))) {
     S4Vectors::first(x, ...)
@@ -2822,6 +2827,7 @@ first <- function(x, ...) {
   }
 }
 
+#' @export
 last <- function(x, ...) {
   if (inherits(x, c("GAlignmentPairs", "Pairs"))) {
     S4Vectors::last(x, ...)
@@ -2830,7 +2836,7 @@ last <- function(x, ...) {
   }
 }
 
-
+#' @export
 filterC <- function(input, ..., comment=NULL){
   sizeOld <- length(input)
   if (is.data.table(input) | is.data.frame(input)) sizeOld <- nrow(input)

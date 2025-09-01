@@ -101,7 +101,63 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T, reload=F){
 
 }
 
-
+#' Install (if needed) and attach one or more packages
+#'
+#' Convenience wrapper that accepts a package name as a symbol (e.g. `dplyr`),
+#' a single character string (e.g. `"dplyr"`), a space-separated string
+#' (e.g. `"dplyr ggplot2"`), or a character vector (e.g. `c("dplyr","ggplot2")`),
+#' and ensures each package is installed and attached. If a package is not
+#' available from CRAN and `tryBioconductor = TRUE`, a Bioconductor install is
+#' attempted via **BiocManager**.
+#'
+#' When multiple packages are supplied and `reload = TRUE`, the function
+#' unloads and re-attaches **vautils** at the end (to refresh its search path
+#' after attachments).
+#'
+#' @section Important:
+#' This helper is intended for **interactive scripts**. Do **not** use it inside
+#' package code; packages should declare dependencies in `DESCRIPTION` and use
+#' `Imports`/`NAMESPACE` (e.g., `pkg::fun` or `@importFrom`), not attach packages
+#' at runtime.
+#'
+#' @param packagename A package identifier provided as a symbol, a character
+#'   string, a space-separated string of names, or a character vector of names.
+#'   Internally, symbols are normalized to character names. Space-separated
+#'   strings are split and processed element-wise.
+#' @param verbose `logical(1)`. If `TRUE`, prints progress messages.
+#' @param tryBioconductor `logical(1)`. If `TRUE`, try installing from
+#'   Bioconductor (via **BiocManager**) when CRAN install fails.
+#' @param reload `logical(1)`. If `TRUE` and more than one package was processed,
+#'   `vautils` is reloaded (`unloadNamespace("vautils")` then `require(vautils)`).
+#'
+#' @return `logical(1)`. For a single package, returns the success status from
+#'   the underlying loader (`TRUE` if attached, `FALSE` otherwise). For multiple
+#'   packages, returns `TRUE` after processing (individual failures are reported
+#'   during the run).
+#'
+#' @seealso [BiocManager::install()], [library()], [require()]
+#'
+#' @examples
+#' \dontshow{old_opt <- options(warn = 1); on.exit(options(old_opt), add = TRUE)}
+#' # Interactive usage (do not run in package examples to avoid installs):
+#' \dontrun{
+#'   # Symbol, single name
+#'   reqq(dplyr)
+#'
+#'   # Character string
+#'   reqq("dplyr")
+#'
+#'   # Space-separated string
+#'   reqq("dplyr ggplot2", verbose = TRUE)
+#'
+#'   # Character vector; skip vautils reload at the end
+#'   reqq(c("dplyr", "ggplot2"), reload = FALSE)
+#'
+#'   # Try Bioconductor if not on CRAN
+#'   reqq("BiocGenerics", tryBioconductor = TRUE)
+#' }
+#'
+#' @export
 reqq <- function(packagename, verbose=F, tryBioconductor=T, reload=T){
   catV <- ifelse(verbose,cat,function(...){})
   catV('\n=======================================================\n');
@@ -153,17 +209,54 @@ reqq <- function(packagename, verbose=F, tryBioconductor=T, reload=T){
     return(T);
   }
 
-  reqS(packagename,verbose = verbose,tryBioconductor=tryBioconductor, reload=reload);
+  reqS(packagename, verbose=verbose, tryBioconductor=tryBioconductor, reload=reload);
 } # e. reqq()
 
+#' Detach (if attached) and re-attach a package by name
+#'
+#' Convenience helper that checks whether a package is currently **attached**
+#' on the search path and, if so, detaches it, then (re)loads it via
+#' [reqS()]. This is handy during interactive development when you want to
+#' pick up changes to a dependency without restarting R.
+#'
+#' @section Important:
+#' This function performs side-effects on the session search path and namespace
+#' table. Avoid using it inside package code or scripts where reproducibility
+#' matters. Prefer declaring dependencies in `DESCRIPTION` and using
+#' `Imports`/`NAMESPACE` rather than attaching/detaching at runtime.
+#'
+#' @param pkgName `character(1)`. The package name (e.g., `"dplyr"`).
+#'
+#' @return A logical value indicating whether the package
+#'   was successfully attached (`TRUE`) or not (`FALSE`). Messages are printed
+#'   for user feedback.
+#'
+#' @details
+#' - Attachment is detected via [`search()`]; if `package:PKG` is present, the
+#'   function prints a message and calls [`unloadNamespace()`] on `PKG` before
+#'   reloading it with [reqS()].
+#' - If the package namespace is loaded but not attached, it may still be
+#'   unloaded by `unloadNamespace()`. Detach failures can occur if other loaded
+#'   packages depend on `pkgName`.
+#'
+#' @seealso [search()], [detach()], [unloadNamespace()]
+#'
+#' @examples
+#' \dontrun{
+#'   # Reload ggplot2 interactively
+#'   reload("ggplot2")
+#'
+#'   # Use within a development session after editing a dependency
+#'   reload("data.table")
+#' }
+#'
+#' @export
 reload <- function(pkgName){
   pkgNameP <- paste0('package:',pkgName);
   print(pkgNameP);
   if(pkgNameP %in% search())
   {
-    #pkgNameP <- "package:ggplot2";
-    print('package found! will be detached. v5');
-    #detach(name = pkgNameP, unload=TRUE);
+    print('package found! will be detached.');
     unloadNamespace(pkgName);
     }
   reqS(pkgName);

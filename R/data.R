@@ -332,6 +332,7 @@ seqlen <- function(obj){
   return(seq_len(length(obj)));
 }
 
+#' @export
 replace.mult <- function(inpvec, from, to, case.sensitive=T, char.only=T){
   if (char.only==T){
     if (! is.character(inpvec)) {warning('Non-character input, will not work'); return(inpvec);}
@@ -568,6 +569,7 @@ minDate <- function(inpX, na.rm=T) {
 
 # maxI() and minI(): modified max() and min();
 # when input is NA only, return NA instead of Inf
+#' @export
 maxI <- function(inp){
   inp <- na.omit(inp)
   if (length(inp)==0) {
@@ -583,6 +585,7 @@ maxI <- function(inp){
   return(max(inp))
 }
 
+#' @export
 minI <- function(inp){
   inp <- na.omit(inp)
   if (length(inp)==0) {
@@ -694,14 +697,14 @@ get1val <- function(input, lenAll=c(0,1,Inf), mult='first', sep=';'){
 
 }
 
-
+#' @export
 factors <- function(input,newlevels,...){
   cur.levels <- unique(as.character(input))
   other.levels <- cur.levels %-% as.character(newlevels)
   return(factor(input, levels = c(newlevels,other.levels),...))
 }
 
-
+#' @export
 not.na <- function(...) !is.na(...)
 
 saveas <- function(..., names2save=NULL, file) {

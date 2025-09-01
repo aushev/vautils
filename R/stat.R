@@ -27,12 +27,11 @@ tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, inpName=NA, ...){
   sum1 <- sum(df$Count);
   df$FreqP <- percent(df$Count/sum1);
   print(names(df));
-  df <- data.table(df);
-  setnames(df, 'input', name1); # names(df)[names(df)=='input'] <- name1;
-  print(order(-df$Count));
-  df <- df[order(-df$Count)];
-  print(names(df));
-  return(df);
+  dt1 <- data.table(df);
+  setnames(dt1, 'input', name1); # names(df)[names(df)=='input'] <- name1;
+  if (isTRUE(do.sort)) dt1 <- dt1[order(-Count)]
+  print(names(dt1));
+  return(dt1);
 }
 
 tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, inpName=NA, thrRank=NA, thrNum=NA, thrLabel='Other',...){
@@ -46,7 +45,6 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
     if (do.sort) dt.ret <- dt.ret[order(-Count),];
     colVal <- first(names(dt.ret))
     colFreq <- last(names(dt.ret))
-
   } else {
     df1 <- data.frame(table(input, useNA = useNA, ...));
     setnames(df1,'Freq','Count')
@@ -71,12 +69,12 @@ tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, in
 
 
   if (not.na(thrRank)){
-    dt.ret[, rankFreq:=rank(-Count)]
+    dt.ret[, rankFreq := frank(-Count, ties.method = "first")]
     dt.ret[rankFreq>thrRank & not.na(get(colVal)), `:=`(tmp_cat_Other=T,Count=sumI(Count) )]
     dt.ret[tmp_cat_Other==T, c(colVal):=thrLabel]
     dt.ret[,tmp_cat_Other:=NULL]
     dt.ret[, rankFreq:=NULL]
-    dt.ret <- unique(dt.ret)
+    dt.ret %<>% unique()
   }
 
   if (not.na(thrNum)){
@@ -109,11 +107,12 @@ tabDT <- function(input, useNA='ifany', do.sort=T, ...){
   setnames(dt1, 'input', name1);
 #  print(order(-df$Count));
 #  print(names(dt));
-  if (do.sort) dt1 <- dt1[order(Count),];
+  if (isTRUE(do.sort)) dt1 <- dt1[order(-Count)]
 #  print(names(dt1));
   return(dt1);
 }
 
+#' @export
 tab <- tabDF;
 
 dt4mosaic <- function(inpDT, byX, byY){
@@ -161,6 +160,7 @@ dt4mosaic <- function(inpDT, byX, byY){
 #   print(is.data.table(dt1))
 #   dt1 <- dt1[N!=0,]
 # }
+#' @export
 tabv <- function(...){View(tab(...))}
 
 mean2sd <- function(x) mean(x)+2*sd(x);
@@ -373,18 +373,23 @@ scaleInt <- function(x){
   ceiling(abs(scaled))*sign(scaled) # <- can this be done simpler?
 }
 
+#' @export
 unqN <- function(x) length(unique(x))
+#' @export
 empty <- function(x) length(x)==0;
+#' @export
 topN <- function(x,thr=3){sort(unique(x), decreasing = T)[1:thr]}
+#' @export
 btmN <- function(x,thr=3){sort(unique(x), decreasing = F)[1:thr]}
 
 
-
+#' @export
 topNf <- function(x, thr=3) {
   dt1 <- data.table(x)
   dt1[, .N, by = x][order(-N, x)][1:thr, x]
 }
 
+#' @export
 topNf1 <- function(x, pos=1) {
   dt1 <- data.table(x)
   dt1[, .N, by = x][order(-N, x)][pos, x]
@@ -659,6 +664,7 @@ build_stat_table_med <- function(dtIn,categories){
   invisible(dt.med)
 }
 
+#' @export
 build_stat_table_both <- function(dtIn, categories.N, categories.med, ...){
   dt.demo.N    <- build_stat_table_N(dtIn, categories.N, ...)
   dt.demo.cont <- build_stat_table_med(dtIn, categories.med)
@@ -667,6 +673,7 @@ build_stat_table_both <- function(dtIn, categories.N, categories.med, ...){
   return(dt.demo.both)
 }
 
+#' @export
 stat_cbind <- function(inpList){
   dt.wide <- NULL
   for (i in names(inpList)){

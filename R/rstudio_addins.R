@@ -126,7 +126,7 @@ flexread_clip <- function(fnOri=fromClip(), obj_open='dt1', write_code=T){
   if (not.na(obj_open)) rstudioapi::sendToConsole('duView(dt1)')
 }
 
-
+#' @export
 duView <- function(dtIn, ..., ignoreColumns=NULL, title = NULL, n=0) {
   dots_raw <- substitute(list(...))[-1]  # capture unevaluated ...
   # browser()
@@ -179,6 +179,7 @@ duView <- function(dtIn, ..., ignoreColumns=NULL, title = NULL, n=0) {
   View(dt.duView, title = title)
 } # e. duView()
 
+#' @export
 tView <- function(x) {
   dt.tmp <<-  as.data.table(t(x), keep.rownames=T);
   title <- deparse(substitute(x));

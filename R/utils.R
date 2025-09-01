@@ -38,7 +38,7 @@ lsos <- function(..., n=10) {
     .ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n)
 }
 
-
+#' @export
 stopifnotunique <- function(x, allowNULL=F) {
   if (is.null(x) & allowNULL==F) stop('input is NULL!')
   if (anyDuplicated(x)==0) return(invisible());
