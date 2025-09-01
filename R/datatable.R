@@ -154,6 +154,14 @@ adderrb <- function(dtIn, condition, flagtxt, inpArrName="flagsList"){
 }
 
 
+is_char_drive_id <- function(input){
+  return(
+    nchar(input) %in% c(33L,44L) &&
+    input %~~% '^[a-zA-Z0-9_-]{33,44}$' &&
+    !(input %inherits% 'drive_id')
+  )
+}
+
 #######################################################################################################################################
 flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
                      silent=T, keyby = NA, char=NULL, num=NULL, filetype=NULL,
@@ -165,10 +173,8 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 #   cat('\nSTARTING ' %+% cs1(fnRead) %+% '\n')
   flags <- c()
   if (fcounter==T){
-    if (!exists('flexread.counter')) flexread.counter <- 0L
-    flexread.counter <- flexread.counter + 1L
-    flexread.counter <<- flexread.counter
-    cat('  ',flexread.counter,'   ')
+    this_counter <- flexread_counter()
+    cat('  ',this_counter,'   ')
   }
 
   if (length(fnRead)>1){
@@ -203,12 +209,12 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
 #  browser()
 
-  if ('drive_id' %!in% class(fnRead) & nchar(fnRead) %in% c(33,44) & fnRead %~~% '^[a-zA-Z0-9_-]{33,44}$' & !file.exists(fnRead)){
+  if (is_char_drive_id(fnRead) & !file.exists(fnRead)){
     message(' Seems to be a Google Drive file.');
     fnRead <- googledrive::as_id(fnRead)
   }
 
-  if ('drive_id' %in% class(fnRead)){
+  if (fnRead %inherits% 'drive_id'){
     message(' Opening as Google Drive file.');
     # browser()
     drDownloaded <- googledrive::drive_download(fnRead, overwrite = T)
@@ -360,10 +366,10 @@ flexread_vcf <- function(fnInp, skip='CHROM', replID=NA, addLastCol=NA, ...) {
   dt.ret <- flexread(fnInp, skip, ...)
   if (not.na(addLastCol)) dt.ret %<>% fixLastCol(colName = addLastCol)
   if (not.na(replID)){
-    dt.ret[, eval(replID):=paste(CHROM,POS,REF,ALT, sep = '_')]
+    dt.ret[, (replID):=paste(CHROM,POS,REF,ALT, sep = '_')]
     #  setnames(dt.ret, '_tmp_ID', replID)
   }
-
+  invisible(dt.ret)
 }
 
 
@@ -1265,7 +1271,7 @@ mergefiletabs2 <- function(
   dt.all <- NULL;
   dt.all <- rbindlist(lapply(fn.list, flexreadA,
                              full.names=full.names,rn=rn,colnames=colnames,fn.mask.remove=fn.mask.remove,fn.mask.replace=fn.mask.replace,fill=fill,fcounter=fcounter,...))
-  if (fcounter==T) flexread.counter <<- 0L;
+  if (fcounter==T) flexread.counter(reset=TRUE);
   invisible(dt.all);
 } # e. mergefiletabs()
 
@@ -2740,7 +2746,8 @@ dt_first <- function(dtIn, by=key(dtIn), orderby=NULL){
 #' dt_last(dt1, by = "grp")
 #'
 #' @export
-dt_last <- function(dtIn, by = key(dtIn), orderby=NULL){ # dt_last_record
+dt_last <- function(dtIn, by = key(dtIn), orderby=NULL, comment=NULL){ # dt_last_record
+  cat(italic(silver(comment)))
   if (is.null(by)) warning('No key provided!')
   if (!is.null(orderby))
     dtIn %<>% setorderv(orderby) # ,order=-1
@@ -2824,14 +2831,16 @@ last <- function(x, ...) {
 }
 
 
-filterC <- function(input, ...){
+filterC <- function(input, ..., comment=NULL){
   sizeOld <- length(input)
   if (is.data.table(input) | is.data.frame(input)) sizeOld <- nrow(input)
-  cat('\n Before filter:\t', red(sizeOld))
+  cat('\n')
+  cat(italic(silver(comment)))
+  cat('Before filter:\t', red(sizeOld))
   input <- filter(input, ...)
   sizeNew <- length(input)
   if (is.data.table(input) | is.data.frame(input)) sizeNew <- nrow(input)
-  cat('. After filter:\t', red(sizeNew))
+  cat('. After filter:\t', red(sizeNew), '\n')
   return(input)
 }
 

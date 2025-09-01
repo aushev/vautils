@@ -4,12 +4,12 @@ annotateENS <- function(es,
                         mart_attr=cs("external_gene_name gene_biotype")){
   mart <- useDataset("hsapiens_gene_ensembl", useMart("ENSEMBL_MART_ENSEMBL"))
 
-  annotLookup <- getBM(
-    attributes=c(mart_filter,mart_attr), # cs("ensembl_gene_id gene_biotype external_gene_name")
-    filters=mart_filter, # "ensembl_gene_id"
-    values=fData(es.sebra10)[[es.ID]], # $ENSG,
-    mart=mart,
-    uniqueRows=TRUE)
+  annotLookup <- biomaRt::getBM(
+    attributes = c(mart_filter,mart_attr), # cs("ensembl_gene_id gene_biotype external_gene_name")
+    filters    = mart_filter, # "ensembl_gene_id"
+    values     = Biobase::fData(es)[[es.ID]], # $ENSG,
+    mart       = mart,
+    uniqueRows = TRUE)
 
   dt.annotlookup <- data.table(annotLookup)
   dt.annotlookup <- unique(dt.annotlookup)

@@ -1,6 +1,6 @@
 
 catV <- function(..., verbose=T){
-  if (verbose) return;
+  if (!verbose) return;
   cat(...);
 }
 
@@ -69,30 +69,24 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T, reload=F){
   }
 
   # if it is installed but not loaded:
-  reqrez <- TRUE;
   tryrez <- tryCatch(
-    expr    = {reqrez <<- require(packagename, character.only = T);},
+    expr    = {require(packagename, character.only = T);},
     warning = function(w){
       cat('Warning raised: ', w$message, '\n');
       if (grepl('there is no package called', w$message)) {
-        reqrez <<- FALSE;
-      } else {reqrez <<- require(packagename, character.only = T);} # very ugly...
+      } else {require(packagename, character.only = T);} # very ugly...
     },
     error   = function(e){
       cat('Error occurred: ',   e$message, '\n');
-      reqrez <<- FALSE;
 
       if (grepl('please re-install it', e$message)) {
         install.packages(packagename);
-        reqrez <<- require(packagename, character.only = T);
+        require(packagename, character.only = T);
       }
 
     },
     finally = {cat(" Finished with", packagename, ".\n");}
   ); # e. tryCatch()
-
-  # catV('\ntryrez: ', tryrez, 'reqrez: ', reqrez, '\n');
-  #if (is.null(reqrez)) reqrez <- FALSE;
 
   if (tryrez) {catV("Success!\n"); return(T);}
   if (tryrez==F) {cat("Failed!\n"); return(F);}
@@ -198,12 +192,12 @@ loadv <- function(file=NULL, envir = parent.frame(n=1L), verbose=T){
   if (is.null(file)) {file <- askfilename();}
   #load(file, verbose=T, envir = parent.frame(n=1L), ...)
 
-  if ('drive_id' %!in% class(file) & nchar(file) %in% c(33,44) & file %~~% '^[a-zA-Z0-9_-]{33,44}$' & !file.exists(file)){
+  if (is_char_drive_id(fnRead) && !file.exists(file)){
     message(' Seems to be a Google Drive file.');
     file <- googledrive::as_id(file)
   }
 
-  if ('drive_id' %in% class(file)){
+  if (file %inherits% 'drive_id'){
     message(' Opening as Google Drive file.');
     # browser()
     drDownloaded <- googledrive::drive_download(file, overwrite = T)

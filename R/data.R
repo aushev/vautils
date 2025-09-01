@@ -334,7 +334,7 @@ seqlen <- function(obj){
 
 replace.mult <- function(inpvec, from, to, case.sensitive=T, char.only=T){
   if (char.only==T){
-    if (! 'character' %in% class(inpvec)) {warning('Non-character input, will not work'); return(inpvec);}
+    if (! is.character(inpvec)) {warning('Non-character input, will not work'); return(inpvec);}
   }
   fun.compare <- ifelse(case.sensitive==T, `%==%`, function(a,b){toupper(a) %==% toupper(b)})
 
@@ -353,7 +353,7 @@ orderby <- function(x,y){
   if (is.character(y) && length(y)==1 && (y %in% names(x))) {
     ret.ord <- x[[y]];
   } else ret.ord <- y;
-  if ('data.table' %in% class(x)) {
+  if (is.data.table(x)) {
     return(x[order(ret.ord),])
    } else return(x[order(ret.ord)])
 
@@ -571,11 +571,11 @@ minDate <- function(inpX, na.rm=T) {
 maxI <- function(inp){
   inp <- na.omit(inp)
   if (length(inp)==0) {
-     if ('integer' %in% class(inp)) {
+     if (is.integer(inp)) {
        return(NA_integer_);
-     } else if ('Date' %in% class(inp)) {
+     } else if (inp %inherits% 'Date') {
        return(as.Date(NA))
-     } else if ('character' %in% class(inp)) {
+     } else if (is.character(inp)) {
        return(NA_character_)
      } else return(NA_real_);
   } # e. if length 0
@@ -586,11 +586,11 @@ maxI <- function(inp){
 minI <- function(inp){
   inp <- na.omit(inp)
   if (length(inp)==0) {
-    if ('integer' %in% class(inp)) {
+    if (is.integer(inp)) {
       return(NA_integer_);
-    } else if ('Date' %in% class(inp)) {
+    } else if (inp %inherits% 'Date') {
       return(as.Date(NA))
-    } else if ('character' %in% class(inp)) {
+    } else if (is.character(inp)) {
       return(NA_character_)
     } else return(NA_real_);
   } # e. if length 0
@@ -601,7 +601,7 @@ minI <- function(inp){
 medianI <- function(inp, digs=NA){
   inp <- na.omit(inp)
   if (length(inp)==0) {
-    return(ifelse('integer' %in% class(inp), NA_integer_, NA_real_))
+    return(ifelse(is.integer(inp), NA_integer_, NA_real_))
   }
   retval <- median(inp)
   if (not.na(digs)) retval <- round(retval, digits=digs)
@@ -661,7 +661,7 @@ signlog <- function(x){
 
 
 delist <- function(X){
-  if ('list' %in% class(X))
+  if (X %inherits% 'list')
   {
     X[sapply(X, is.null)] <- NA;
     return(unlist(X));
@@ -858,3 +858,5 @@ rm.from.env <- function(re.mask='^this', envir=parent.frame()){
   rm(list=objs_found, envir=envir)
 }
 
+`%inherits%` <- function(obj,classname) inherits(obj,classname)
+`%||%` <- function (x, y) if (is.null(x)) y else x

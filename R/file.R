@@ -7,7 +7,15 @@ file_renameR <- function(from, to) {
 `%path%` <- file.path
 
 
-file_findRecent <- function(pattern, dirs, orderstrict=T, recursive=F, include.dirs=F, ignore.case=T, exclude.pattern='^~\\$',...){
+file_findRecent <- function(
+    pattern,
+    dirs,
+    orderstrict = TRUE,
+    recursive   = FALSE,
+    include.dirs= FALSE,
+    ignore.case = TRUE,
+    exclude.pattern='^~\\$',
+    ...){
   found <- FALSE
   time.latest <- NA
   fn.latest <- NA
