@@ -7,12 +7,12 @@
 shrink_values(
   values,
   collapse = ";",
-  all = F,
+  all = "unique",
   dropNA = T,
   exclude = NULL,
   fillempty = NULL,
   force.char = T,
-  do.sort = NA
+  do.sort = FALSE
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ shrink_values(
 
 \item{force.char}{Logical. If \code{TRUE} (default), coerce values to character before collapsing.}
 
-\item{do.sort}{Logical or \code{NA}. If \code{TRUE}, sort values before collapsing. If \code{FALSE}, keep original order. If \code{NA} (default), do not modify order.}
+\item{do.sort}{Logical. If \code{TRUE}, sort values before collapsing. If \code{FALSE}, keep original order.}
 }
 \value{
 A single character string (or a scalar value, if length 1), representing the collapsed input.

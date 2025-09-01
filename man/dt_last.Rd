@@ -4,7 +4,7 @@
 \alias{dt_last}
 \title{Get Last Row per Group from a data.table}
 \usage{
-dt_last(dtIn, by = key(dtIn), orderby = NULL)
+dt_last(dtIn, by = key(dtIn), orderby = NULL, comment = NULL)
 }
 \arguments{
 \item{dtIn}{A \code{data.table} object.}

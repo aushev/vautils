@@ -1,3 +1,5 @@
+requireNamespace("magrittr")
+
 
 catV <- function(..., verbose=T){
   if (!verbose) return;
@@ -192,7 +194,7 @@ loadv <- function(file=NULL, envir = parent.frame(n=1L), verbose=T){
   if (is.null(file)) {file <- askfilename();}
   #load(file, verbose=T, envir = parent.frame(n=1L), ...)
 
-  if (is_char_drive_id(fnRead) && !file.exists(file)){
+  if (is_char_drive_id(file) && !file.exists(file)){
     message(' Seems to be a Google Drive file.');
     file <- googledrive::as_id(file)
   }

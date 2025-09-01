@@ -15,3 +15,20 @@ flexread_counter <- function(reset = FALSE, peek = FALSE) {
   .vautils_state$flexread_counter <- (.vautils_state$flexread_counter %||% 0L) + 1L
   .vautils_state$flexread_counter
 }
+
+
+#' Re-export the magrittr pipe
+#'
+#' @name %>%
+#' @rdname vautils-reexports
+#' @export
+#' @importFrom magrittr %>%
+magrittr::`%>%`
+
+#' @export
+#' @importFrom magrittr %<>%
+magrittr::`%<>%`
+
+#' @export
+#' @importFrom magrittr %T>%
+magrittr::`%T>%`
