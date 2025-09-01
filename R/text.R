@@ -492,7 +492,7 @@ str_shrink <- function(inp_str, sep=';'){
 #' @param exclude Optional vector of values to exclude from the result.
 #' @param fillempty Value to return when the result is empty after filtering (default: `NULL`).
 #' @param force.char Logical. If `TRUE` (default), coerce values to character before collapsing.
-#' @param do.sort Logical or `NA`. If `TRUE`, sort values before collapsing. If `FALSE`, keep original order. If `NA` (default), do not modify order.
+#' @param do.sort Logical. If `TRUE`, sort values before collapsing. If `FALSE`, keep original order.
 #'
 #' @return A single character string (or a scalar value, if length 1), representing the collapsed input.
 #'
@@ -509,7 +509,7 @@ str_shrink <- function(inp_str, sep=';'){
 #' shrink_values(c(3, 1, 2), do.sort = TRUE)               # "1;2;3"
 #'
 #' @export
-shrink_values <- function(values, collapse=';', all='unique', dropNA=T, exclude=NULL, fillempty=NULL, force.char=T, do.sort=NA){
+shrink_values <- function(values, collapse=';', all='unique', dropNA=T, exclude=NULL, fillempty=NULL, force.char=T, do.sort=FALSE){
   # browser()
   if (force.char==T){
     if (!is.character(values)) values %<>% as.character()
@@ -521,7 +521,7 @@ shrink_values <- function(values, collapse=';', all='unique', dropNA=T, exclude=
   if (length(exclude)>0) values2 <- values2[values2 %!in% exclude];
   if (all=='unique')     values2 <- unique(values2);
   if (all=='rle')        values2 <- rle(values)$values;
-  if (not.na(do.sort))   values2 %<>% sort()
+  if (do.sort==TRUE)     values2 %<>% sort()
 
   if (length(values2)==1) return(values2);
   if (length(values2)==0){

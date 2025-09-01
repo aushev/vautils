@@ -76,13 +76,15 @@ selectionTab <- function(){
 
 
 expFun <- function(){
-  message('Debugging!!!')
-  tmp.ADC <<- rstudioapi::getActiveDocumentContext()
-  tmp.prj <<- rstudioapi::getActiveProject()
-  tmp.SEC <<- rstudioapi::getSourceEditorContext()
-  tmp.CEC <<- rstudioapi::getConsoleEditorContext()
-  message(tmp.ADC$id)
+  message('Debugging only!!!')
+  # tmp.ADC <<- rstudioapi::getActiveDocumentContext()
+  # tmp.prj <<- rstudioapi::getActiveProject()
+  # tmp.SEC <<- rstudioapi::getSourceEditorContext()
+  # tmp.CEC <<- rstudioapi::getConsoleEditorContext()
+  # message(tmp.ADC$id)
 }
+
+
 
 clipboard2selected <- function(){
   execute <- TRUE;
@@ -124,17 +126,6 @@ flexread_clip <- function(fnOri=fromClip(), obj_open='dt1', write_code=T){
   if (not.na(obj_open)) rstudioapi::sendToConsole('duView(dt1)')
 }
 
-
-
-duView <- function(x, columns=NULL,ignoreColumns=columns, title=NULL, n=0) {
-  dt.tmp <- x;
-  if (nrow(dt.tmp)==0) {warning('No records in the input table!'); return(NULL);}
-
-  dt.tmp <- dt_deluselesscols(setcolorderV(dt.tmp,columns), ignoreColumns = ignoreColumns)
-  if (nrow(dt.tmp)==0) {warning('No records left in the table!'); return(NULL);}
-  if (is.null(title)) title <- deparse(substitute(x));
-  View(dt.tmp, title = title)
-}
 
 duView <- function(dtIn, ..., ignoreColumns=NULL, title = NULL, n=0) {
   dots_raw <- substitute(list(...))[-1]  # capture unevaluated ...

@@ -1,4 +1,7 @@
-detachAllPackages <- function() {lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE);}
+detachAllPackages <- function() {
+  pkgs <- paste0('package:', names(sessionInfo()$otherPkgs))
+  invisible(lapply(pkgs,detach,character.only=TRUE,unload=TRUE));
+}
 
 pkgparent <- function (fun) {
   nsenv <- topenv(environment(fun))
@@ -10,8 +13,7 @@ pkgparent <- function (fun) {
 # improved list of objects
 .ls.objects <- function (pos = 1, pattern, order.by,
                         decreasing=FALSE, head=FALSE, n=5) {
-    napply <- function(names, fn) sapply(names, function(x)
-                                         fn(get(x, pos = pos)))
+    napply <- function(names, fn) sapply(names, function(x) fn(get(x, pos = pos)))
     objnames <- ls(pos = pos, pattern = pattern)
     obj.class <- napply(objnames, function(x) as.character(class(x))[1])
     obj.mode <- napply(objnames, mode)
@@ -22,7 +24,7 @@ pkgparent <- function (fun) {
     vec <- is.na(obj.dim)[, 1] & (obj.type != "function")
     obj.dim[vec, 1] <- napply(objnames, length)[vec]
     out <- data.frame(obj.type, obj.size, obj.dim)
-    objnames(out) <- c("Type", "Size", "Rows", "Columns")
+    names(out) <- c("Type", "Size", "Rows", "Columns")
     if (!missing(order.by))
         out <- out[order(out[[order.by]], decreasing=decreasing), ]
     if (head)

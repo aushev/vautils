@@ -13,11 +13,6 @@ Description: calls flexread() for clipboard
 Binding: flexread_clip
 Interactive: false
 
-Name: Experimental
-Description: calls experimental function
-Binding: expFun
-Interactive: false
-
 Name: Clipboard to selection
 Description: assigns clipboard contents to selected variable
 Binding: clipboard2selected
