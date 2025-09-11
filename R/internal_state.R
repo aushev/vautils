@@ -30,5 +30,9 @@ magrittr::`%>%`
 magrittr::`%<>%`
 
 #' @export
+#' @importFrom magrittr %!>%
+magrittr::`%!>%`
+
+#' @export
 #' @importFrom magrittr %T>%
 magrittr::`%T>%`

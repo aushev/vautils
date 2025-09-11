@@ -166,10 +166,11 @@ is_char_drive_id <- function(input){
 
 #######################################################################################################################################
 #' @export
-flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
+flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
                      silent=T, keyby = NA, char=NULL, num=NULL, filetype=NULL,
                      clean.names = T, trimspaces=F, deluseless=F,
                      rename.from=NULL, rename.to=NULL,
+                     openxlsx_ver=1,
                      fcounter=F,
                      fixV1=NA,
                      ...){
@@ -205,12 +206,19 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
 
 
   msgOp <- '\nOpening ' %+% bold(fnRead)
-  if (!is.null(sheetName)) msgOp <- msgOp %+% ' ' %+% bold(green(sheetName))
+  if (not.na(sheetName)) msgOp <- msgOp %+% ' ' %+% bold(green(sheetName))
   message(msgOp);
 
   dots <- substitute(list(...));
 
 #  browser()
+
+  re.gid <- '.*[?&]id=([a-zA-Z0-9_-]+).*'
+  if (fnRead %~~% re.gid){fnRead <- gsub(re.gid,'\\1',fnRead)}
+
+  re.gid <- ".*/d/([a-zA-Z0-9_-]+)/?.*"
+  if (fnRead %~~% re.gid){fnRead <- gsub(re.gid,'\\1',fnRead)}
+
 
   if (is_char_drive_id(fnRead) & !file.exists(fnRead)){
     message(' Seems to be a Google Drive file.');
@@ -256,21 +264,31 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NULL,
   flag1 <- 0
 
   if (filetype=='xls'){
-    cat(' with openxlsx/read.xlsx... ');
     sheet <- sheetIndex;
-    if (!is.null(sheetName)) sheet <- sheetName;
-    reqq('openxlsx', verbose = F);
-    rez <- openxlsx::read.xlsx(fnRead, sheet, check.names=F,...); # don't do check.names=clean.names bc it also dedups names
+    if (not.na(sheetName)) sheet <- sheetName;
+
+    if (as.character(openxlsx_ver)=='1'){
+      cat(' with openxlsx::read.xlsx()... ');
+      reqq('openxlsx', verbose = F);
+      rez <- openxlsx::read.xlsx(fnRead, sheet, check.names=F,...); # don't do check.names=clean.names bc it also dedups names
+    }
+
+    if (as.character(openxlsx_ver)=='2'){
+      cat(' with openxlsx2::read_xlsx()... ');
+      reqq('openxlsx', verbose = F);
+      rez <- openxlsx2::read_xlsx(fnRead, sheet, check_names=F, ...); # don't do check.names=clean.names bc it also dedups names
+    }
+
     rez <- data.table(rez);
   }
   else if (filetype == 'sas7bdat') {
-    cat(' with read.sas7bdat... ');
+    cat(' with sas7bdat::read.sas7bdat()... ');
     reqq('sas7bdat', verbose = F);
     rez <- read.sas7bdat(fnRead);
     rez <- data.table(rez);
   }
   else if (filetype == 'spss') {
-    cat(' with read.spss... ');
+    cat(' with foreign::read.spss()... ');
     reqq('foreign', verbose = F);
     rez <- read.spss(fnRead);
     rez <- as.data.table(rez);
@@ -2466,12 +2484,12 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requ
 
   dt.ret <- NULL
   for (i in seqlen(nrow(dt.template))){
-    cat('\n', bold(blue(i)),'\t')
+    cat('\n row#', bold(blue(i)),'\t')
     this.row <- dt.template[i]
 
     if (mode.work.multi==T){
       this.table_name <- this.row$Table
-      cat(bold(green(this.table_name)),'\t')
+      cat(bold(green(this.table_name)),': ')
       dt.this.dat <- copy(input[[this.table_name]])
       if (is.null(dt.this.dat)) {
         msg_text <- "Can't find table named " %+% bold(this.table_name) %+% " in the input list."
@@ -2482,6 +2500,17 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requ
       }
       cat(blue(nrow(dt.this.dat)),'\t')
     }
+
+	# browser()
+
+    if (not.na(this.row$PreCondition)) {
+	  cat('PreCondition=> ')
+#	  dt.this.dat[, .tmp.PreCondition := TRUE]
+      dt.this.dat[, .tmp.PreCondition := eval(expr = parse(text=this.row$PreCondition), envir=dt.this.dat)]
+	  dt.this.dat <- dt.this.dat[.tmp.PreCondition==T]
+	  cat(blue(nrow(dt.this.dat), '\t'))
+    }
+
 
     cols.keep.this <- cols.keep
 
@@ -2501,13 +2530,16 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requ
       cat('\t')
     } # e. for(e.col)
 
-    dt.this.dat[, .tmp.PreCondition:=T]
-    if (not.na(this.row$PreCondition)) dt.this.dat[, .tmp.PreCondition := eval(expr = parse(text=this.row$PreCondition), envir=dt.this.dat)]
+    if (not.na(this.row$PostCondition)) {
+  	  cat('PreCondition=> ')
+#     dt.this.dat[, .tmp.PostCondition := TRUE]
+      dt.this.dat[, .tmp.PostCondition := eval(expr = parse(text=this.row$PostCondition), envir=dt.this.dat)]
+ 	  dt.this.dat <- dt.this.dat[.tmp.PostCondition==TRUE]
+ 	  cat(blue(nrow(dt.this.dat), '\t'))
+    }
 
-    dt.this.dat[, .tmp.PostCondition:=T]
-    if (not.na(this.row$PostCondition)) dt.this.dat[, .tmp.PostCondition := eval(expr = parse(text=this.row$PostCondition), envir=dt.this.dat)]
     # browser()
-    dt.add <- dt.this.dat[.tmp.PreCondition==T & .tmp.PostCondition==T, c(cols.keep.this %&% names(dt.this.dat)),with=F]
+    dt.add <- dt.this.dat[, c(cols.keep.this %&% names(dt.this.dat)),with=F]
     cat(red('+' %+% nrow(dt.add)))
     dt.ret %<>% rbindV(dt.add)
     cat(red(' = ' %+% nrow(dt.ret)))

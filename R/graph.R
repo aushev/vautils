@@ -160,7 +160,7 @@ ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, device=NULL, dir=NULL,...
   fn <- ifelse(fn_dir=='.',fn_name,fs::path(fn_dir,fn_name))
   ext <- tools::file_ext(fn_name)
   #if (!exists('device') || is.na(device)) device <- ext;
-  if (exists(fn)) {warning('File already exists! Will try to save under different name. '); fn <- gsub(fn_name,nicedate() %+% fn_name,fn, fixed = T)}
+  if (file.exists(fn)) {warning('File already exists! Will try to save under different name. '); fn <- gsub(fn_name,nicedate() %+% fn_name,fn, fixed = T)}
   message('Saving as ' %+% bold(fn) )
 #  browser()
   if ('list' %in% class(inpPlot)) {
