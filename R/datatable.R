@@ -2871,7 +2871,11 @@ last <- function(x, ...) {
 #' @export
 filterC <- function(input, ..., comment=NULL){
   sizeOld <- length(input)
-  if (is.data.table(input) | is.data.frame(input)) sizeOld <- nrow(input)
+  if (is.data.table(input) | is.data.frame(input)) {
+    browser()
+    sizeOld <- nrow(input)
+    filter <- dplyr::filter
+  }
   cat('\n')
   cat(italic(silver(comment)))
   cat('Before filter:\t', red(sizeOld))
