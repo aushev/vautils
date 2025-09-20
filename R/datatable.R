@@ -119,11 +119,11 @@ tdt <- function(inpdt, newcolname=names(inpdt)[1]){
 }
 
 # returns a vector of values where TRUE means this column is empty ####
-emptycolumns <- function(input.table){
+dt_emptycolumns <- function(dtIn){
   return(
-    sapply(1:ncol(input.table),
+    sapply(1:ncol(dtIn),
            function(X){
-             all(is.na(input.table[, X]))
+             all(is.na(dtIn[, X]))
            }
     )
   );
