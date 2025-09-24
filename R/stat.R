@@ -700,3 +700,9 @@ stat_cbind <- function(inpList){
     dt_del_columns(cs('orderCategory,orderValue,Category1'))
   invisible(dt.wide)
 }
+
+
+sample_ordered <- function(x, size, ...) {
+  idx <- sort(sample(seq_along(x), size = size, ...))
+  x[idx]
+}

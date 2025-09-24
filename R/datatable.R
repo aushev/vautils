@@ -2872,7 +2872,7 @@ last <- function(x, ...) {
 filterC <- function(input, ..., comment=NULL){
   sizeOld <- length(input)
   if (is.data.table(input) | is.data.frame(input)) {
-    browser()
+    # browser()
     sizeOld <- nrow(input)
     filter <- dplyr::filter
   }
