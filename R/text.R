@@ -46,7 +46,7 @@ cs <- function(inputstr, sep=",", fixed=T, nonewlines=T, allowempty=F){
   return(rez);
 }
 
-printcs <- cs1 <- function(input, collapse=','){paste0(cs(input), collapse = collapse)}
+printcs <- cs1 <- function(input, collapse=',', sep=','){paste0(cs(input, sep=sep), collapse=collapse)}
 
 
 
@@ -745,7 +745,7 @@ if (Sys.info()['sysname'] != 'Windows'){
 
 toClip <- function(content){writeClipboard(replace.mult(as.character(content),NA,''))}
 fromClip <- function(...){readClipboard()}
-tromClip <- function(...){fromClip() %>% paste(collapse = '\n') %>% fread(...)}
+tromClip <- function(...){fromClip() %>% paste(collapse = '\n') %>% fread(fill=T,...)}
 
 
 # this doesn't work in data.table, see https://stackoverflow.com/questions/72926127/
@@ -995,14 +995,26 @@ split_count <- function(input, sep=';'){
   return(dt.stat)
 }
 # faster version:
-split_count <- function(input, sep=";") {
+split_count <- function(input, sep=";", order_by='count') {
   split_list <- strsplit(input, split=sep, fixed=TRUE)
   # browser()
   dt_long <- data.table(
     row_id = rep(seq_along(split_list), lengths(split_list)),
     value = trimws(unlist(split_list))
   )
-  dt_long[, .(count = uniqueN(row_id)), by = value][order(value)]
+  dt.ret <- dt_long[, .(count = uniqueN(row_id)), by = value]
+  if (order_by=='count') {
+    dt.ret %<>% setorder(-count)
+  } else dt.ret %<>% setorder(value)
+  dt.ret
+}
+
+
+# returns a match matrix:
+#  each row is an input hay record,
+#  each col is a rule
+grep_multi_match <- function(vec_re, vec_hay, ignore.case=FALSE){
+  vapply(X=vec_re, FUN=grepl, x=vec_hay, ignore.case=ignore.case, FUN.VALUE=logical(length(vec_hay)))
 }
 
 
@@ -1010,6 +1022,150 @@ split_count <- function(input, sep=";") {
 
 
 
+#' Paste labels selected by indices (order-preserving)
+#'
+#' @description
+#' Given a vector of indices (1-based) that point into a character vector of labels,
+#' return a single pasted string.
+#'
+#' @param indices Integer vector of 1-based positions into `labels`. May be empty.
+#' @param labels Character vector containing candidate labels.
+#' @param collapse Character scalar used to join multiple labels. Default: "; ".
+#' @param deduplicate Logical; if `TRUE`, remove duplicates while preserving the order
+#'   of first appearance. Default: `TRUE`.
+#' @param ignore_case Logical; if `TRUE` and `deduplicate = TRUE`, deduplication is
+#'   performed case-insensitively (order still preserved). Default: `FALSE`.
+#' @param no_match_value Character scalar to return when `indices` is empty
+#'   (i.e., no matches). Default: `NA_character_`.
+#' @param validate_bounds Logical; if `TRUE`, checks that all `indices` are within
+#'   `1:length(labels)` and errors otherwise. Default: `TRUE`.
+#'
+#' @return A length-1 character vector (possibly `NA_character_` if no matches and
+#'   `no_match_value` is left at default).
+#'
+#' @examples
+#' labels_vec <- c("Apple", "Banana", "apple", "Cherry")
+#' paste_labels_by_index(
+#'   indices         = c(1L, 3L, 2L, 2L),
+#'   labels          = labels_vec,
+#'   collapse        = ", ",
+#'   deduplicate     = TRUE,
+#'   ignore_case     = TRUE,
+#'   no_match_value  = NA_character_,
+#'   validate_bounds = TRUE
+#' )
+#' # "Apple, Banana"
+#'
+#' paste_labels_by_index(
+#'   indices         = integer(0),
+#'   labels          = labels_vec,
+#'   collapse        = "; ",
+#'   deduplicate     = TRUE,
+#'   ignore_case     = FALSE,
+#'   no_match_value  = ""
+#' )
+#' # "" (empty string when no matches)
+paste_labels_by_index <- function(indices,
+                                  labels,
+                                  collapse        = "; ",
+                                  deduplicate     = TRUE,
+                                  ignore_case     = FALSE,
+                                  no_match_value  = NA_character_,
+                                  validate_bounds = TRUE){
+  ## Basic checks
+  if (!is.integer(indices)) {
+    indices <- as.integer(indices)
+  }
+  if (!is.character(labels)) {
+    stop("`labels` must be a character vector.", call. = FALSE)
+  }
+  if (!is.character(collapse) || length(collapse) != 1L) {
+    stop("`collapse` must be a length-1 character scalar.", call. = FALSE)
+  }
+  if (!is.logical(deduplicate) || length(deduplicate) != 1L) {
+    stop("`deduplicate` must be a single logical value.", call. = FALSE)
+  }
+  if (!is.logical(ignore_case) || length(ignore_case) != 1L) {
+    stop("`ignore_case` must be a single logical value.", call. = FALSE)
+  }
+  if (!is.character(no_match_value) || length(no_match_value) != 1L) {
+    stop("`no_match_value` must be a length-1 character scalar.", call. = FALSE)
+  }
+  if (!is.logical(validate_bounds) || length(validate_bounds) != 1L) {
+    stop("`validate_bounds` must be a single logical value.", call. = FALSE)
+  }
+
+  ## No matches -> return the requested placeholder
+  if (length(indices) == 0L) {
+    return(no_match_value)
+  }
+
+  ## Optional bounds check
+  if (validate_bounds) {
+    n_lab <- length(labels)
+    if (anyNA(indices) || any(indices < 1L | indices > n_lab)) {
+      stop("`indices` contains out-of-bounds or NA values.", call. = FALSE)
+    }
+  }
+
+  ## Subset labels
+  vals <- labels[indices]
+
+  ## Optional de-duplication (order-preserving)
+  if (deduplicate) {
+    if (ignore_case) {
+      keep <- !duplicated(tolower(vals))
+      vals <- vals[keep]
+    } else {
+      keep <- !duplicated(vals)
+      vals <- vals[keep]
+    }
+  }
+
+  ## If everything became missing/empty after processing, still return collapse-joined
+  ## semantics: paste of length-0 returns "", but we follow no_match_value only when
+  ## *initially* there were no indices.
+  return(paste(vals, collapse = collapse))
+}
+
+
+
+
+#' Vectorized paste of labels for each row's index list
+#'
+#' @param idx_list List where each element is an integer vector of indices
+#'   (1-based) into `rule_labels`. Length should equal the number of rows/events.
+#' @param rule_labels Character vector of labels to index into.
+#' @param collapse Character scalar used to join multiple labels. Default: "; ".
+#' @param deduplicate Logical; remove duplicates while preserving order. Default: TRUE.
+#' @param ignore_case Logical; case-insensitive de-duplication if TRUE. Default: FALSE.
+#' @param no_match_value Character to return when an element of `idx_list` is empty.
+#'   Default: NA_character_.
+#' @param validate_bounds Logical; error if any indices are out of bounds. Default: TRUE.
+#'
+#' @return Character vector of length `length(idx_list)`.
+labels_from_index_list <- function(idx_list,
+                                   rule_labels,
+                                   collapse         = "; ",
+                                   deduplicate      = TRUE,
+                                   ignore_case      = FALSE,
+                                   no_match_value   = NA_character_,
+                                   validate_bounds  = TRUE){
+  n_out <- length(idx_list)
+  out_vec <- character(n_out)
+  for (i in seq_len(n_out)) {
+    out_vec[i] <- paste_labels_by_index(
+      indices         = idx_list[[i]],
+      labels          = rule_labels,
+      collapse        = collapse,
+      deduplicate     = deduplicate,
+      ignore_case     = ignore_case,
+      no_match_value  = no_match_value,
+      validate_bounds = validate_bounds
+    )
+  }
+  return(out_vec)
+}
 
 # nbspace <- rawToChar(as.raw(0xA0))
 nbspace <- "\u00A0"

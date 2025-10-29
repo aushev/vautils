@@ -1189,7 +1189,7 @@ mergefiletabs <- function(
   fn.inpdir,      # input directory
   fn.mask='.*',   # files mask
   recursive = T,  # recursive
-  fill=T,
+  rbind_fill = TRUE,
   fn.list=NULL,   # list of files => fn.inpdir, recursive and fn.mask will be ignored
   full.names = T, # which form of filenames to put in the table
   rn=NULL,        # if not NULL, add rn column with id
@@ -1219,6 +1219,11 @@ mergefiletabs <- function(
   for (fn.this in fn.list){
     i <- i+1L
     cat(' ', i, '/', N,' ', sep = '')
+
+    # cat(red('\n\n!!!!\n\n'))
+    # browser()
+
+
     dt.this <- readFUN(fn.this, ...)
     if (! 'data.frame' %in% class(dt.this)) stop('Not a data.frame returned')
     if (! 'data.table' %in% class(dt.this)) setDT(dt.this)
@@ -1230,7 +1235,7 @@ mergefiletabs <- function(
       if (!is.null(colnames)) {setnames(dt.this, colnames);}
       dt.this[, ffn:=fn.this.show]
       if (!is.null(rn)) {dt.this[, (rn):=seq_len(nrow(dt.this))]}
-      dt.all <- rbindV(dt.all, dt.this, fill=fill)
+      dt.all <- rbindV(dt.all, dt.this, fill=rbind_fill)
     } else { # mode == 'c'
       dt.left <- dt.this[,(colnames), with=F]
       dt.right <- dt.this[,-(colnames), with=F]
@@ -2992,3 +2997,10 @@ dt_parse_kv <- function(dt_input,
 
 
 
+dt_cartesian <- function(dtA, dtB){
+  stopifnot(length(names(dtA) %&% names(dtB))==0)
+  dtA[, tmp := 1L]
+  dtB[, tmp := 1L]
+  dt.ret <- dtA[dtB, on = "tmp", allow.cartesian = TRUE][, tmp := NULL]
+  return(dt.ret)
+}

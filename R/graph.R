@@ -544,15 +544,18 @@ euler_plot <- function(inpList, pal=gg_color_hue(length(inpList)) ){
   print(ppv$data$original.values)
 
   dt.stat1 <- ppv$data$original.values %>% as.data.table(keep.rownames = T)
-  names(dt.stat1) <- cs('Drug_group Count')
-  dt.stat1[, Drug := Drug_group]
+  names(dt.stat1) <- cs('Group Count')
+  dt.stat1$Group %<>% gsub('&',' & ',.,fixed = T)
+  ppv$stat1 <- dt.stat1 %>% setorder(-Count)
 
-  dt.stat1 %<>% cSplit(splitCols='Drug', sep='&', direction='long', fixed=T, drop=F, stripWhite=T, type.convert=F)
-  dt.stat2 <- dt.stat1[,.(Count=sumI(Count)),by=Drug]
+  dt.stat1[, Component := Group]
+  dt.stat1 %<>% cSplit(splitCols='Component', sep='&', direction='long', fixed=T, drop=F, stripWhite=T, type.convert=F)
+  dt.stat2 <- dt.stat1[,.(Count=sumI(Count)),by=Component]
 
   print(dt.stat2)
 
-  ppv$stat <- dt.stat2
+  ppv$stat2 <- dt.stat2
+
 
 
   ppv

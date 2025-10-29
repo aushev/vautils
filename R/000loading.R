@@ -300,6 +300,12 @@ loadv <- function(file=NULL, envir = parent.frame(n=1L), verbose=T){
   }
 
   message('Loading file: ' %+% bold(file))
+  file_info <- fs::file_info(file)
+  file_size <- fs::file_size(file)
+
+  cat('\t',yellow(bold(file_info$modification_time)))
+  cat('\t',blue(bold(file_size)),'\t')
+
   returned.objects <- base::load(file, envir = envir, verbose=verbose)
   if ('run_on_load_dat' %in% returned.objects) {
     cat('\n Running', italic('run_on_load_dat()'))

@@ -863,3 +863,44 @@ rm.from.env <- function(re.mask='^this', envir=parent.frame()){
 
 `%inherits%` <- function(obj,classname) inherits(obj,classname)
 `%||%` <- function (x, y) if (is.null(x)) y else x
+
+
+
+
+find_first_TRUE <- function(vec_logical){
+  j <- which(vec_logical)
+  if (length(j)) j[1] else NA_integer_
+}
+
+find_all_TRUE <- function(vec_logical) {
+  j <- which(vec_logical);
+}
+
+
+
+# Build an index list from a logical match matrix (rows = events, cols = rules)
+# Each element i is an integer vector of rule indices that matched for event i.
+# `idx_list <- row_match_indices(mtx_match)` is much faster than
+# `idx_list <- apply(mtx_match, MARGIN=1, FUN = find_all_TRUE)`
+row_match_indices <- function(mtx_logical){
+  inp_nRows <- nrow(mtx_logical)
+  # by `arr.ind=TRUE` we ask to return 2-dimensional indices (row and col)
+  # instead of a 1-dimensional position:
+  pos <- which(mtx_logical, arr.ind=TRUE)
+  # pos is a 2-column array:
+  #  first column `row` is match's row,
+  #  second column `col` is match's col,
+  if (nrow(pos) == 0L){
+    return(vector(mode="list", length=inp_nRows))
+  }
+#  browser()
+  # for each unique row index (pos[,1])
+  # collect all column indices (pos[,2]):
+  split_cols_by_row <- split(x = pos[, 2], f = pos[, 1])
+  # resulting a list
+  # where each element corresponds to a row (and has a name of row index),
+  # and element's content is a vector of column indices (i.e. which rules it matched)
+  out_list <- vector(mode = "list", length = inp_nRows)
+  out_list[as.integer(names(split_cols_by_row))] <- split_cols_by_row
+  return(out_list)
+}
