@@ -275,7 +275,7 @@ gg_labNb <- function(inpPlot, yPos=Inf, vjust=0, ...){
   data1[,lblN := 'N='%+% N]
   #setnames(data1,'get',grpX)
 #  inpPlot + geom_text(aes(label=lblN,y=yPos, fill='blue', color='blue',vjust=vjust), data = data1, ...)
-  inpPlot + annotate('text',label=data1$lblN, x=data1$yearS, y=data1$N, vjust=vjust)
+  inpPlot + ggplot2::annotate('text',label=data1$lblN, x=data1$yearS, y=data1$N, vjust=vjust)
 #  inpPlot + geom_text(aes(label=lblN,y=yPos), data = data1, ...)
 }
 
@@ -386,18 +386,18 @@ gghist <- function(inpDT, val.col, col.mean='red',col.med='darkgreen',lg10=NA,co
   if (showCI==T) pHist <-
     pHist +
     geom_vline(xintercept = c(val.05,val.95), linetype='dashed', col='darkgrey')+
-    annotate('text', x=val.05, y=Inf, label=round(val.05,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)+
-    annotate('text', x=val.95, y=Inf, label=round(val.95,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)
+    ggplot2::annotate('text', x=val.05, y=Inf, label=round(val.05,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)+
+    ggplot2::annotate('text', x=val.95, y=Inf, label=round(val.95,2), col='darkgrey', angle=90, vjust=-0.5, hjust=1.2)
 
   if (not.na(col.med)) # show vertical line for median
     pHist <- pHist +
      geom_vline(xintercept = val.median, linetype='dashed', col=col.med)+
-     annotate('text', x=val.median, y=0, label=round(val.median,2), col=col.med, angle=90, vjust=-0.5, hjust=-0.2)
+     ggplot2::annotate('text', x=val.median, y=0, label=round(val.median,2), col=col.med, angle=90, vjust=-0.5, hjust=-0.2)
 
   if (not.na(col.mean)) # show vertical line for mean
     pHist <- pHist +
      geom_vline(xintercept =   val.mean, linetype='dashed', col=col.mean)+
-     annotate('text', x=val.mean, y=0, label=round(val.mean,2), col=col.mean, angle=90, vjust=-0.5,hjust=-0.2)
+     ggplot2::annotate('text', x=val.mean, y=0, label=round(val.mean,2), col=col.mean, angle=90, vjust=-0.5,hjust=-0.2)
 
   if (lg10 %~~% 'x' | lg10 %==% T) pHist <- pHist+scale_x_log10()
   if (lg10 %~~% 'y')               pHist <- pHist+scale_y_log10()

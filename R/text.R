@@ -672,6 +672,11 @@ grepl_mult_ic <- function(y, patterns){
   apply(X=sapply(X=patterns, FUN=grepl, x=y, ignore.case=T),MARGIN=1,FUN=any)
 }
 
+grepl_mult_specigncase <- function(y, patterns, igncase){
+  if (length(y)==1) {return(any(sapply(patterns, grepl, x=y, ignore.case=igncase)))}
+  apply(X=sapply(X=patterns, FUN=grepl, x=y, ignore.case=igncase),MARGIN=1,FUN=any)
+}
+
 
  `%~~~%`  <- grepl_mult
 `%!~~~%`  <- function(x, patterns) !grepl_mult(x,patterns)

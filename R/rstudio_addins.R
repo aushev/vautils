@@ -115,7 +115,7 @@ flexread_clip <- function(fnOri=fromClip(), obj_open='dt1', write_code=T){
   } else {
     print('Not a file!')
     fnOri <- gsub('.*/([_a-zA-Z0-9\\-]{30,})/.*','\\1',fnOri)
-    txt2inp <- 'fn1 <- ' %+% "as_id('" %+% fnOri %+% "')\n"
+    txt2inp <- 'fn1 <- ' %+% "googledrive::as_id('" %+% fnOri %+% "')\n"
     txt2inp <- txt2inp %+% 'dt1 <- flexread(fn1, deluseless = T)\n'
 
   }

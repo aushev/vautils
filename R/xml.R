@@ -96,3 +96,118 @@ xml_find_parent <- function(node, tagname){
   if (tagnameP=='') return(NULL)
   return(nodeP)
 }
+
+
+xml_find_first_with_attr <- function(node, attr, return_attr=FALSE, direct_only=TRUE) {
+  if (!direct_only) stop('not implemented yet!')
+  # Get all direct children
+  children <- xml_children(node)
+
+  node_found <- NULL
+  attr_found <- NA_character_
+  # Iterate and find the first with the attribute requested
+  for (this_child in children) {
+    this_attr <- xml_attr(this_child, attr)
+    if (!is.na(this_attr)) {
+      node_found <- this_child
+      attr_found <- this_attr
+      break
+    }
+  }
+
+  if (return_attr) return(attr_found) else return(node_found)
+}
+
+
+
+xml_find_all_with_attr <- function(node, attr, return_attr=FALSE, direct_only=TRUE) {
+  if (!direct_only) stop('not implemented yet!')
+  # Get all direct children
+  children <- xml_children(node)
+
+  node_found <- NULL
+  attr_found <- NA_character_
+  # Iterate and find the first with the attribute requested
+  for (this_child in children) {
+    this_attr <- xml_attr(this_child, attr)
+    if (!is.na(this_attr)) {
+      node_found <- this_child
+      attr_found <- this_attr
+      break
+    }
+  }
+
+  if (return_attr) return(attr_found) else return(node_found)
+}
+
+
+read_xml_safe <- function(file_path,...) {
+  if (file.size(file_path)) return(NULL);
+  tryCatch(
+    {
+      read_xml(file_path, ...)
+    },
+    error = function(e) {
+      message("Failed to read XML ",file_path, '\n', conditionMessage(e))
+      return(NULL)
+    }
+  )
+}
+
+xml_ns_custom <- function(doc, uri){
+  ns_uri <- unname(uri)
+  # If you want to be defensive, you can try to read whatever the root declares:
+  root    <- xml_root(doc)
+  root_ns <- xml_ns(root)
+  # If a default namespace exists, prefer it
+  if ("d1" %in% names(root_ns)) {
+    ns_uri <- unname(root_ns[["d1"]])
+  }
+  ret_obj <- c(ns1=ns_uri)
+  if (!is.null(names(uri)))
+    names(ret_obj) <- names(uri)
+  ret_obj
+}
+
+
+
+
+
+xml_get_xpath <- function(node) {
+  stopifnot(inherits(node, "xml_node"))
+
+  parts <- character()
+  cur <- node
+
+#  while (!xml2::xml_is_document(cur)) {
+  while (!inherits(cur, "xml_document")) {
+    tagname <- xml2::xml_name(cur)
+    if (tagname=='') break;
+#    cat('\n', red(tagname))
+#browser()
+    # index among siblings of the same name
+#    siblings <- xml2::xml_find_all(xml2::xml_parent(cur), tagname)
+#    siblings <- xml2::xml_siblings(cur)
+    siblings <- xml2::xml_children(xml_parent(cur))
+    siblings_tagnames <- sapply(siblings, xml_name,simplify = T, USE.NAMES = F)
+    siblings <- siblings[siblings_tagnames==tagname]
+    if (length(siblings) > 1) {
+#      cat('\t', blue(length(siblings)))
+      # browser()
+      # find position
+      pos <- which(vapply(siblings, identical, logical(1), cur))
+      parts <- c(sprintf("%s[%d]", tagname, pos), parts)
+    } else {
+      parts <- c(tagname, parts)
+    }
+
+    cur <- xml2::xml_parent(cur)
+  }
+
+  paste0("/", paste(parts, collapse = "/"))
+}
+
+
+
+
+
