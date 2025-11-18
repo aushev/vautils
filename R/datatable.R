@@ -229,7 +229,16 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
     message(' Opening as Google Drive file.');
     # browser()
     drDownloaded <- googledrive::drive_download(fnRead, overwrite = T)
-    rez <- do.call(flexread, args = c(list(fnRead = drDownloaded$local_path),as.list(match.call()[-(1:2)])))
+
+    args_main <- mget(
+      setdiff(names(formals(flexread)), c("fnRead", "...")),
+      envir = environment(),
+      inherits = TRUE
+    )
+    args_main$fnRead <- drDownloaded$local_path
+
+#    rez <- do.call(flexread, args = c(list(fnRead = drDownloaded$local_path),as.list(match.call()[-(1:2)])))
+    rez <- do.call(flexread, c(args_main, list(...)))
     return(rez)
   }
 
