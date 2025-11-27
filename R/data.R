@@ -639,8 +639,8 @@ fill_with_one <- function(inpVals){
   return(inpVals)
 }
 
-most_frequent <- function(inpVals, n=1){
-  count <- table(inpVals)
+most_frequent <- function(inpVals, n=1, useNA = 'always'){
+  count <- table(inpVals, useNA=useNA)
   count <- sort(count, decreasing = T)
   rez <- names(count)
   if (n>length(rez)) n<-length(rez);
@@ -874,6 +874,65 @@ find_first_TRUE <- function(vec_logical){
 
 find_all_TRUE <- function(vec_logical) {
   j <- which(vec_logical);
+}
+
+
+
+pos_in_hay <- function(needles, hay) {
+  # Create a named index for hay
+  idx <- seq_along(hay)
+  names(idx) <- hay
+
+  # Match each needle to hay using the named index
+  unname(idx[needles])
+}
+# example:
+# pos_in_hay(cs('a d c D'), letters)
+# returns c(1,4,3,NA)
+
+
+split_by_chunksize <- function(x, size) {
+  stopifnot(size >= 1)
+  n <- length(x)
+  idx <- ceiling(seq_len(n) / size)
+  split(x, idx)
+}
+
+split_by_nchunks <- function(x, n_chunks) {
+  stopifnot(n_chunks >= 1)
+  n <- length(x)
+  # compute chunk size ~ evenly
+  size <- ceiling(n / n_chunks)
+  idx <- ceiling(seq_len(n) / size)
+  split(x, factor(idx, levels = seq_len(max(idx))))
+}
+
+
+# Takes the "size" column  (for example filesize)
+# and splits table by chunks,
+# where the total size of the chunk is less than predefined limit (if possible)
+split_by_cumsize <- function(dt1, col.size='filesize', limit=1e9){
+  dt1[, chunk_id := {
+    s <- 0      # running sum within current chunk
+    g <- 1L     # current chunk index
+    out <- integer(.N)
+
+    for (i in seq_len(.N)) {
+#      size_i <- filesize[i]
+      size_i <- get(col.size)[i]
+      if (is.na(size_i)) next;
+      # browser()
+#      cat('\n',bold(i),'\t',red(size_i))
+      if (s + size_i > limit) {
+        g <- g + 1L   # start new chunk
+        s <- 0
+      }
+      s <- s + size_i
+      out[i] <- g
+    }
+    out
+  }]
+
 }
 
 

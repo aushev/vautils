@@ -1175,3 +1175,63 @@ labels_from_index_list <- function(idx_list,
 # nbspace <- rawToChar(as.raw(0xA0))
 nbspace <- "\u00A0"
 
+#' Extract a regex keyword with one word of context on each side
+#'
+#' This function searches a character vector for a specified **regular-expression
+#' keyword** and returns the keyword match together with at most one *preceding*
+#' and one *following* word.
+#'
+#' A “word” is defined as a sequence of letters (`A–Z` / `a–z`).
+#' Any sequence of non-letter characters (spaces, punctuation, slashes,
+#' hyphens, periods, etc.) is treated as a “separator”.
+#'
+#' The extraction pattern is:
+#'
+#' \preformatted{
+#'   [word][separator](keyword-regex)[separator][word]
+#' }
+#'
+#' where each of the surrounding `[word]` blocks is optional, and the
+#' central `(keyword-regex)` is inserted exactly as given (it is **not**
+#' escaped or treated literally).
+#'
+#' @param text A character vector. Each element is processed independently.
+#' @param keyword A character string containing a regular expression that
+#'   defines the keyword to match. This may include character classes,
+#'   quantifiers, alternation (`|`), or any valid regex construct.
+#'
+#' @return A character vector of the same length as `text`, containing either
+#'   the extracted context or `NA` if no keyword match is found.
+#'
+#' @examples
+#' # literal keyword
+#' extract_context("I bought a big apple at the store", "apple")
+#' # "big apple at"
+#'
+#' # keyword as regex ("appl.*at" matches "apple at")
+#' extract_context("I bought a big apple at the store", "appl.*at")
+#' # "big apple at the"
+#'
+#' # punctuation and compound words
+#' extract_context("I bought a big apple-like fruit.", "apple.*")
+#' # "big apple-like fruit."
+#'
+#' extract_context("I bought a big pear/apple there.", "pear.*apple")
+#' # "big pear/apple there"
+#'
+#' # keyword at boundaries
+#' extract_context("apple at the store", "appl.*at")
+#' # "apple at the"
+#'
+#' @export
+extract_context <- function(text, keyword) {
+  # Build pattern: optional word before + (keyword regex) + optional word after
+  pattern <- sprintf(
+    "(?:[A-Za-z]+[^A-Za-z]+)?(%s)(?:[^A-Za-z]+[A-Za-z]+)?",
+    keyword
+  )
+
+  # Extract entire match (keyword + optional neighbors)
+  stringr::str_extract(text, pattern)
+}
+

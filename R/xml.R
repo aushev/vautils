@@ -142,7 +142,7 @@ xml_find_all_with_attr <- function(node, attr, return_attr=FALSE, direct_only=TR
 
 
 read_xml_safe <- function(file_path,...) {
-  if (file.size(file_path)) return(NULL);
+  if (file.size(file_path)==0) return(NULL);
   tryCatch(
     {
       read_xml(file_path, ...)
@@ -173,7 +173,7 @@ xml_ns_custom <- function(doc, uri){
 
 
 
-xml_get_xpath <- function(node) {
+xml_get_xpath <- function(node, reverse=F) {
   stopifnot(inherits(node, "xml_node"))
 
   parts <- character()
@@ -203,7 +203,7 @@ xml_get_xpath <- function(node) {
 
     cur <- xml2::xml_parent(cur)
   }
-
+  if (reverse==T) parts %<>% rev()
   paste0("/", paste(parts, collapse = "/"))
 }
 
