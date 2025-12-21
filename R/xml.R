@@ -208,6 +208,11 @@ xml_get_xpath <- function(node, reverse=F) {
 }
 
 
-
+xml_file_trim <- function(file_in, file_out=file_in) {
+  text_raw <- readLines(con = file_in, warn = FALSE)
+  text_collapsed <- paste(text_raw, collapse = "\n")
+  text_trimmed <- sub(pattern = "^[ \t\r\n]+", replacement = "", x = text_collapsed)
+  writeLines(text_trimmed, con = file_out)
+}
 
 

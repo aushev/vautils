@@ -47,3 +47,9 @@ stopifnotunique <- function(x, allowNULL=F) {
   print(dt.show)
   stop('\nNot unique!')
 }
+
+#' @export
+stopifnotempty <- function(x) {
+  if (length(x)==0) return(invisible());
+  stop('\nNot empty!')
+}
