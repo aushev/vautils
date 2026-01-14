@@ -774,7 +774,7 @@ forcedominant <- function(input, sep=';', ignore='') {
   list.amb   <- vec.amb %>% strsplit(sep)
   vec.amb.split <- list.amb %>% unlist()
 
-  dt.stat <- data.table(tab(strsplitS(input,sep), inpName = 'statCol'))
+  dt.stat <- tab(strsplitS(input,sep), inpName = 'statCol')
   list.top <- dt.stat[statCol %in% vec.amb.split,statCol]
 
   output.amb <- output[mask.amb]
@@ -789,6 +789,10 @@ forcedominant <- function(input, sep=';', ignore='') {
 
   (output)
 }
+
+
+
+
 
 
 list_from_S4 <- function(S4obj){

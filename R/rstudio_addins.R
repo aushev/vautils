@@ -174,8 +174,10 @@ duView <- function(dtIn, ..., ignoreColumns=NULL, title = NULL, n=0) {
 
   if (is.null(title)) {
     title <- deparse(substitute(dtIn))
+    if (title=='.') title <- 'dt.duView'
   }
 
+  dt.duView <<- dt.duView
   View(dt.duView, title = title)
 } # e. duView()
 

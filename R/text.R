@@ -649,6 +649,8 @@ greplic <- function(...) grepl(...,ignore.case = T)
 `%!~~%`  <- function(x, pattern){!grepl(pattern,x)}
 `%!~~i%` <- function(x, pattern){!greplic(pattern,x)}
 
+`%startsWith%`  <- function(x, prefix){ startsWith(x,prefix)}
+
 
 grepl_mult <- function(y, patterns){
   if (length(y)==1) {return(any(sapply(patterns, grepl, x=y)))}
@@ -844,7 +846,41 @@ va_txt_splitsortunique <- function(x, split=','){
 
 trim0 <- function(input) gsub('\\.0$','',input)
 
-
+#' Select dominant casing for case-insensitive strings
+#'
+#' Given a character vector, this function collapses strings that differ only
+#' by letter case and selects a single "dominant" representative spelling for
+#' each case-insensitive group. Dominance is determined by frequency and
+#' deterministic tie-breaking rules, and the selected spelling is then mapped
+#' back to all original elements.
+#'
+#' Selection rules within each case-insensitive group (defined by `toupper()`):
+#' \enumerate{
+#'   \item Keep the spelling(s) with the highest frequency.
+#'   \item If there is a tie, prefer spellings that start with an uppercase letter.
+#'   \item If a tie still remains, select the lexicographically largest spelling
+#'         (descending string order).
+#' }
+#'
+#' The output vector has the same length and order as the input, with each element
+#' replaced by the dominant spelling of its case-insensitive group.
+#'
+#' @param inpVec Character vector of strings to normalize by dominant casing.
+#'
+#' @return A character vector of the same length as `inpVec`, where each value is
+#' replaced by the selected dominant spelling for its case-insensitive group.
+#'
+#' @details
+#' Case-insensitive grouping is performed using `toupper()`.
+#'
+#' @examples
+#' va_txt_dominant_case(cs("apple Apple APPLE banana Apple"))
+#' # returns: "Apple" "Apple" "Apple" "banana" "Apple"
+#'
+#' va_txt_dominant_case(cs("mayo Mayo"))
+#' # returns: "Mayo" "Mayo"
+#'
+#' @export
 va_txt_dominant_case <- function(inpVec){
 
   dt.inp <- data.table(inpStr=inpVec)
