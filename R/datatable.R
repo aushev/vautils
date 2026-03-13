@@ -2452,7 +2452,7 @@ dt_set <- function(inputDT, newColName, condition=NA, construction){
 
 
 
-dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requireTable=T){
+dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requireTable=T, debug_lines=c()){
   # browser()
   mode.work.multi <- NA
   if ('data.frame' %in% class(input)){
@@ -2494,12 +2494,11 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requ
   if (mode.work.multi==T & !dt.template %hasnames% 'Table') stop('For Multi-Table mode, template table must contain "Table" column.')
   if (mode.work.multi==F & sum(not.na(dt.template$Table))>0 ) warning('Single-Table mode, "Table" column will be ignored!')
 
-  if (mode.work.multi==F) dt.this.dat <- copy(input)
-
   dt.ret <- NULL
   for (i in seqlen(nrow(dt.template))){
     cat('\n row#', bold(blue(i)),'\t')
     this.row <- dt.template[i]
+    if (i %in% debug_lines) browser()
 
     if (mode.work.multi==T){
       this.table_name <- this.row$Table
@@ -2513,6 +2512,8 @@ dt_melt_complex <- function(input, dt.template, cols.keep=NULL, char.all=T, requ
         next;
       }
       cat(blue(nrow(dt.this.dat)),'\t')
+    } else {
+      dt.this.dat <- copy(input)
     }
 
 	# browser()
@@ -3013,3 +3014,21 @@ dt_cartesian <- function(dtA, dtB){
   dt.ret <- dtA[dtB, on = "tmp", allow.cartesian = TRUE][, tmp := NULL]
   return(dt.ret)
 }
+
+
+
+dt_class_convert <- function(dtIn, class_from, fun_convert, cols=NA){
+  if (cols %===% NA) cols <- seq_len(ncol(dtIn))
+  for (i in cols){
+    j <- i
+    if (is.numeric(j)) j <- names(dtIn)[i]
+    this_classes <- class(dtIn[[i]])
+    if (class_from %in% this_classes){
+      cat('\n',bold(j),'\t',this_classes)
+      dtIn[[i]] %<>% fun_convert
+    }
+  }
+  invisible(dtIn)
+}
+
+

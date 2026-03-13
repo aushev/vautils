@@ -1051,15 +1051,48 @@ split_count <- function(input, sep=";", order_by='count') {
 }
 
 
+grep_autoperl <- function(pattern, x, ignore.case, grep_FUN=grep){
+  use_perl <- grepl(pattern="(?!", x=pattern, fixed=TRUE)
+  grep_FUN(pattern, x, ignore.case, perl=use_perl)
+}
+
+grepl_autoperl <- function(pattern, x, ignore.case){
+  use_perl <- grepl(pattern="(?!", x=pattern, fixed=TRUE)
+  grepl(pattern, x, ignore.case, perl=use_perl)
+}
+
 # returns a match matrix:
 #  each row is an input hay record,
 #  each col is a rule
+# grep_multi_match <- function(vec_re, vec_hay, ignore.case=FALSE){
+#   vapply(X=vec_re, FUN=grepl_autoperl, x=vec_hay, ignore.case=ignore.case, FUN.VALUE=logical(length(vec_hay)))
+# }
 grep_multi_match <- function(vec_re, vec_hay, ignore.case=FALSE){
-  vapply(X=vec_re, FUN=grepl, x=vec_hay, ignore.case=ignore.case, FUN.VALUE=logical(length(vec_hay)))
+
+  # 1) index uniques
+  uniq0 <- unique(vec_hay)
+  fac1 <- factor(vec_hay, levels=unique(vec_hay))
+  idx1 <- as.integer(fac1)
+  uniq1 <- levels(fac1)
+  n_uniq <- length(uniq1)
+
+  # 2) which rules require perl
+  idx_perl <- grepl(pattern="(?!", x=vec_re, fixed=TRUE)
+
+  # 3) compute match matrix for uniques only (n_uniq x n_re)
+  mat_u <- matrix(FALSE, nrow=n_uniq, ncol=length(vec_re))
+
+  if (any(!idx_perl)) {mat_u[, !idx_perl] <- vapply(X=vec_re[!idx_perl], grepl, x=uniq1, ignore.case, perl=FALSE,FUN.VALUE=logical(n_uniq))}
+  if (any( idx_perl)) {mat_u[,  idx_perl] <- vapply(X=vec_re[ idx_perl], grepl, x=uniq1, ignore.case, perl=TRUE, FUN.VALUE=logical(n_uniq))}
+
+  # 4) expand back to full size by indexing rows
+  mat1 <- mat_u[idx1, , drop=FALSE]
+
+  # 5) assign FALSE where idx1 was NA
+  mat1[is.na(idx1), ] <- FALSE
+
+  return(mat1)
 }
-
-
-
 
 
 
@@ -1270,4 +1303,53 @@ extract_context <- function(text, keyword) {
   # Extract entire match (keyword + optional neighbors)
   stringr::str_extract(text, pattern)
 }
+
+
+
+assign_labels_by_regex <- function(vec_re,
+                                   vec_label,
+                                   vec_case_sensitive,
+                                   vec_hay,
+                                   collapse = "; ",
+                                   deduplicate = TRUE,
+                                   no_match_value = NA_character_) {
+
+  uniques <- unique(vec_hay)
+  map_idx <- match(vec_hay, uniques)
+
+  # Initialize a list for unique matches
+  match_list <- replicate(length(uniques), character(0), simplify = FALSE)
+
+  # 2. Iterate through rules with specific case-sensitivity
+  for (i in seq_along(vec_re)) {
+    # Determine case sensitivity for this specific rule
+    # perl = TRUE is kept for advanced regex support (like lookaheads)
+    hits <- grepl(pattern = vec_re[i], x = uniques, ignore.case = !vec_case_sensitive[i], perl = TRUE)
+
+    if (any(hits)) {
+      match_list[hits] <- lapply(match_list[hits], function(x) c(x, vec_label[i]))
+    }
+  }
+
+  # 3. Collapse and Deduplicate unique results
+  unique_results <- sapply(match_list, function(labels) {
+    if (length(labels) == 0) return(no_match_value)
+    if (deduplicate) labels <- unique(labels)
+    return(paste(labels, collapse = collapse))
+  })
+
+  # 4. Map the unique results back to the original big vector
+  return(unique_results[map_idx])
+}
+
+# Usage example:
+# labels_all <- assign_labels_by_regex(
+#   vec_re             = dt.agents$regex,
+#   vec_label          = dt.agents$drug_short,
+#   vec_case_sensitive = dt.agents$Case.sensitive,
+#   vec_hay            = dt.events$evValue,
+#   collapse           = "; ",
+#   deduplicate        = TRUE,
+#   no_match_value     = NA_character_
+# )
 
