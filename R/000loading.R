@@ -158,26 +158,23 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T, reload=F){
 #' }
 #'
 #' @export
-reqq <- function(..., verbose=F, tryBioconductor=T, reload=T){
+reqq <- function(..., verbose=F, tryBioconductor=T, reload=F){
   catV <- ifelse(verbose, cat, function(...){})
   catV('\n=======================================================\n');
 
   dots      <- substitute(list(...))
   dots_expr <- dots[-1L]
 
+  if (length(dots_expr) == 0L) {stop("No package names provided")}
+
   to_char <- function(expr) {
     # Case 1: bare name
     if (is.symbol(expr)) {return(deparse(expr))}
-    # Case 2: something evaluatable (like c("a","b") or variable)
+    # Case 2: something evaluable (like c("a","b") or variable)
     val <- try(eval.parent(expr), silent = TRUE)
     if (!inherits(val, "try-error") && is.character(val)) {return(val)}
     # fallback
     deparse(expr)
-  }
-
-
-  if (length(dots_expr) == 0L) {
-    stop("No package names provided")
   }
 
   str_packagenames <-
@@ -198,7 +195,7 @@ reqq <- function(..., verbose=F, tryBioconductor=T, reload=T){
       catV(ndx_s);
       reqS(this_package_name, verbose=verbose, tryBioconductor=tryBioconductor, reload = FALSE);
     }
-    catV("Finished loading", ndx, "packages.\n");
+    catV("Finished loading", bold(ndx), "packages.\n");
 
     if (reload==T){
       unloadNamespace('vautils');
@@ -338,10 +335,6 @@ filter <- dplyr::filter
 checkPlus <- function(){
   if (is.null('a'%+%'b')) reload('vautils')
 }
-
-# vai <- function(){
-#   reqq('data.table magrittr');
-# }
 
 
 computer_user_names <- function() {
