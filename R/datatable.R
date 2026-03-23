@@ -2111,6 +2111,7 @@ mergeR <- function(dtX, dtY,
   # remember original columns and key column:
   ori_keyX <- key(dtX)
   ori.columns <- columns; # needed if columns is passed as a named vector
+  nX_ori <- nrow(dtX)
 
 
   # Resolve join keys
@@ -2178,6 +2179,10 @@ mergeR <- function(dtX, dtY,
     cat('\nSetting key: ', paste(blue(bold(ori_keyX)), collapse = ', '))
     setkeyv(ret, ori_keyX)
   } else cat('\n Cant re-key the result table.')
+
+  nX_ret <- nrow(ret)
+
+  if (nX_ori != nX_ret) cat(red("\n Number of rows doesn't match! Was " %+% bold(nX_ori) %+% ", now " %+% bold(nX_ret) ))
 
   return(ret)
 } # e. mergeR()

@@ -185,9 +185,9 @@ paste0notNA <- function(arg1, arg2){
 `%++%.NULL`      <- paste0notNA
 #' @export
 `%++%.default` <- function (arg1, arg2){
-#  browser()
+  #  browser()
   if (all(is.na(arg1)) & is.character(arg2)) return(paste0notNA(arg1,arg2));
-#  if (all(is.na(arg1)) & all(is.na(arg2)) ) return(NA);
+  #  if (all(is.na(arg1)) & all(is.na(arg2)) ) return(NA);
   e <- parent.env(getEnvByName(.GlobalEnv,'package:vautils'));
   if (exists('%++%', envir = e)) get('%++%',envir = e)(arg1,arg2);
 }
@@ -202,7 +202,7 @@ paste0notNA <- function(arg1, arg2){
 pasteNotNA <- function(...,collapse=', '){
   arglist <- list(...);
   arglens <- sapply(arglist, length)
-#  browser()
+  #  browser()
   if (all(arglens<2)) return(paste(na.omit(unlist(arglist)),collapse=collapse))
   maxlen <- max(arglens)
 
@@ -402,7 +402,7 @@ va_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y,
     gsub('[-\\.]','/',.) %>%
     as.Date(optional=T)
 
- # browser()
+  # browser()
 
 
   re.ok <- '\\d{1,2}[-/\\.]\\d{1,2}[-/\\.]\\d{4}'
@@ -429,7 +429,7 @@ va_date <- function(input, strict=F, quiet=T, split=F, formats2try=cs('%m/%d/%Y,
 }
 
 va_date_char <- function(inp, ...){
-#  browser()
+  #  browser()
   ret <- as.character(va_date(inp, ...))
   ret[is.na(ret)] <- inp[is.na(ret)]
   ret
@@ -437,14 +437,14 @@ va_date_char <- function(inp, ...){
 
 
 xlsxlsdate_char <- function(inp, ...){
-#  browser()
+  #  browser()
   ret <- as.character(xlsxlsdate(inp, ...))
   ret[is.na(ret)] <- inp[is.na(ret)]
   ret
 }
 
 xls_date_char <- function(inp, ...){
-#  browser()
+  #  browser()
   ret <- as.character(xls_date(inp, ...))
   ret[is.na(ret)] <- inp[is.na(ret)]
   ret
@@ -524,7 +524,7 @@ shrink_values <- function(values, collapse=';', all='unique', dropNA=T, exclude=
   if (dropNA==T)         values2 <- na.omitva(values2);
   if (length(exclude)>0) values2 <- values2[values2 %!in% exclude];
   if (all=='unique')     values2 <- unique(values2);
-  if (all=='rle')        values2 <- rle(values)$values;
+  if (all=='rle')        values2 <- rle(values2)$values;
   if (do.sort==TRUE)     values2 %<>% sort()
 
   if (length(values2)==1) return(values2);
@@ -593,7 +593,7 @@ chr <- function(n) { rawToChar(as.raw(n)) }
 
 lettersX <- c(letters,
               sapply(letters, function(X){X %+% letters})
-              )
+)
 
 LETTERSX <- toupper(lettersX)
 
@@ -644,8 +644,8 @@ compl_year <- function(inpStr, regex='(.*)/(\\d+)', thr=25){
 greplic <- function(...) grepl(...,ignore.case = T)
 
 #`%like%` <- function(x, pattern){grepl(pattern,x)}
- `%~~%`  <- function(x, pattern){ grepl(pattern,x)}
- `%~~i%` <- function(x, pattern){ greplic(pattern,x)}
+`%~~%`  <- function(x, pattern){ grepl(pattern,x)}
+`%~~i%` <- function(x, pattern){ greplic(pattern,x)}
 `%!~~%`  <- function(x, pattern){!grepl(pattern,x)}
 `%!~~i%` <- function(x, pattern){!greplic(pattern,x)}
 
@@ -680,9 +680,9 @@ grepl_mult_specigncase <- function(y, patterns, igncase){
 }
 
 
- `%~~~%`  <- grepl_mult
+`%~~~%`  <- grepl_mult
 `%!~~~%`  <- function(x, patterns) !grepl_mult(x,patterns)
- `%~~~i%` <- grepl_mult_ic
+`%~~~i%` <- grepl_mult_ic
 `%!~~~i%` <- function(x, patterns) !grepl_mult_ic(x,patterns)
 
 #  `%~~~%`  <- function(x, patterns){ apply(sapply(patterns, function(pattern) grepl(pattern,x), USE.NAMES=F), 1,any) }
@@ -979,7 +979,7 @@ va_txt_initials <- function(inpTxt, collapse=''){
 # dedup_vals(cs('abc def abc xyz')) -> abc.1 def abc.2 xyz
 dedup_vals <- function(inpvec, sep='.'){
   if (sum(duplicated(inpvec))==0) {
-  #  message('No duplicate values;');
+    #  message('No duplicate values;');
     invisible(inpvec);
   }
   dupvals <- unique(inpvec[duplicated(inpvec)]);
@@ -1306,35 +1306,57 @@ extract_context <- function(text, keyword) {
 
 
 
-assign_labels_by_regex <- function(vec_re,
-                                   vec_label,
-                                   vec_case_sensitive,
-                                   vec_hay,
-                                   collapse = "; ",
-                                   deduplicate = TRUE,
-                                   no_match_value = NA_character_) {
+assign_labels_by_regex <- function(vec_hay,          # vector
+                                   rules_re,         # vector or table
+                                   col_re     =NA,   # column name, if rules_re is table
+                                   rules_label,      # vector, or column name
+                                   rules_case  =TRUE, # vector, or column name
+                                   collapse   ="; ",
+                                   deduplicate=TRUE,
+                                   no_match   =NA_character_) {
 
   uniques <- unique(vec_hay)
   map_idx <- match(vec_hay, uniques)
 
+  if (is.data.table(rules_re)){
+    cat('\n Datatable mode: rules are provided as a table. ')
+    cat('Regex in column ', bold(col_re))
+    if (! rules_re %hasnames% col_re) stop('Column not found!')
+    vec.re <- rules_re[[col_re]]
+    if (! rules_re %hasnames% rules_label) stop('Column not found!')
+    vec.labels <- rules_re[[rules_label]]
+    if (is.logical(rules_case)){
+      vec.case <- rep(rules_case, length(vec.re))
+    } else vec.case <- rules_re[[rules_case]]
+  } else {
+    cat('\n Vector mode')
+    vec.re     <- rules_re
+    vec.labels <- rules_label
+    vec.case   <- rules_case
+    if (length(rules_case)==1 & length(vec.re)>1)
+      vec.case <- rep(rules_case, length(vec.re))
+  }
+
   # Initialize a list for unique matches
   match_list <- replicate(length(uniques), character(0), simplify = FALSE)
+  cat('\n')
 
   # 2. Iterate through rules with specific case-sensitivity
-  for (i in seq_along(vec_re)) {
+  for (i in seq_along(vec.re)) {
+    cat('. ')
     # Determine case sensitivity for this specific rule
     # perl = TRUE is kept for advanced regex support (like lookaheads)
-    hits <- grepl(pattern = vec_re[i], x = uniques, ignore.case = !vec_case_sensitive[i], perl = TRUE)
+    hits <- grepl(pattern = vec.re[i], x = uniques, ignore.case = !vec.case[i], perl = TRUE)
 
     if (any(hits)) {
-      match_list[hits] <- lapply(match_list[hits], function(x) c(x, vec_label[i]))
+      match_list[hits] <- lapply(match_list[hits], function(x) c(x, vec.labels[i]))
     }
   }
 
   # 3. Collapse and Deduplicate unique results
   unique_results <- sapply(match_list, function(labels) {
-    if (length(labels) == 0) return(no_match_value)
-    if (deduplicate) labels <- unique(labels)
+    if (length(labels) == 0) return(no_match)
+    if (deduplicate) labels <- unique(labels) %-% NA
     return(paste(labels, collapse = collapse))
   })
 
@@ -1342,14 +1364,27 @@ assign_labels_by_regex <- function(vec_re,
   return(unique_results[map_idx])
 }
 
-# Usage example:
-# labels_all <- assign_labels_by_regex(
-#   vec_re             = dt.agents$regex,
-#   vec_label          = dt.agents$drug_short,
-#   vec_case_sensitive = dt.agents$Case.sensitive,
-#   vec_hay            = dt.events$evValue,
-#   collapse           = "; ",
-#   deduplicate        = TRUE,
-#   no_match_value     = NA_character_
+# # Usage example, vector mode:
+# labels_all_v <- assign_labels_by_regex(
+#   vec_hay     = dt.events$evValue,
+#   rules_re    = dt.agents$regex,
+#   rules_label = dt.agents$drug_short,
+#   rules_case  = dt.agents$Case.sensitive,
+#   collapse    = "; ",
+#   deduplicate = TRUE,
+#   no_match    = NA_character_
 # )
-
+#
+# # Usage example, table mode:
+# labels_all_t <- assign_labels_by_regex(
+#   vec_hay     = dt.events$evValue,
+#   rules_re    = dt.agents,
+#   col_re      = 'regex',
+#   rules_label = 'drug_short',
+#   rules_case  = 'Case.sensitive',
+#   collapse    = "; ",
+#   deduplicate = TRUE,
+#   no_match    = NA_character_
+# )
+#
+# labels_all_v %===% labels_all_t
