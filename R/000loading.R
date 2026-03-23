@@ -40,7 +40,7 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T, reload=F){
   stopifnot(length(packagename)==1L);
   stopifnot(class(packagename)=='character');
 
-  catV('Loading',packagename,'...')
+  catV('Loading',bold(packagename),'...')
 
   # first, check if the package is installed at all:
   if(packagename %in% rownames(utils::installed.packages())) {
@@ -162,21 +162,15 @@ reqq <- function(..., verbose=F, tryBioconductor=T, reload=T){
   catV <- ifelse(verbose, cat, function(...){})
   catV('\n=======================================================\n');
 
-#  dots_expr <- substitute(list(...))
-  dots_expr <- substitute(list(...))[-1L]
+  dots      <- substitute(list(...))
+  dots_expr <- dots[-1L]
 
   to_char <- function(expr) {
     # Case 1: bare name
-    if (is.symbol(expr)) {
-      return(deparse(expr))
-    }
-
+    if (is.symbol(expr)) {return(deparse(expr))}
     # Case 2: something evaluatable (like c("a","b") or variable)
     val <- try(eval.parent(expr), silent = TRUE)
-    if (!inherits(val, "try-error") && is.character(val)) {
-      return(val)
-    }
-
+    if (!inherits(val, "try-error") && is.character(val)) {return(val)}
     # fallback
     deparse(expr)
   }
@@ -186,41 +180,25 @@ reqq <- function(..., verbose=F, tryBioconductor=T, reload=T){
     stop("No package names provided")
   }
 
+  str_packagenames <-
+    lapply(dots_expr, to_char) %>%
+    unlist %>%
+    strsplit('[ ,]') %>%
+    unlist() %>%
+    trimws() %>%
+    setdiff(c(NA,'')) %>%
+    unique();
 
-  packagename <- unlist(lapply(dots_expr, to_char))
-
-  pkname.subs <- substitute(packagename);
-  catV('Loading [',class(pkname.subs),']',sep='')
-  if (class(pkname.subs)=='name') {
-    catV(" named variable ");
-    if (exists(deparse(pkname.subs))){
-      catV("exists");
-      packagename <- eval.parent(pkname.subs);
-
-      if (!is.character(packagename)){
-        catV(' but is not character. ')
-        packagename <- deparse(pkname.subs);
-      }
-
-    } else {
-      catV(" doesn't exist");
-      packagename <- deparse(pkname.subs);
-    }
-    #,);
-  }
-  #if (class(pkname.subs)!='character') packagename <- deparse(pkname.subs);
-  catV(' [',packagename,']\n',sep=' ')
-
-  if (length(packagename)>1) { # recursively process vector/list
-    catV('Requested', length(packagename), 'packages:', paste0(packagename, collapse = ','),'\n');
+  if (length(str_packagenames)>0) { # recursively process vector/list
+    catV('\nRequested', length(str_packagenames), 'packages:', paste0(bold(str_packagenames), collapse = ', '),'\n');
     ndx <- 0L;
-    for (eachpackagename in packagename) {
+    for (this_package_name in str_packagenames) {
       ndx <- ndx + 1L;
-      ndx_s <- paste0('(', ndx, ')');
+      ndx_s <- paste0('(', ndx, ') ');
       catV(ndx_s);
-      reqS(eachpackagename, verbose = verbose, tryBioconductor = tryBioconductor, reload = FALSE);
+      reqS(this_package_name, verbose=verbose, tryBioconductor=tryBioconductor, reload = FALSE);
     }
-    catV("Finished loading", length(packagename), "packages.\n");
+    catV("Finished loading", ndx, "packages.\n");
 
     if (reload==T){
       unloadNamespace('vautils');
@@ -230,15 +208,11 @@ reqq <- function(..., verbose=F, tryBioconductor=T, reload=T){
     return(T);
   } # e. if (length>1)
 
-  packagename %<>% strsplit('[ ,]') %>% unlist() %>% trimws();
-  if (length(packagename)>1) {
-    catV('Splitting package name:', length(packagename), "names.\n");
-    reqq(packagename,verbose = verbose,tryBioconductor=tryBioconductor, reload=reload);
-    return(T);
-  }
-
-  reqS(packagename, verbose=verbose, tryBioconductor=tryBioconductor, reload=reload);
 } # e. reqq()
+
+
+
+
 
 #' Detach (if attached) and re-attach a package by name
 #'
@@ -354,21 +328,6 @@ loadv1 <- function(fnRdat, index=1, verbose=T){
 }
 
 load <- loadv
-
-
-getvloc <- function(){
-  locs <- list();
-  locs['~/../AppData/Roaming/locconfig/dell'] <- 'dell';
-  locs['~/../AppData/Roaming/locconfig/T560'] <- 'T560';
-  locs['~/../AppData/Roaming/locconfig/helix'] <- 'helix';
-  locs['~/../AppData/Roaming/locconfig/atran'] <- 'atran';
-
-  for (loc in names(locs)){
-    if (file.exists(loc)) {return(locs[[loc]]);}
-  }
-  return("");
-}
-
 
 require('data.table');
 require('magrittr');
