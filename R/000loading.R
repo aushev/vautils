@@ -232,7 +232,7 @@ reqq <- function(..., verbose=F, tryBioconductor=T, reload=T){
     return(T);
   } # e. if (length>1)
 
-  packagename %<>% cs %>% trimws();
+  packagename %<>% strsplit('[ ,]') %>% trimws();
   if (length(packagename)>1) {
     catV('Splitting package name:', length(packagename), "names.\n");
     reqq(packagename,verbose = verbose,tryBioconductor=tryBioconductor, reload=reload);
