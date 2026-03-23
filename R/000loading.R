@@ -158,9 +158,39 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T, reload=F){
 #' }
 #'
 #' @export
-reqq <- function(packagename, verbose=F, tryBioconductor=T, reload=T){
-  catV <- ifelse(verbose,cat,function(...){})
+reqq <- function(..., verbose=F, tryBioconductor=T, reload=T){
+
+#  if ()
+  catV <- ifelse(verbose, cat, function(...){})
   catV('\n=======================================================\n');
+
+#  dots_expr <- substitute(list(...))
+  dots_expr <- substitute(list(...))[-1L]
+
+  to_char <- function(expr) {
+    # Case 1: bare name
+    if (is.symbol(expr)) {
+      return(deparse(expr))
+    }
+
+    # Case 2: something evaluatable (like c("a","b") or variable)
+    val <- try(eval.parent(expr), silent = TRUE)
+    if (!inherits(val, "try-error") && is.character(val)) {
+      return(val)
+    }
+
+    # fallback
+    deparse(expr)
+  }
+
+
+  if (length(dots_expr) == 0L) {
+    stop("No package names provided")
+  }
+
+
+  packagename <- unlist(lapply(dots_expr, to_char))
+
   pkname.subs <- substitute(packagename);
   catV('Loading [',class(pkname.subs),']',sep='')
   if (class(pkname.subs)=='name') {
@@ -190,7 +220,7 @@ reqq <- function(packagename, verbose=F, tryBioconductor=T, reload=T){
       ndx <- ndx + 1L;
       ndx_s <- paste0('(', ndx, ')');
       catV(ndx_s);
-      reqS(eachpackagename, reload=F);
+      reqS(eachpackagename, verbose = verbose, tryBioconductor = tryBioconductor, reload = FALSE);
     }
     catV("Finished loading", length(packagename), "packages.\n");
 
@@ -202,7 +232,7 @@ reqq <- function(packagename, verbose=F, tryBioconductor=T, reload=T){
     return(T);
   } # e. if (length>1)
 
-  packagename <- unlist(strsplit(packagename, " ", fixed=T));
+  packagename %<>% cs %>% trimws();
   if (length(packagename)>1) {
     catV('Splitting package name:', length(packagename), "names.\n");
     reqq(packagename,verbose = verbose,tryBioconductor=tryBioconductor, reload=reload);
