@@ -815,7 +815,9 @@ va_txt_reduce <- function(inpTxt,fun.case=toupper,repl=T){
 
 # Removes more "general" text if more "specific" presents, for example:
 # cs('CRC/Colon,CRC,Lung,Lung/NSCLC,Lung/SCLC') => cs('CRC/Colon,Lung/NSCLC,Lung/SCLC') # ('CRC' and 'Lung' are removed)
-va_txt_remove_parents <- function(inpVec){
+va_txt_remove_parents <- function(inpVec, sep=NA){
+#  browser()
+  if (sep!='') inpVec %<>% cs(sep = sep)
   vec.work <- sort(unique(inpVec))
   if (length(vec.work)<2) return(inpVec)
 
@@ -825,7 +827,10 @@ va_txt_remove_parents <- function(inpVec){
     el.2 <- vec.work[i]
     if (el.1==substr(el.2,1,nchar(el.1))) vec.remove <- c(vec.remove,el.1);
   }
-  return(inpVec[!inpVec %in% vec.remove])
+#  ret <- vec.work[!vec.work %in% vec.remove]
+  ret <- vec.work %-% vec.remove
+  if (sep!='') ret %<>% paste0(collapse = sep)
+  return(ret)
 }
 
 
@@ -1093,6 +1098,23 @@ grep_multi_match <- function(vec_re, vec_hay, ignore.case=FALSE){
 
   return(mat1)
 }
+# Usage:
+# match matrix (rows = events, cols = rules)
+# mtx_match <- grep_multi_match(vec_re=dt.agents$regex, vec_hay=dt.events$evValue, ignore.case = TRUE)
+# idx_list <- row_match_indices(mtx_logical = mtx_match)
+# labels_all <- labels_from_index_list(
+#   idx_list         = idx_list,
+#   rule_labels      = dt.agents$drug_short,
+#   collapse         = "; ",
+#   deduplicate      = TRUE,
+#   ignore_case      = FALSE,
+#   no_match_value   = NA_character_,
+#   validate_bounds  = FALSE
+# )
+
+
+
+
 
 
 

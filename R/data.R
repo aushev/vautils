@@ -75,6 +75,10 @@ show.envs.plus <- function(){
   return(identical(x,y));
 }
 
+"%!==%" <- function(x,y) {
+  return(!identical(x,y));
+}
+
 # %==%: compares with (NA==NA) = TRUE; factors as character ####
 "%==%" <- function(vec1, vec2){
   dims <- NULL;
@@ -967,3 +971,6 @@ row_match_indices <- function(mtx_logical){
   out_list[as.integer(names(split_cols_by_row))] <- split_cols_by_row
   return(out_list)
 }
+
+
+get_list_value <- function(x) {if (is.list(x) && "value" %in% names(x)) x$value else x}
