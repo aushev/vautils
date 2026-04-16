@@ -817,7 +817,7 @@ va_txt_reduce <- function(inpTxt,fun.case=toupper,repl=T){
 # cs('CRC/Colon,CRC,Lung,Lung/NSCLC,Lung/SCLC') => cs('CRC/Colon,Lung/NSCLC,Lung/SCLC') # ('CRC' and 'Lung' are removed)
 va_txt_remove_parents <- function(inpVec, sep=NA){
 #  browser()
-  if (sep!='') inpVec %<>% cs(sep = sep)
+  if (TnotNA(sep!='')) inpVec %<>% cs(sep = sep)
   vec.work <- sort(unique(inpVec))
   if (length(vec.work)<2) return(inpVec)
 
@@ -829,7 +829,7 @@ va_txt_remove_parents <- function(inpVec, sep=NA){
   }
 #  ret <- vec.work[!vec.work %in% vec.remove]
   ret <- vec.work %-% vec.remove
-  if (sep!='') ret %<>% paste0(collapse = sep)
+  if (TnotNA(sep!='')) ret %<>% paste0(collapse = sep)
   return(ret)
 }
 

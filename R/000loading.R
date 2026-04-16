@@ -282,6 +282,24 @@ trylocs <- function(..., req=F, all=F){
   return(NULL);
 }
 
+
+savev <- function(..., file){
+  base::save(..., file = file, envir = parent.frame())
+  f_info <- fs::file_info(file)
+  f_path <- as.character(f_info$path)
+  f_time <- f_info$modification_time
+  f_size <- as.numeric(f_info$size)
+  f_size_p <- scales::label_bytes()(f_size)
+
+  message('Saved file: ' %+% bold(f_path))
+  cat('\t',yellow(bold(f_time)))
+  cat('\t',blue(bold(f_size_p)),'\t')
+  cat('\t')
+
+
+} # e. savev()
+
+
 loadv <- function(file=NULL, envir = parent.frame(n=1L), verbose=T){
   if (is.null(file)) {file <- askfilename();}
   #load(file, verbose=T, envir = parent.frame(n=1L), ...)
