@@ -651,7 +651,6 @@ greplic <- function(...) grepl(...,ignore.case = T)
 
 `%startsWith%`  <- function(x, prefix){ startsWith(x,prefix)}
 
-
 grepl_mult <- function(y, patterns){
   if (length(y)==1) {return(any(sapply(patterns, grepl, x=y)))}
   apply(X=sapply(X=patterns, FUN=grepl, x=y),MARGIN=1,FUN=any)

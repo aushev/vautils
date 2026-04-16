@@ -286,17 +286,19 @@ trylocs <- function(..., req=F, all=F){
 savev <- function(..., file){
   base::save(..., file = file, envir = parent.frame())
   f_info <- fs::file_info(file)
-  f_path <- as.character(f_info$path)
+  f_path <- f_info$path %>% path.expand %>% fs::path_abs()
   f_time <- f_info$modification_time
   f_size <- as.numeric(f_info$size)
   f_size_p <- scales::label_bytes()(f_size)
 
   message('Saved file: ' %+% bold(f_path))
+  if (!file.exists(f_path)) stop('File not saved!')
+
   cat('\t',yellow(bold(f_time)))
   cat('\t',blue(bold(f_size_p)),'\t')
   cat('\t')
 
-
+  invisible(f_path)
 } # e. savev()
 
 
