@@ -16,8 +16,28 @@ getrseltxt <- function(){
   sel_text <- sel$text;
 
   if (sel_text=='') {
-    msgStr <- 'Empty string. '
+    msgStr <- 'Nothing selected. '
     sel_text <- trimws(adc$contents[sel$range$start[[1]]]);
+    if (sel_text!='') {
+      msgStr <- msgStr %+% ' Complete line: ' %+% bold(sel_text);
+    } else msgStr <- msgStr %+% ' No string found! ';
+
+    message(msgStr)
+  }
+
+  return(sel_text);
+}
+
+getrseltxt_debug <- function(){
+  adc <- rstudioapi::getActiveDocumentContext();
+  sel <- adc$selection[[1]];
+  sel_text <- sel$text;
+
+  browser()
+
+  if (sel_text=='') {
+    msgStr <- 'Nothing selected. '
+    sel_text <- trimws(adc$contents[ sel$range$start[[1]] ]);
     if (sel_text!='') {
       msgStr <- msgStr %+% ' New string: ' %+% bold(sel_text);
     } else msgStr <- msgStr %+% ' No string found! ';
@@ -27,6 +47,7 @@ getrseltxt <- function(){
 
   return(sel_text);
 }
+
 
 
 #' Explore selected object:
@@ -119,11 +140,19 @@ flexread_clip <- function(fnOri=fromClip(), obj_open='dt1', write_code=T){
     txt2inp <- txt2inp %+% 'dt1 <- flexread(fn1, deluseless = T)\n'
 
   }
-  if (write_code==T) rstudioapi::insertText(NULL, txt2inp)
+  
   # print(str(txt2inp))
   # message('YYY')
-  rstudioapi::sendToConsole(txt2inp)
-  if (not.na(obj_open)) rstudioapi::sendToConsole('duView(dt1)')
+
+  if (Sys.getenv("RSTUDIO")=='1') {
+    if (write_code==T) rstudioapi::insertText(NULL, txt2inp)
+    rstudioapi::sendToConsole(txt2inp)
+    if (not.na(obj_open)) rstudioapi::sendToConsole('duView(dt1)')
+  } else {
+    eval(parse(text = txt2inp), envir = .GlobalEnv)
+    if (not.na(obj_open)) eval(parse(text = 'duView(dt1)'), envir = .GlobalEnv)
+  }
+
 }
 
 #' @export

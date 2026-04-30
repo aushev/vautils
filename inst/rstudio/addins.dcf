@@ -3,6 +3,11 @@ Description: Views Selection
 Binding: selectionView
 Interactive: false
 
+Name: Get Selection Debug
+Description: Debug Get Selection
+Binding: getrseltxt_debug
+Interactive: false
+
 Name: Tab-stat Selection
 Description: calls tab() for selection
 Binding: selectionTab

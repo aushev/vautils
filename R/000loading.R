@@ -283,8 +283,8 @@ trylocs <- function(..., req=F, all=F){
 }
 
 
-savev <- function(..., file){
-  base::save(..., file = file, envir = parent.frame())
+savev <- function(..., file, envir = parent.frame()){
+  base::save(..., file = file, envir=envir)
   f_info <- fs::file_info(file)
   f_path <- f_info$path %>% path.expand %>% fs::path_abs()
   f_time <- f_info$modification_time

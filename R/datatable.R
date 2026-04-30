@@ -91,13 +91,13 @@ inexcel2 <- function(dtIn, row.names=F, na='', name_dt=NA, ...){
   # system(command = paste0('cmd /C ', fn_save));
   # return(fn_save);
 
-  wb <- createWorkbook()
+  wb <- openxlsx::createWorkbook()
   #  style.bold <- createStyle(textDecoration = 'bold')
 
-  addWorksheet(wb, name_sheet)
-  writeData(wb,name_sheet,dtIn)
+  openxlsx::addWorksheet(wb, name_sheet)
+  openxlsx::writeData(wb,name_sheet,dtIn)
 
-  saveWorkbook(wb, file = fn_save,overwrite = T)
+  openxlsx::saveWorkbook(wb, file = fn_save,overwrite = T)
   system('cmd /C ' %+% fn_save)
 
   return(fn_save)
@@ -293,13 +293,13 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
   else if (filetype == 'sas7bdat') {
     cat(' with sas7bdat::read.sas7bdat()... ');
     reqq('sas7bdat', verbose = F);
-    rez <- read.sas7bdat(fnRead);
+    rez <- sas7bdat::read.sas7bdat(fnRead);
     rez <- data.table(rez);
   }
   else if (filetype == 'spss') {
     cat(' with foreign::read.spss()... ');
     reqq('foreign', verbose = F);
-    rez <- read.spss(fnRead);
+    rez <- foreign::read.spss(fnRead);
     rez <- as.data.table(rez);
   }
   else {
@@ -2286,7 +2286,7 @@ dt_reheader <- function(dtIn, n=1, dedup=T, clean.names=T){
   dtIn <- dtIn[-seq_len(n),]
   names(dtIn) <- names_dt
   if (dedup==T) dtIn %<>% dt_names_dedup_n()
-  if (clean.names==T) dtIn %<>% dtcleannames()
+  if (clean.names==T) dtIn %<>% dt_cleannames()
   dtIn
 }
 
@@ -2405,7 +2405,7 @@ dt_process <- function(dtIn,
   # 2. Clean column names
   if (cleannames==T) {
     cat('\n  Cleaning column names. ')
-    dtIn %<>% dtcleannames()
+    dtIn %<>% dt_cleannames()
   }
 
   # 3. Rename columns
@@ -2784,32 +2784,82 @@ dt_first <- function(dtIn, by=key(dtIn), orderby=NULL){
 
 
 
-#' Get Last Row per Group from a data.table
+#' Return the last record or last tied records within group
 #'
-#' Returns the last row of each group in a data.table, based on grouping columns.
+#' Within each group, it sorts records and returns either the last record or all records tied.
 #'
-#' @param dtIn A \code{data.table} object.
-#' @param by A character vector of column names to group by. Defaults to the key columns of \code{dtIn}, if any.
+#' The function groups rows by `by` and orders them using `orderby`.
+#' When `return_all = FALSE`, it returns one last row per group after sorting.
+#' When `return_all = TRUE`, it returns all rows tied on the full `orderby`
+#' tuple of the last row in each group.
 #'
-#' @return A \code{data.table} containing the last row of each group defined by \code{by}.
+#' @param dtIn A `data.table`.
+#' @param by Character vector of grouping column names. Defaults to `key(dtIn)`.
+#' @param orderby Character vector of ordering column names. Must be provided.
+#' @param return_all Logical. If `FALSE` (default), return one last row per
+#'   group. If `TRUE`, return all rows tied at the last ordered state within
+#'   each group.
+#' @param byref Logical. If `TRUE` (default), sorting is performed by reference
+#'   and may modify `dtIn`. If `FALSE`, `dtIn` is copied first.
+#' @param comment Optional text to print for debugging purposes.
+#'
+#' @details
+#' For `return_all = FALSE`, the function sorts `dtIn` by `orderby` and returns
+#' `.SD[.N]` within each `by` group.
+#'
+#' For `return_all = TRUE`, the function sorts by `c(by, orderby)`, extracts the
+#' final `orderby` tuple within each `by` group, and joins back to return all
+#' matching rows. Thus ties are evaluated across the full set of `orderby`
+#' columns.
+#'
+#' @return A `data.table`.
 #'
 #' @examples
 #' library(data.table)
-#' dt1 <- data.table(grp = c("A", "A", "B", "B"), val = 1:4)
-#' setkey(dt1, grp)
-#' dt_last(dt1)  # returns last row from each group A and B
 #'
-#' # Without key
-#' dt_last(dt1, by = "grp")
+#' dt1 <- data.table(
+#'   grp  = c("A", "A", "A", "A", "A", "B", "B"),
+#'   Rank = c(20, 40, 40, 30, 40, 5, 5),
+#'   val  = seq_len(length.out = 7L)
+#' )
+#'
+#' # One last record per group
+#' dt_last(
+#'   dtIn = dt1,
+#'   by = "grp",
+#'   orderby = "Rank"
+#' )
+#'
+#' # All rows tied at the last ordered state
+#' dt_last(
+#'   dtIn = dt1,
+#'   by = "grp",
+#'   orderby = "Rank",
+#'   return_all = TRUE
+#' )
 #'
 #' @export
-dt_last <- function(dtIn, by = key(dtIn), orderby=NULL, comment=NULL){ # dt_last_record
+dt_last <- function(dtIn, by = key(dtIn), orderby, return_all=FALSE, byref=TRUE, comment=NULL){ # dt_last_record
   cat(italic(silver(comment)))
-  if (is.null(by)) warning('No key provided!')
-  if (!is.null(orderby))
-    dtIn %<>% setorderv(orderby) # ,order=-1
-  dtIn[ , .SD[.N], by = c(by)]
-}
+  if (is.null(by))      warning('No key provided!')
+  if (is.null(orderby)) stop('orderby must be provided!')
+  if (byref==FALSE) dtIn <- copy(dtIn)
+
+  if (return_all==FALSE) {
+    dtIn %<>% setorderv(orderby, na.last=FALSE) # ,order=-1
+    return(dtIn[, .SD[.N], by = c(by)])
+  }
+
+  if (return_all==TRUE){
+    dtIn %<>% setorderv(c(by,orderby), na.last=FALSE)
+    return(dtIn[
+      dtIn[, .SD[.N], by = c(by), .SDcols = orderby],
+      on=c(by,orderby)
+      ])
+  }
+
+} # e. dt_last()
+
 
 
 dt_addvalues <- function(dtIn, col2add, values, col2comment=NA, comment=NULL){

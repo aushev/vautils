@@ -497,11 +497,11 @@ lazyObject <- function(obj_names,
       message("  Assigning ", nm)
       assign(nm, result[[nm]], envir = assign_env)
     }
-    if (!is.null(fnRdat)) save(list = names(result), file = fnRdat, envir = assign_env)
+    if (!is.null(fnRdat)) savev(list = names(result), file = fnRdat, envir = assign_env)
   } else {
     obj_name <- obj_names[[1]]
     assign(obj_name, result, envir = assign_env)
-    if (!is.null(fnRdat)) save(list = obj_name, file = fnRdat, envir = assign_env)
+    if (!is.null(fnRdat)) savev(list = obj_name, file = fnRdat, envir = assign_env)
   }
 
   return(invisible(result))
