@@ -631,6 +631,71 @@ corr_pair <- function(pair, dtIn){
 #            #Location='Cancer location'
 # )
 
+
+build_stat_table <- function(dtIn, dt.template, ...){
+  cat('\n')
+  dt.full <- NULL
+  for (i in seq_len(nrow(dt.template))){
+    this.row  <- dt.template[i,]
+    this.var  <- this.row$variable 
+    this.type <- this.row$type 
+    this.lbl  <- this.row$label
+    this.vals <- dtIn[[this.var]]
+    cat('\n',bold(this.var),'\t', italic(this.lbl),'\t')
+    if (ForNA(this.var !='')) {message(bold(' Variable not defined! ')); next;}
+    if (ForNA(this.type!='')) {message(bold(' Type not defined! ')); next;}
+    if (ForNA(this.lbl !='')) {message(bold(' Label not defined! ')); next;}
+    if (is.null(this.vals)) {message(bold(' Not found! ')); next;}
+
+    if (this.type=='categorical'){
+      cat(red('categorical\t'))
+      this.thrR <- this.row$thrRank
+      this.thrN <- this.row$thrN
+      this.sort <- this.row$sort
+      this.sort.tab <- TRUE # default: order by prevalence
+      if (this.sort %in% cs('ori original')) this.sort.tab <- FALSE;
+      this.stat  <- tab(this.vals, thrRank = this.thrR, do.sort = this.sort.tab)
+      this.stat <- this.stat[,.(Value=this.vals, N=Count, `%`=FreqP)]
+
+    this.title <- data.table(Category=this.lbl)
+    this.tab   <- rbindV(this.title, this.stat, fill=T)
+    dt.full %<>% rbindV(this.tab, fill=T)
+    } else if (this.type=='continuous'){
+      cat(blue('continuous\t'))
+
+      this.vals %<>% as.numeric()
+      if (length(this.vals)==0) warning('???')
+
+      this.N   <- sum(not.na(this.vals))
+      this.med <- median(this.vals, na.rm=T)
+      this.avg <- mean(this.vals, na.rm=T)
+      this.sd  <- sd(    this.vals, na.rm=T)
+      this.rng <- range( this.vals, na.rm=T)
+
+      dt.cont <- rbind(data.table(
+        Category = this.lbl, 
+        N        = this.N,
+        Mean     = round(this.avg, 2), 
+        Median   = round(this.med, 2), 
+        SD       = round(this.sd,2), 
+        range    = paste(round(this.rng,2),collapse = ' .. ')), fill=T)
+      
+     dt.cont1 <- dt.cont[,.(Category, Value='(median±SD, range)', N, `%`=(Median %+% '±' %+% SD %+% ', ' %+% range))]
+     dt.full %<>% rbindV(dt.cont1, fill=T)
+    } else if (this.type %~~% 'comp') {
+      cat(green('completeness\t'))
+      this.compl <- sum(not.na(this.vals))
+      dt.comp <- data.table(Category=this.lbl, Value='(completeness)', N=this.compl, `%`=percent(this.compl/length(this.vals)))
+      dt.full %<>% rbindV(dt.comp, fill=T)
+  } else message('Unknown type!')
+
+  } # e. for (i)
+
+  dt.full[is.na(Value) & is.na(Category),Value:='N/A']
+  invisible(dt.full)
+} # e. build_stat_table()
+
+
 build_stat_table_N <- function(dtIn, categories, do.sort = F, thrRank=15, ...){
   dt.N <- NULL
   #  browser()
@@ -646,7 +711,7 @@ build_stat_table_N <- function(dtIn, categories, do.sort = F, thrRank=15, ...){
 
   dt.N[is.na(Value) & is.na(Category),Value:='N/A']
   invisible(dt.N)
-}
+} # e. build_stat_table_N()
 
 build_stat_table_med <- function(dtIn,categories){
   dt.med <- NULL
@@ -658,13 +723,21 @@ build_stat_table_med <- function(dtIn,categories){
     this.vals %<>% as.numeric()
     if (length(this.vals)==0) warning('')
 
+    this.N   <- sum(not.na(this.vals))
     this.med <- median(this.vals, na.rm=T)
+    this.avg <- mean(this.vals, na.rm=T)
     this.sd  <- sd(    this.vals, na.rm=T)
     this.rng <- range( this.vals, na.rm=T)
 
     #    this.title <- data.table(Category=this.label)
     #    this.tab   <- rbind(this.title, data.table(Value=this.stat$this.vals, N=this.stat$Freq, `%`=this.stat$FreqP), fill=T)
-    dt.med %<>% rbind(data.table(Category=this.label, Median=round(this.med, 2), SD=round(this.sd,2), range=paste(round(this.rng,2),collapse = ' .. ')), fill=T)
+    dt.med %<>% rbind(data.table(
+      Category = this.label, 
+      N        = this.N,
+      Mean     = round(this.avg, 2), 
+      Median   = round(this.med, 2), 
+      SD       = round(this.sd,2), 
+      range    = paste(round(this.rng,2),collapse = ' .. ')), fill=T)
   }
 
   invisible(dt.med)

@@ -447,44 +447,61 @@ na.allow <- function(input) return(is.na(input) | input);
 #' }
 #'
 #' @export
-lazyObject <- function(obj_names,
-                       fnRdat = NULL,
-                             builder = NULL,
-                             assign_env = parent.frame(),
-                             unpack_list = FALSE,
-                             verbose = TRUE) {
+lazyObject <- function( obj_names,
+                        fnRdat = NULL,
+                        fnData = NULL,
+                        builder = NULL,
+                        assign_env = parent.frame(),
+                        unpack_list = FALSE,
+                        verbose = TRUE) {
   if (verbose==F) message <- function(...){invisible()}
+  obj_name <- obj_names[[1]]
   # browser()
-  obj_found <- sapply(obj_names, exists, envir = assign_env, inherits = FALSE)
+  ndx_found <- sapply(obj_names, exists, envir = assign_env, inherits = FALSE)
   # If all requested objects already exist, return silently
-  if (all(obj_found)) {
+  if (all(ndx_found)) {
     message("✅ Objects already exist: ", paste(obj_names, collapse = ", "))
     return(invisible(mget(obj_names, envir = assign_env)))
   } else {
-    message("Some or all objects not found in the environment.");
+    obj_not_found <- obj_names[!ndx_found]
+    message("Objects not found in the environment:\t", paste(bold(obj_not_found), collapse = ', '));
   }
 
+  result <- NULL
   # Try to load from RData fnRdat if provided
   if (!is.null(fnRdat)) {
     message("📦 Trying to load from ", fnRdat)
     # browser()
 
     if (file.exists(fnRdat)) {
-      message("  Rdat file found.")
-      loadv(fnRdat, envir = assign_env)
+      message("  data file found.")
+      #browser()
+      if (tools::file_ext(fnRdat) %~~i% 'rd'){
+        loadv(fnRdat, envir = assign_env)
+      } else {
+        result <- flexread(fnRdat)
+        assign(obj_name, result, envir = assign_env)
+      }
     } else {
-      message(" ⚠️ Rdat file not found.")
+      message(" ⚠️ data file not found.")
     }
 
     # Re-check existence after loading
-    obj_found <- sapply(obj_names, exists, envir = assign_env, inherits = FALSE)
-    if (all(obj_found)) {
+    ndx_found <- sapply(obj_names, exists, envir = assign_env, inherits = FALSE)
+    if (all(ndx_found)) {
       message("All objects loaded from the file.");
       return(invisible(mget(obj_names, envir = assign_env)))
     } else {
       message(" ⚠️ Not all objects loaded from file. Will try to build.")
     }
   } # e. if(!is.null(fnRdat))
+
+  if (is.null(result) & !is.null(fnData)){
+    message(" Trying to read data file with flexread().")
+    result <- flexread(fnData)
+    assign(obj_name, result, envir = assign_env)
+    return(invisible(result))
+  }
 
   # Build using provided function
   if (is.null(builder)) stop("No builder provided and objects not found or loaded.")
@@ -499,7 +516,6 @@ lazyObject <- function(obj_names,
     }
     if (!is.null(fnRdat)) savev(list = names(result), file = fnRdat, envir = assign_env)
   } else {
-    obj_name <- obj_names[[1]]
     assign(obj_name, result, envir = assign_env)
     if (!is.null(fnRdat)) savev(list = obj_name, file = fnRdat, envir = assign_env)
   }

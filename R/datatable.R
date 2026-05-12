@@ -1199,7 +1199,8 @@ mergefiletabs <- function(
   fn.mask='.*',   # files mask
   recursive = T,  # recursive
   rbind_fill = TRUE,
-  fn.list=NULL,   # list of files => fn.inpdir, recursive and fn.mask will be ignored
+  fn.list=NULL,   # list of files => then `fn.inpdir`, `recursive` and `fn.mask` will be ignored
+  add_ffn    = T, # whether to add a column with filename
   full.names = T, # which form of filenames to put in the table
   rn=NULL,        # if not NULL, add rn column with id
   colnames = NULL, # rbind mode: if not NULL, each table names will be set to this
@@ -1242,11 +1243,11 @@ mergefiletabs <- function(
 
     if (mode=='r'){
       if (!is.null(colnames)) {setnames(dt.this, colnames);}
-      dt.this[, ffn:=fn.this.show]
+      if (add_ffn) dt.this[, ffn := fn.this.show]
       if (!is.null(rn)) {dt.this[, (rn):=seq_len(nrow(dt.this))]}
       dt.all <- rbindV(dt.all, dt.this, fill=rbind_fill)
     } else { # mode == 'c'
-      dt.left <- dt.this[,(colnames), with=F]
+      dt.left  <- dt.this[,(colnames), with=F]
       dt.right <- dt.this[,-(colnames), with=F]
       if (is.null(dt.all)){
         dt.const <- dt.left

@@ -35,7 +35,6 @@ summarize.cox <- function(inp.cox, filtS){
     confInts <- confInts[filtS,]
   }
 
-
   if (ncol(confInts)==0){
     confInts <- data.frame(col1=NA_real_,col2=NA_real_,low95=inp.cox.summary$ci.lower,hi95=inp.cox.summary$ci.upper)
   }
@@ -48,7 +47,45 @@ summarize.cox <- function(inp.cox, filtS){
   setnames(coefs, 'Pr(>|z|)', 'p')
   #setnames(rez_tab0, cs('exp(coef) coef se(coef)'), cs('HR lnHR se.lnHR'));
   return(coefs);
-}
+} # e. summarize.cox()
+
+cox_sum2df <- function(cox_sum, filtS){
+#  browser()
+#  cox_sum <- summary(inp.cox)
+  
+  if ('matrix' %in% class(cox_sum$coefficients)){ # standard coxph
+    coefs    <- as.data.frame(cox_sum$coefficients)
+    confInts <- as.data.frame(cox_sum$conf.int)
+
+    if (nrow(coefs)>1) confInts <- confInts[filtS,]
+    if (ncol(confInts)==0){
+      confInts <- data.frame(col1=NA_real_,col2=NA_real_,low95=cox_sum$ci.lower,hi95=cox_sum$ci.upper)
+    }
+
+    coefs$CIl <- confInts[,3]; # "lower .95"
+    coefs$CIh <- confInts[,4]; # "upper .95"
+
+
+  } else if (class(cox_sum$coefficients) %===% 'numeric'){ # coxphf
+    coefs <- data.frame(coef=cox_sum$coefficients)
+
+    coefs$CIl <- cox_sum$ci.lower # %>% exp
+    coefs$CIh <- cox_sum$ci.upper # %>% exp
+
+    if ('Pr(>|z|)'  %!in% names(coefs)) coefs$`Pr(>|z|)` <- cox_sum$prob    
+    if ('exp(coef)' %!in% names(coefs)) coefs$`exp(coef)` <- exp(coefs$coef)
+
+  } else stop('NOT IMPLEMENTED')
+    
+
+  if (nrow(coefs)>1) {
+    coefs    <- coefs[filtS,]
+  }
+
+  setnames(coefs, 'Pr(>|z|)', 'p')
+  #setnames(rez_tab0, cs('exp(coef) coef se(coef)'), cs('HR lnHR se.lnHR'));
+  return(coefs);
+} # e. cox_sum2df()
 
 fitsum <- function(inpFit, cox.fun=coxph){
   # browser()
@@ -56,8 +93,8 @@ fitsum <- function(inpFit, cox.fun=coxph){
 
   cox.obj.sum <- summary(cox.obj)
   # cox.obj.sum.coefs <- as.data.frame(cox.obj.sum$coefficients)
-
-  sumcox <- summarize.cox(cox.obj)
+#  sumcox <- summarize.cox(cox.obj)
+  sumcox <- cox_sum2df(cox.obj.sum)
 
   # if (identical(cox.fun,coxph)){
   #   sumcox <- cox.obj.sum

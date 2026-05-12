@@ -235,25 +235,47 @@ gg_replace_geomlabel <- function(inpPlot){
 }
 
 
+pmod1 <- function (inp, coefs, lab.x=NA, lab.y=0.4, colors = NULL) 
+{
+    # If colors not provided, use default colors for all labels
+    if (is.null(colors)) {
+      colors <- rep('black', nrow(coefs))
+    } else {
+      # Skip reference group (first color) and use remaining colors for labels
+      colors <- colors[-1]  # Remove reference group color
+      # Recycle colors if needed to match number of comparisons
+      colors <- rep(colors, length.out = nrow(coefs))
+    }
+    
+    # Get the strata names from the fit object in inp
+    strata_names <- names(inp$plot$data$strata)
+    
+    # Process each row of coefs (each comparison group)
+    for (i in seq_len(nrow(coefs))) {
+      lab.s <- sprintf("HR = %.1f [%.1f - %.1f]", coefs$`exp(coef)`[i], coefs$CIl[i], coefs$CIh[i])
+      lab.s <- lab.s %+% ifelse(coefs$p[i] < 0.0005, sprintf("\np = %.2e", coefs$p[i]), sprintf("\np = %.3f", coefs$p[i]))
+      
+      n.risk <- inp$plot$data[inp$plot$data$time == 0, ]$n.risk
+      lab.n <- "N = " %+% paste(n.risk, collapse = "+") %+% " = " %+% sum(n.risk)
+      
+      if (is.na(lab.x)) {
+          lab.x <- max(inp$data.survplot$time) * 0.4
+          if (!is.null(inp$data.survtable)) 
+              lab.x <- max(inp$data.survtable$time) * 0.4
+      }
+      
+      # Adjust label y-position for each comparison (stack vertically)
+      lab.y_adj <- lab.y - (i - 1) * 0.12
+      
+      # Add label with color from palette
+      inp$plot <- 
+        inp$plot + 
+        ggplot2::annotate("text", label=lab.s, color = colors[i], x=lab.x, y=lab.y_adj, hjust=0, size=5)
+    }
+    
+    return(inp)
+} # e. pmod1()
 
-pmod1 <- function(inp, coefs, lab.x=NA, lab.y=0.4){
-  lab.s <- sprintf('HR = %.1f [%.1f - %.1f]', coefs$`exp(coef)`, coefs$CIl, coefs$CIh) # coefs[,2] === coefs$`exp(coef)`
-  lab.s <- lab.s %+% ifelse(coefs$p<1e-3, sprintf('\np = %.2e',coefs$p), sprintf('\np = %.3f',coefs$p))
-
-  n.risk <- inp$plot$data[inp$plot$data$time==0,]$n.risk
-  lab.n <- 'N = ' %+% paste(n.risk, collapse='+') %+% ' = ' %+% sum(n.risk)
-  #lab.s <- lab.s %+% '\n' %+% lab.n
-
-  if (is.na(lab.x)){
-    #message('Redefining lab.x')
-    lab.x <- max(inp$data.survplot$time)*0.4
-    #message('909: ',lab.x)
-    if (!is.null(inp$data.survtable)) lab.x <- max(inp$data.survtable$time)*0.4
-  }
-  #message(lab.x)
-  inp$plot <- inp$plot + ggplot2::annotate('text', x=lab.x, y=lab.y, label=lab.s, hjust=0, size=5)
-  return(inp)
-}
 
 
 
@@ -370,11 +392,16 @@ gghist <- function(inpDT, val.col, col.mean='red',col.med='darkgreen',lg10=NA,co
     inpDT <- data.table(value=inpDT)
     val.col <- 'value'
   }
-  values     <- as.numeric(inpDT[[val.col]])
+  if (! inpDT %hasnames% val.col) stop("Can't find column with values:\t[", bold(val.col),']')
+
+  values     <- (inpDT[[val.col]])
+  if (!is.numeric(values) & !('Date' %in% class(values))) values %<>% as.numeric()
+  values_num <- as.numeric(values)
+
   val.median <- median(values,na.rm=T)
   val.mean   <- mean(  values,na.rm=T)
-  val.05     <- quantile(values,   (1-q_ci)/2, na.rm=T) #
-  val.95     <- quantile(values, 1-(1-q_ci)/2, na.rm=T) #
+  val.05     <- quantile(values_num,   (1-q_ci)/2, na.rm=T) #
+  val.95     <- quantile(values_num, 1-(1-q_ci)/2, na.rm=T) #
 
   pHist <-
     inpDT %>%
@@ -427,7 +454,8 @@ gg_va_rescale <- function(inp, base=3, basemin=1,basemax=6){
 
 plot4mosaic <- function(
     inpDTmosaic,
-    byX=NULL, byY=NULL,
+    byX=NULL, byY=NULL, 
+    xlab=byX,
     del=10,
     colors=NULL,
     colFreq='Count',
@@ -456,6 +484,7 @@ plot4mosaic <- function(
   #inpDTmosaic[,grpN:=sum(get(colFreq)),by=get(byX)]
   inpDTmosaic[,grpN := sum(get(colFreq)),by=c(byX)]
   inpDTmosaic[, lbl_byX := as.character(get(byX))][, lbl_xN := '']
+  if (prefix %~~% '%$') {prefix %<>% chopRight(); showN='%';}
   if (not.na(prefix)) inpDTmosaic[, lbl_xN := '\n' %+% prefix %+% grpN]
   #inpDTmosaic[, xN := sprintf('%s\n%s%s',lbl_byX,prefix,grpN), by=.(xN,grpN)]
   if (not.na(replCRLF)) inpDTmosaic$lbl_byX %<>% gsub(replCRLF,'\n',.)
@@ -508,7 +537,7 @@ plot4mosaic <- function(
 
   }
 
-  p + xlab(byX) + ylab(NULL)
+  p + xlab(xlab) + ylab(NULL)
 }
 
 
