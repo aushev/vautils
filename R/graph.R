@@ -238,6 +238,7 @@ gg_replace_geomlabel <- function(inpPlot){
 pmod1 <- function (inp, coefs, lab.x=NA, lab.y=0.4, colors = NULL) 
 {
   # browser()
+  
     # If colors not provided, use default colors for all labels
     if (is.null(colors)) {
       colors <- rep('black', nrow(coefs))
