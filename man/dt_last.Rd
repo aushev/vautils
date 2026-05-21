@@ -2,28 +2,75 @@
 % Please edit documentation in R/datatable.R
 \name{dt_last}
 \alias{dt_last}
-\title{Get Last Row per Group from a data.table}
+\title{Return the last record or last tied records within group}
 \usage{
-dt_last(dtIn, by = key(dtIn), orderby = NULL, comment = NULL)
+dt_last(
+  dtIn,
+  by = key(dtIn),
+  orderby,
+  return_all = FALSE,
+  byref = TRUE,
+  comment = NULL
+)
 }
 \arguments{
-\item{dtIn}{A \code{data.table} object.}
+\item{dtIn}{A \code{data.table}.}
 
-\item{by}{A character vector of column names to group by. Defaults to the key columns of \code{dtIn}, if any.}
+\item{by}{Character vector of grouping column names. Defaults to \code{key(dtIn)}.}
+
+\item{orderby}{Character vector of ordering column names. Must be provided.}
+
+\item{return_all}{Logical. If \code{FALSE} (default), return one last row per
+group. If \code{TRUE}, return all rows tied at the last ordered state within
+each group.}
+
+\item{byref}{Logical. If \code{TRUE} (default), sorting is performed by reference
+and may modify \code{dtIn}. If \code{FALSE}, \code{dtIn} is copied first.}
+
+\item{comment}{Optional text to print for debugging purposes.}
 }
 \value{
-A \code{data.table} containing the last row of each group defined by \code{by}.
+A \code{data.table}.
 }
 \description{
-Returns the last row of each group in a data.table, based on grouping columns.
+Within each group, it sorts records and returns either the last record or all records tied.
+}
+\details{
+The function groups rows by \code{by} and orders them using \code{orderby}.
+When \code{return_all = FALSE}, it returns one last row per group after sorting.
+When \code{return_all = TRUE}, it returns all rows tied on the full \code{orderby}
+tuple of the last row in each group.
+
+For \code{return_all = FALSE}, the function sorts \code{dtIn} by \code{orderby} and returns
+\code{.SD[.N]} within each \code{by} group.
+
+For \code{return_all = TRUE}, the function sorts by \code{c(by, orderby)}, extracts the
+final \code{orderby} tuple within each \code{by} group, and joins back to return all
+matching rows. Thus ties are evaluated across the full set of \code{orderby}
+columns.
 }
 \examples{
 library(data.table)
-dt1 <- data.table(grp = c("A", "A", "B", "B"), val = 1:4)
-setkey(dt1, grp)
-dt_last(dt1)  # returns last row from each group A and B
 
-# Without key
-dt_last(dt1, by = "grp")
+dt1 <- data.table(
+  grp  = c("A", "A", "A", "A", "A", "B", "B"),
+  Rank = c(20, 40, 40, 30, 40, 5, 5),
+  val  = seq_len(length.out = 7L)
+)
+
+# One last record per group
+dt_last(
+  dtIn = dt1,
+  by = "grp",
+  orderby = "Rank"
+)
+
+# All rows tied at the last ordered state
+dt_last(
+  dtIn = dt1,
+  by = "grp",
+  orderby = "Rank",
+  return_all = TRUE
+)
 
 }

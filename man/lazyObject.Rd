@@ -7,6 +7,7 @@
 lazyObject(
   obj_names,
   fnRdat = NULL,
+  fnData = NULL,
   builder = NULL,
   assign_env = parent.frame(),
   unpack_list = FALSE,

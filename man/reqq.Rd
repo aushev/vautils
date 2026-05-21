@@ -4,14 +4,9 @@
 \alias{reqq}
 \title{Install (if needed) and attach one or more packages}
 \usage{
-reqq(packagename, verbose = F, tryBioconductor = T, reload = T)
+reqq(..., verbose = F, tryBioconductor = T, reload = F)
 }
 \arguments{
-\item{packagename}{A package identifier provided as a symbol, a character
-string, a space-separated string of names, or a character vector of names.
-Internally, symbols are normalized to character names. Space-separated
-strings are split and processed element-wise.}
-
 \item{verbose}{\code{logical(1)}. If \code{TRUE}, prints progress messages.}
 
 \item{tryBioconductor}{\code{logical(1)}. If \code{TRUE}, try installing from
@@ -19,6 +14,11 @@ Bioconductor (via \strong{BiocManager}) when CRAN install fails.}
 
 \item{reload}{\code{logical(1)}. If \code{TRUE} and more than one package was processed,
 \code{vautils} is reloaded (\code{unloadNamespace("vautils")} then \code{require(vautils)}).}
+
+\item{packagename}{A package identifier provided as a symbol, a character
+string, a space-separated string of names, or a character vector of names.
+Internally, symbols are normalized to character names. Space-separated
+strings are split and processed element-wise.}
 }
 \value{
 \code{logical(1)}. For a single package, returns the success status from

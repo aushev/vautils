@@ -237,6 +237,7 @@ gg_replace_geomlabel <- function(inpPlot){
 
 pmod1 <- function (inp, coefs, lab.x=NA, lab.y=0.4, colors = NULL) 
 {
+  # browser()
     # If colors not provided, use default colors for all labels
     if (is.null(colors)) {
       colors <- rep('black', nrow(coefs))
@@ -249,7 +250,7 @@ pmod1 <- function (inp, coefs, lab.x=NA, lab.y=0.4, colors = NULL)
     
     # Get the strata names from the fit object in inp
     strata_names <- names(inp$plot$data$strata)
-    
+    # browser()
     # Process each row of coefs (each comparison group)
     for (i in seq_len(nrow(coefs))) {
       lab.s <- sprintf("HR = %.1f [%.1f - %.1f]", coefs$`exp(coef)`[i], coefs$CIl[i], coefs$CIh[i])

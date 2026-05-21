@@ -4,7 +4,7 @@
 \alias{split_count}
 \title{Count Unique Substring Matches from Delimited Strings}
 \usage{
-split_count(input, sep = ";")
+split_count(input, sep = ";", order_by = "count")
 }
 \arguments{
 \item{input}{A character vector with delimited entries (e.g., "A; B; C").}
