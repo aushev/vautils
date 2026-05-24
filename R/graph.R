@@ -150,8 +150,18 @@ annotation_compass <- function(label,position='N',
 
 
 
-ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, device=NULL, dir=NULL,...){
-  if (exists('OUT') & OUT==0) {message("Skipping. "); return(FALSE);}
+ggsaveopen <- function(
+  fn, 
+  inpPlot=last_plot(), 
+  OUT=2, 
+  device=NULL, 
+  dir=NULL, 
+  use_print=F, 
+  width=8, height=8, res=300, 
+  debug_text=NA, 
+  ...){
+ 
+  if (exists('OUT') && OUT==0) {message("OUT==0. Skipping saving. "); return(FALSE);}
   fn <- trimws(fn)
   fn_dir  <- dir
   if (is.null(fn_dir)) fn_dir <- fs::path_dir(fn)
@@ -162,8 +172,71 @@ ggsaveopen <- function(fn, inpPlot=last_plot(), OUT=2, device=NULL, dir=NULL,...
   #if (!exists('device') || is.na(device)) device <- ext;
   if (file.exists(fn)) {warning('File already exists! Will try to save under different name. '); fn <- gsub(fn_name,nicedate() %+% fn_name,fn, fixed = T)}
   message('Saving as ' %+% bold(fn) )
+
+  if (ext=='pdf' && is.null(device)) device <- grDevices::pdf
+  if (ext=='png' && is.null(device)) device <- grDevices::png
+  if (is.null(device)){
+    message('Device not defined! Using pdf by default.')
+    device <- grDevices::pdf
+  }
 #  browser()
-  if ('list' %in% class(inpPlot)) {
+  message('Input plot is of class:\t', paste0(bold(class(inpPlot)), collapse = ', '))
+
+  device_args <- list(
+    file    = fn,
+    width   = width,
+    height  = height
+  )
+  if (device %===% png) {
+    device_args$res <- res
+    device_args$units <- "in"
+  }
+
+
+  multipage_device <- (device %===% pdf) || (device %===% cairo_pdf)  
+
+#  browser()
+
+
+  if (use_print==T){
+  message('Using print')
+    
+  do.call(
+    what = device,
+    args = device_args
+  )
+
+  on.exit(
+    expr = grDevices::dev.off(),
+    add = TRUE
+  )  
+    
+    
+  print(
+    x = inpPlot,
+    newpage = FALSE
+  )
+
+  if (isTRUE(multipage_device && any(not.na(debug_text)))) {
+      message('Printing debug_text.')
+      grid::grid.newpage()
+      # browser()
+
+      debug_text_wrapped <- 
+        debug_text
+        # paste(strwrap(debug_text, width = 100), collapse = "\n")
+    
+      grid::grid.text(
+        label = debug_text_wrapped,
+        x = grid::unit(x = 0.02, units = "npc"),
+        y = grid::unit(x = 0.98, units = "npc"),
+        just = c("left", "top"),
+        gp = grid::gpar(fontsize = 9, fontfamily = "mono")
+      )
+  } # e. if (multipage)
+  grDevices::dev.off()
+    
+  } else if (is.list(inpPlot)) {
     ggpubr::ggexport(filename=fn,plot=inpPlot, device=device, ...)
   } else {
     ggsave(fn, inpPlot, device=device, ...)

@@ -182,7 +182,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
   }
 
   if (length(fnRead)>1){
-   #  browser()
+     browser()
     for (this.fnRead in fnRead){
       retTry <- tryCatch(
         expr = {
@@ -191,6 +191,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
                    fixV1=fixV1,...)
           return(rez)
         },
+        condition = function(cond) {warning(conditionMessage(cond)); cat('\n'); NULL;},
         error = function(cond) {warning(cond); cat('\n'); NULL;}
       )
     } # e. for
@@ -227,8 +228,19 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
 
   if (fnRead %inherits% 'drive_id'){
     message(' Opening as Google Drive file.');
-    # browser()
+    #browser()
+
     drDownloaded <- googledrive::drive_download(fnRead, overwrite = T)
+
+    # retTry <- tryCatch(
+    #   expr = {
+    #     drDownloaded <- googledrive::drive_download(fnRead, overwrite = T)
+    #     return(drDownloaded)
+    #   },
+    #   condition = function(cond) {warning(conditionMessage(cond)); cat('\n'); NULL;},
+    #   error     = function(cond) {warning(cond);                   cat('\n'); NULL;}
+    # )
+    # if (is.null(retTry)) return(NULL)
 
     args_main <- mget(
       setdiff(names(formals(flexread)), c("fnRead", "...")),
