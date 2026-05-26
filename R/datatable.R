@@ -173,6 +173,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
                      openxlsx_ver=1,
                      fcounter=F,
                      fixV1=NA,
+                     show_hyperlinks = FALSE,
                      ...){
 #   cat('\nSTARTING ' %+% cs1(fnRead) %+% '\n')
   flags <- c()
@@ -182,21 +183,29 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
   }
 
   if (length(fnRead)>1){
-     browser()
+    # browser()
     for (this.fnRead in fnRead){
       retTry <- tryCatch(
         expr = {
-          rez <- flexread(this.fnRead, sheetIndex=sheetIndex, sheetName=sheetName, silent=silent, keyby=keyby, char=char, num=num, filetype=filetype,
-                   clean.names=clean.names, trimspaces=trimspaces, deluseless=deluseless,rename.from=rename.from, rename.to=rename.to, fcounter=fcounter,
-                   fixV1=fixV1,...)
-          return(rez)
+          flexread(this.fnRead, sheetIndex=sheetIndex, sheetName=sheetName, silent=silent, keyby=keyby, char=char, num=num, filetype=filetype,
+                   clean.names=clean.names, trimspaces=trimspaces, deluseless=deluseless,rename.from=rename.from, rename.to=rename.to, fcounter=fcounter, 
+                   fixV1=fixV1,show_hyperlinks=show_hyperlinks,...)
         },
-        condition = function(cond) {warning(conditionMessage(cond)); cat('\n'); NULL;},
-        error = function(cond) {warning(cond); cat('\n'); NULL;}
-      )
+#        condition = function(cond) {warning(conditionMessage(cond)); cat('\n'); NULL;},
+        error = function(cond) {
+          message(
+            red('Failed to open: ', bold(this.fnRead), '\n'),
+            'Condition: ', cond,'\n',
+            conditionMessage(cond), 
+            '\n=================\n'
+          ); 
+          cat('\n'); NULL;
+        }
+      ) # e. tryCatch()
+      if (!is.null(retTry)) return(retTry)  # Return on first success
     } # e. for
 #    message('\nok!!!\n')
-    if (!is.null(retTry)) return(retTry)
+#    if (!is.null(retTry)) return(retTry)
     # message('\nNO!!!\n')
     stop("All file paths in fnRead failed to open.")
   } # e. if(length(fnRead)>1)
@@ -297,7 +306,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
     if (as.character(openxlsx_ver)=='2'){
       cat(' with openxlsx2::read_xlsx()... ');
       reqq('openxlsx', verbose = F);
-      rez <- openxlsx2::read_xlsx(fnRead, sheet, check_names=F, ...); # don't do check.names=clean.names bc it also dedups names
+      rez <- openxlsx2::read_xlsx(fnRead, sheet, check_names=F, show_hyperlinks=show_hyperlinks,...); # don't do check.names=clean.names bc it also dedups names
     }
 
     rez <- data.table(rez);
@@ -390,7 +399,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
 } # e. flexread()
 
 #########################################################################################################################
-vec2namedlist <- function(inpVec, split2='='){
+lvec2namedlist <- function(inpVec, split2='='){
   inp_split <- strsplit(inpVec,split = split2)
   inp_values <- sapply(inp_split, '[[', 2)
   names(inp_values) <- sapply(inp_split, '[[', 1)

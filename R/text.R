@@ -818,7 +818,7 @@ va_txt_remove_parents <- function(inpVec, sep=NA){
 #  browser()
   if (TnotNA(sep!='')) inpVec %<>% cs(sep = sep)
   vec.work <- sort(unique(inpVec))
-  if (length(vec.work)<2) return(inpVec)
+  if (length(vec.work)<2) return(vec.work)
 
   vec.remove <- c()
   for (i in 2:length(vec.work)){
@@ -830,7 +830,7 @@ va_txt_remove_parents <- function(inpVec, sep=NA){
   ret <- vec.work %-% vec.remove
   if (TnotNA(sep!='')) ret %<>% paste0(collapse = sep)
   return(ret)
-}
+} # e. va_txt_remove_parents()
 
 
 # myfun <- function(x){
@@ -1332,7 +1332,7 @@ assign_labels_by_regex <- function(vec_hay,          # vector
                                    col_re     =NA,   # column name, if rules_re is table
                                    rules_label,      # vector, or column name
                                    rules_case  =TRUE, # vector, or column name
-                                   collapse   ="; ",
+                                   collapse   =";",
                                    deduplicate=TRUE,
                                    no_match   =NA_character_) {
 

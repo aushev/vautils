@@ -34,7 +34,7 @@ tab <- function(input, useNA='ifany', na.rm=F, do.sort=T, inpName=NA, ...){
   return(dt1);
 }
 
-tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, inpName=NA, thrRank=NA, thrNum=NA, thrLabel='Other',...){
+tabDF <- function(input, useNA='ifany', na.rm=F, do.sort=T, keepN=T, keepP=T, inpName=NA, thrRank=NA, thrNum=NA, thrLabel='<Other>',...){
   if (useNA==F | na.rm==T) useNA <- 'no';
   if (useNA==T | na.rm==F) useNA <- 'ifany';
 
@@ -293,7 +293,7 @@ contingency <- function(inpDT, colTest, colReal, valsNeg=NULL, valsPos=NULL, per
   valNegReal <- valsNeg[[2]]
   valPosTest <- valsPos[[1]]
   valPosReal <- valsPos[[2]]
-  valOther <-'<OTHER>'
+  valOther <-'<Other>'
 
   if (valNegTest %in% cs('FALSE TRUE')) valNegTest %<>% as.logical()
   if (valNegReal %in% cs('FALSE TRUE')) valNegReal %<>% as.logical()
@@ -660,6 +660,49 @@ build_stat_table <- function(dtIn, dt.template, ...){
     this.title <- data.table(Category=this.lbl)
     this.tab   <- rbindV(this.title, this.stat, fill=T)
     dt.full %<>% rbindV(this.tab, fill=T)
+    } else if (this.type=='split'){
+      cat(red('split\t'))
+      this.thrR <- this.row$thrRank
+      this.thrN <- this.row$thrN
+      this.sort <- this.row$sort
+      this.sort.tab <- TRUE # default: order by prevalence
+      if (this.sort %in% cs('ori original')) this.sort.tab <- FALSE;
+
+      this.levels <- this.vals %>% cs(';') %>% trimws() %>% unique() %>% setdiff(NA)
+
+#      browser()
+
+      this.stat <- data.table(Value=this.levels) %>% setkey(Value)
+      for (i in this.levels){
+        this.found <- this.vals %>% strsplit(split=';') %>% sapply(function(x) {i %in% trimws(x)}) %>% sumI
+        this.stat[i, N := this.found]
+      }
+
+      this.stat %<>% setorder(-N)
+      this.stat[, rnkI := .I]
+      if (isTRUE(this.thrR>0)) this.stat[rnkI>this.thrR, e_Other := TRUE]
+      if (isTRUE(this.thrN>0)) this.stat[   N<this.thrN, e_Other := TRUE]
+      
+      if (this.stat %hasnames% 'e_Other'){
+        this.vals.other <- this.stat[e_Other==T, Value]
+        this.stat[e_Other==T, `:=`(Value='<Other>', rnkI=NA, N=NA)]
+        this.stat %<>% unique()
+        other.sumN <- 0L
+        for (i in this.vals.other){
+         this.found <- this.vals %>% strsplit(split=';') %>% sapply(function(x) {i %in% trimws(x)}) %>% sumI
+         other.sumN <- other.sumN + this.found
+        }
+        this.stat[Value=='<Other>', N := other.sumN]
+      } # e. if Others
+
+    #  browser()
+
+    this.stat[, `%` := percent(N/length(this.vals))]
+    this.stat <- this.stat[,.(Value,N,`%`)]
+
+    this.title <- data.table(Category=this.lbl)
+    this.tab   <- rbindV(this.title, this.stat, fill=T)
+    dt.full %<>% rbindV(this.tab, fill=T)
     } else if (this.type=='continuous'){
       cat(blue('continuous\t'))
 
@@ -694,6 +737,12 @@ build_stat_table <- function(dtIn, dt.template, ...){
   dt.full[is.na(Value) & is.na(Category),Value:='N/A']
   invisible(dt.full)
 } # e. build_stat_table()
+
+
+
+
+
+
 
 
 build_stat_table_N <- function(dtIn, categories, do.sort = F, thrRank=15, ...){
