@@ -199,25 +199,12 @@ ggsaveopen <- function(
 
 
   if (use_print==T){
-  message('Using print')
-    
-  do.call(
-    what = device,
-    args = device_args
-  )
+   message('Using print')    
+   do.call(device, args = device_args)
+   on.exit(expr = grDevices::dev.off(), add = TRUE)
+   print(inpPlot, newpage=FALSE)
 
-  on.exit(
-    expr = grDevices::dev.off(),
-    add = TRUE
-  )  
-    
-    
-  print(
-    x = inpPlot,
-    newpage = FALSE
-  )
-
-  if (isTRUE(multipage_device && any(not.na(debug_text)))) {
+   if (isTRUE(multipage_device && any(not.na(debug_text)))) {
       message('Printing debug_text.')
       grid::grid.newpage()
       # browser()
@@ -233,13 +220,15 @@ ggsaveopen <- function(
         just = c("left", "top"),
         gp = grid::gpar(fontsize = 9, fontfamily = "mono")
       )
-  } # e. if (multipage)
+   } # e. if (multipage)
   grDevices::dev.off()
     
   } else if (is.list(inpPlot)) {
-    ggpubr::ggexport(filename=fn,plot=inpPlot, device=device, ...)
+    message('Plot is a list. Printing with ', bold('ggpubr::ggexport()'))
+    ggpubr::ggexport(filename=fn,plot=inpPlot, device=device, width=width, height=height, ...)
   } else {
-    ggsave(fn, inpPlot, device=device, ...)
+    message('Printing with ', bold('ggsave()'))
+    ggsave(fn, inpPlot, device=device, width=width, height=height,  ...)
   }
   if (exists('OUT') & OUT==1) {message("Saved but won't be open. "); return(FALSE);}
   cmd_str <- ifelse(Sys.info()['sysname'] == 'Windows', 'cmd /C "', 'open "')

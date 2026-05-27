@@ -632,7 +632,7 @@ corr_pair <- function(pair, dtIn){
 # )
 
 
-build_stat_table <- function(dtIn, dt.template, ...){
+build_stat_table <- function(dtIn, dt.template, range.char='-',...){
   cat('\n')
   dt.full <- NULL
   for (i in seq_len(nrow(dt.template))){
@@ -721,7 +721,7 @@ build_stat_table <- function(dtIn, dt.template, ...){
         Mean     = round(this.avg, 2), 
         Median   = round(this.med, 2), 
         SD       = round(this.sd,2), 
-        range    = paste(round(this.rng,2),collapse = ' .. ')), fill=T)
+        range    = paste(round(this.rng,2),collapse = range.char)), fill=T)
       
      dt.cont1 <- dt.cont[,.(Category, Value='(median±SD, range)', N, `%`=(Median %+% '±' %+% SD %+% ', ' %+% range))]
      dt.full %<>% rbindV(dt.cont1, fill=T)

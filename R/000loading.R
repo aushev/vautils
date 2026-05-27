@@ -291,7 +291,7 @@ savev <- function(..., file, envir = parent.frame()){
   f_size <- as.numeric(f_info$size)
   f_size_p <- scales::label_bytes()(f_size)
 
-  message('Saved file: ' %+% bold(f_path))
+  message('\nSaved file: ' %+% bold(f_path))
   if (!file.exists(f_path)) stop('File not saved!')
 
   cat('\t',yellow(bold(f_time)))
