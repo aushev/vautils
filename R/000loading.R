@@ -346,11 +346,7 @@ loadv1 <- function(fnRdat, index=1, verbose=T){
 
 load <- loadv
 
-require('data.table');
-require('magrittr');
-require('crayon');
-
-filter <- dplyr::filter
+# filter <- dplyr::filter
 
 checkPlus <- function(){
   if (is.null('a'%+%'b')) reload('vautils')

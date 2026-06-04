@@ -7,11 +7,6 @@ resetPar <- function() {
 }
 
 
-reqq(ggplot2)
-
-# annotate <- ggplot2::annotate
-
-
 gg_nogrids <- theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())
 
 legJ.BL <- legJ.DL <- theme(legend.justification=c(0,0)); # bottom-left
