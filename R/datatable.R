@@ -2775,8 +2775,8 @@ dt_sample <- function(dtIn, size, fun_sample=sample, ...){
 
 
 
-
-dtprint <- DT::datatable
+if (requireNamespace("DT", quietly = TRUE))
+  dtprint <- DT::datatable;
 
 #' Get First Row per Group from a data.table
 #'

@@ -2,7 +2,7 @@ Package: vautils
 Type: Package
 Title: data processing routines
 Date: 2026-06-04
-Version: 0.1.2.46
+Version: 0.1.2.47
 Author: Vasily Aushev
 Maintainer: Vasily Aushev <vasily@aushev.name>
 Description: helper functions. under development
@@ -12,6 +12,6 @@ LazyData: true
 Imports: magrittr, data.table, ggplot2, dplyr, crayon
 Roxygen: list(markdown = TRUE)
 Depends: data.table
-Suggests: fs, clipr, scales, zoo, knitr, rstudioapi, googledrive,
+Suggests: fs, clipr, scales, zoo, knitr, rstudioapi, DT, googledrive,
         ggrepel, quantmod
 RoxygenNote: 7.3.3
