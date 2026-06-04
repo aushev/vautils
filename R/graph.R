@@ -300,44 +300,47 @@ gg_replace_geomlabel <- function(inpPlot){
 pmod1 <- function (inp, coefs, lab.x=NA, lab.y=0.4, colors = NULL) 
 {
   # browser()
+  if (is.na(lab.y)) stop('lab.y argument must be not NA')
+  # If colors not provided, use default colors for all labels
+  if (is.null(colors)) {
+    colors <- rep('black', nrow(coefs))
+  } else {
+    # Skip reference group (first color) and use remaining colors for labels
+    colors <- colors[-1]  # Remove reference group color
+    # Recycle colors if needed to match number of comparisons
+    colors <- rep(colors, length.out = nrow(coefs))
+  }
   
-    # If colors not provided, use default colors for all labels
-    if (is.null(colors)) {
-      colors <- rep('black', nrow(coefs))
-    } else {
-      # Skip reference group (first color) and use remaining colors for labels
-      colors <- colors[-1]  # Remove reference group color
-      # Recycle colors if needed to match number of comparisons
-      colors <- rep(colors, length.out = nrow(coefs))
+  # Get the strata names from the fit object in inp
+  strata_names <- names(inp$plot$data$strata)
+  # browser()
+  # Process each row of coefs (each comparison group)
+  cat('\n', bold(cyan(nrow(coefs))),'\n')
+
+  for (i in seq_len(nrow(coefs))) {
+    cat('\n',cyan(i),'\t')
+    lab.s <- sprintf("HR = %.1f [%.1f - %.1f]", coefs$`exp(coef)`[i], coefs$CIl[i], coefs$CIh[i])
+    lab.s <- lab.s %+% ifelse(coefs$p[i] < 0.0005, sprintf("\np = %.2e", coefs$p[i]), sprintf("\np = %.3f", coefs$p[i]))
+    
+    n.risk <- inp$plot$data[inp$plot$data$time == 0, ]$n.risk
+    lab.n <- "N = " %+% paste(n.risk, collapse = "+") %+% " = " %+% sum(n.risk)
+    
+    if (is.na(lab.x)) {
+        lab.x <- max(inp$data.survplot$time) * 0.4
+        if (!is.null(inp$data.survtable)) 
+            lab.x <- max(inp$data.survtable$time) * 0.4
     }
     
-    # Get the strata names from the fit object in inp
-    strata_names <- names(inp$plot$data$strata)
-    # browser()
-    # Process each row of coefs (each comparison group)
-    for (i in seq_len(nrow(coefs))) {
-      lab.s <- sprintf("HR = %.1f [%.1f - %.1f]", coefs$`exp(coef)`[i], coefs$CIl[i], coefs$CIh[i])
-      lab.s <- lab.s %+% ifelse(coefs$p[i] < 0.0005, sprintf("\np = %.2e", coefs$p[i]), sprintf("\np = %.3f", coefs$p[i]))
-      
-      n.risk <- inp$plot$data[inp$plot$data$time == 0, ]$n.risk
-      lab.n <- "N = " %+% paste(n.risk, collapse = "+") %+% " = " %+% sum(n.risk)
-      
-      if (is.na(lab.x)) {
-          lab.x <- max(inp$data.survplot$time) * 0.4
-          if (!is.null(inp$data.survtable)) 
-              lab.x <- max(inp$data.survtable$time) * 0.4
-      }
-      
-      # Adjust label y-position for each comparison (stack vertically)
-      lab.y_adj <- lab.y - (i - 1) * 0.12
-      
-      # Add label with color from palette
-      inp$plot <- 
-        inp$plot + 
-        ggplot2::annotate("text", label=lab.s, color = colors[i], x=lab.x, y=lab.y_adj, hjust=0, size=5)
-    }
+    # Adjust label y-position for each comparison (stack vertically)
+    lab.y_adj <- lab.y - (i - 1) * 0.12
     
-    return(inp)
+    # Add label with color from palette
+    inp$plot <- 
+      inp$plot + 
+      ggplot2::annotate("text", label=lab.s, color = colors[i], x=lab.x, y=lab.y_adj, hjust=0, size=4)
+  }# e. for (i)
+  
+  return(inp)
 } # e. pmod1()
 
 
