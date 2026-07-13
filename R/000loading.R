@@ -158,7 +158,7 @@ reqS <- function(packagename, verbose=T, tryBioconductor=T, reload=F){
 #' }
 #'
 #' @export
-reqq <- function(..., verbose=F, tryBioconductor=T, reload=F){
+reqq <- function(..., verbose=F, tryBioconductor=FALSE, reload=F){
   catV <- ifelse(verbose, cat, function(...){})
   catV('\n=======================================================\n');
 

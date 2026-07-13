@@ -239,7 +239,19 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
     message(' Opening as Google Drive file.');
     #browser()
 
-    drDownloaded <- googledrive::drive_download(fnRead, overwrite = T)
+    
+    dir_save <- getwd()
+    meta     <- googledrive::drive_get(fnRead)
+    meta_fn  <- meta$name
+    meta_ext <- tools::file_ext(meta_fn)
+    fn_save  <- if (nchar(meta_ext) > 0) meta_fn else paste0(meta_fn, ".xlsx")
+    fn_save  %<>% fs::path_sanitize()
+    dest <- file.path(dir_save, fn_save)
+    
+    if (!file.exists(dest) & (basename(dest) %in% list.files(dir_save, all.files = TRUE))){
+      message(' Seems the file already exists as a stub.');
+      drDownloaded <- dest
+    } else drDownloaded <- googledrive::drive_download(fnRead, path=dest, overwrite = T)
 
     # retTry <- tryCatch(
     #   expr = {
@@ -287,6 +299,9 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
     else if (substrRight(fnRead,3) == 'zip') {
       filetype <- 'zip';
     }
+    else if (tolower(tools::file_ext(fnRead)) %in% c('rdata', 'rdat')) {
+      filetype <- 'rdata';
+    }
     else {filetype <- 'auto';}
     cat(' as ', bold(filetype));
   }
@@ -322,6 +337,43 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
     reqq('foreign', verbose = F);
     rez <- foreign::read.spss(fnRead);
     rez <- as.data.table(rez);
+  }
+  else if (filetype == 'zip') {
+        cat(' unzipping and reading...\n');
+        tmp_dir <- tempfile(pattern = 'flexread_zip_')
+        dir.create(tmp_dir)
+        on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+        utils::unzip(fnRead, exdir = tmp_dir)
+        zip_files <- list.files(tmp_dir, full.names = TRUE, recursive = TRUE)
+        if (length(zip_files) == 0) stop('No files found in zip archive: ', fnRead)
+        message(' Found ', length(zip_files), ' file(s) in zip. Reading...')
+        args_zip <- mget(
+          setdiff(names(formals(flexread)), c("fnRead", "filetype", "...")),
+          envir = environment(),
+          inherits = TRUE
+        )
+        rez_list <- lapply(zip_files, function(f) {
+          do.call(flexread, c(list(fnRead = f, filetype = NULL), args_zip, list(...)))
+        })
+        rez_list <- Filter(Negate(is.null), rez_list)
+        if (length(rez_list) == 0) stop('All files in zip archive failed to read.')
+        rez <- rbindlist(rez_list, fill = TRUE, use.names = TRUE)
+        cat('Success:', paste(dim(rez), collapse = ' x '), '\n')
+        return(rez)
+  } # e. filetype == 'zip'
+  else if (filetype == 'rdata') {
+    cat(' with loadv()... \n');
+    load_env <- new.env(parent = emptyenv())
+    loadv(fnRead, envir = load_env)
+    obj_names <- ls(load_env)
+    if (length(obj_names) == 0) stop('No objects found in RData file: ', fnRead)
+    if (length(obj_names) > 1) {
+      warning('Multiple objects in RData file (returning first): ', paste(obj_names, collapse = ', '))
+      message(' Objects found: ', paste(bold(obj_names), collapse = ', '))
+    }
+    rez <- get(obj_names[1], envir = load_env)
+    if (!is.data.frame(rez)) warning('Loaded object is not a data.frame; attempting coercion.')
+    rez <- as.data.table(rez)
   }
   else {
     cat(' with fread... ');
@@ -2861,18 +2913,20 @@ dt_first <- function(dtIn, by=key(dtIn), orderby=NULL){
 #' )
 #'
 #' @export
-dt_last <- function(dtIn, by = key(dtIn), orderby, return_all=FALSE, byref=TRUE, comment=NULL){ # dt_last_record
+dt_last <- function(dtIn, by = key(dtIn), orderby=NULL, return_all=FALSE, byref=TRUE, comment=NULL){ # dt_last_record
   cat(italic(silver(comment)))
   if (is.null(by))      warning('No key provided!')
-  if (is.null(orderby)) stop('orderby must be provided!')
+  #if (is.null(orderby)) stop('orderby must be provided!')
   if (byref==FALSE) dtIn <- copy(dtIn)
 
   if (return_all==FALSE) {
-    dtIn %<>% setorderv(orderby, na.last=FALSE) # ,order=-1
+    if (!is.null(orderby))
+      dtIn %<>% setorderv(orderby, na.last=FALSE) # ,order=-1
     return(dtIn[, .SD[.N], by = c(by)])
   }
 
   if (return_all==TRUE){
+    if (is.null(orderby)) stop('Not implemented!')
     dtIn %<>% setorderv(c(by,orderby), na.last=FALSE)
     return(dtIn[
       dtIn[, .SD[.N], by = c(by), .SDcols = orderby],
@@ -2970,11 +3024,21 @@ filterC <- function(input, ..., comment=NULL){
   }
   cat('\n')
   cat(italic(silver(comment)))
-  cat('Before filter:\t', red(sizeOld))
+  cat(red(sizeOld))
+
+  dots <- substitute(list(...))[-1]
+  dots_str <- paste(sapply(dots, deparse), collapse = ", ")
+
   input <- filter(input, ...)
   sizeNew <- length(input)
   if (is.data.table(input) | is.data.frame(input)) sizeNew <- nrow(input)
-  cat('. After filter:\t', red(sizeNew), '\n')
+  cat('\t->\t', 
+    red(sizeNew),
+    '\t', 
+    percent(sizeNew/sizeOld),
+    '\t')
+   cat(' [', blue(dots_str), ']')  # NEW: Print filter conditions
+ 
   return(input)
 }
 
@@ -3109,3 +3173,105 @@ dt_class_convert <- function(dtIn, class_from, fun_convert, cols=NA){
 }
 
 
+dt_explore_column_levels <- function(dt_in, threshold=6){
+  vec.small <- c()
+  for (i in names(dt_in)){
+    cat('\n', bold(i),'\t')
+    this_values <- dt_in[[i]] 
+    nLevels <- uniqueN(this_values)
+    
+    if (nLevels<threshold) {
+      vec.small %<>% c(i)
+      cat(bold(green(nLevels)))
+    } else {
+      cat(red(nLevels))
+    }
+  }
+ return(vec.small)
+}
+
+
+#' Append a note to a character column in a data.table
+#'
+#' Appends a string (`note`) to a character column in a data.table, optionally
+#' restricting to rows matching a condition and/or skipping rows where the note
+#' already exists. Designed for use with the pipe-assign operator `%<>%`.
+#'
+#' @param dtIn A `data.table`. Modified and returned.
+#' @param colname Character. Name of the column to append to. If the column does
+#'   not exist it is created as `NA_character_` before appending.
+#' @param note Character. The string to append.
+#' @param condition Character string containing an R expression (e.g.
+#'   `'Petal.Length > 5'`) that is evaluated in the context of `dtIn` to select
+#'   rows. `NA` (default) applies the note to all rows.
+#' @param sep Character. Separator inserted between existing content and the new
+#'   `note`. Defaults to `'; '`.
+#' @param dedup Controls duplicate-checking behaviour. One of:
+#'   \describe{
+#'     \item{`NA`}{No check performed (default).}
+#'     \item{`'global'`}{Splits every value in `colname` by `sep` and scans the
+#'       whole column. If `note` is found anywhere, the function returns
+#'       immediately without making any changes.}
+#'     \item{`'row'`}{Applies the note only to rows where (a) `condition` is
+#'       `TRUE` (if provided) and (b) `note` is not already present in that
+#'       row's value of `colname`.}
+#'   }
+#' @param do.trimws Logical. If `TRUE` (default), whitespace is trimmed from
+#'   the tokens produced by splitting `colname` values before checking whether
+#'   `note` is already present. Applies to both `dedup = 'global'` and
+#'   `dedup = 'row'`.
+#'
+#' @return The modified `data.table`, invisibly suitable for `%<>%`.
+#'
+#' @examples
+#' library(data.table)
+#' dt <- as.data.table(iris)
+#'
+#' # Append unconditionally
+#' dt %<>% dt_addnote(colname = 'Note', note = 'Checked')
+#'
+#' # Append only where condition is met
+#' dt %<>% dt_addnote(colname = 'Note', note = 'Long petal!',
+#'                    condition = 'Petal.Length > 5')
+#'
+#' # Skip rows that already have the note
+#' dt %<>% dt_addnote(colname = 'Note', note = 'Long petal!',
+#'                    condition = 'Petal.Length > 5', dedup = 'row')
+#'
+#' # Skip the entire operation if the note exists anywhere in the column
+#' dt %<>% dt_addnote(colname = 'Note', note = 'Long petal!',
+#'                    condition = 'Petal.Length > 5', dedup = 'global')
+dt_addnote <- function(dtIn, colname, note, condition=NA, sep='; ', dedup=NA, do.trimws=TRUE){
+  if (dtIn %hasnames% colname && !is.na(dedup) && dedup=='global'){
+    existing <- unlist(strsplit(dtIn[[colname]], sep, fixed = TRUE))
+    if (isTRUE(do.trimws)) existing %<>% trimws()
+    if (note %in% existing) return(dtIn)
+  }
+
+  if (! dtIn %hasnames% colname){
+    message('Column ', bold(colname), " doesn't exist, will be added.")
+    dtIn[, c(colname) := NA_character_ ]
+  }
+
+  # 'each': build a logical vector marking rows that don't yet have the note
+  note_absent <- if (not.na(dedup) && dedup == 'row') {
+    my_check <- function(x) !note %in% x;
+    if (isTRUE(do.trimws)) my_check <- function(x) !note %in% trimws(x);
+    vapply(strsplit(dtIn[[colname]], sep, fixed = TRUE), my_check, logical(1))
+  } else NULL
+
+  # Combine condition string and note_absent into a single i-expression
+  i_parts <- c(
+    if (not.na(condition))       condition,
+    if (!is.null(note_absent)) "note_absent"
+  )
+
+  if (length(i_parts) == 0) {
+    dtIn[, c(colname) := get(colname) %++% sep %+% note]
+  } else {
+    i_expr <- parse(text = paste(i_parts, collapse = " & "))
+    dtIn[eval(i_expr), c(colname) := get(colname) %++% sep %+% note]    
+  }
+
+  dtIn 
+} # e. dt_addnote()

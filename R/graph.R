@@ -1,3 +1,5 @@
+require(ggplot2)
+
 # reset graphic state
 resetPar <- function() {
   dev.new()
