@@ -152,6 +152,33 @@ paste0ignNA <- function(arg1, arg2){
 # cs('A B') %+% c('1', NA): 'A1', 'B'
 
 
+#' Compound String Concatenation Assignment
+#'
+#' Appends a string to a variable in place. `myvar %<+>% rhs` is equivalent to
+#' `myvar <- myvar %+% rhs`. Uses non-standard evaluation to capture the
+#' left-hand side variable name and reassign it in the caller's environment.
+#'
+#' @param lhs A bare variable name to update.
+#' @param rhs A character string (or value coercible via `%+%`) to append.
+#'
+#' @return Invisibly returns the new value; the primary effect is the assignment
+#'   of `lhs %+% rhs` back to `lhs` in the calling environment.
+#'
+#' @note Only works when `lhs` is a simple variable name. Complex left-hand
+#'   sides (e.g. `mylist$x`) are not supported.
+#'
+#' @examples
+#' x <- "hello"
+#' x %<+>% " world"
+#' x  # "hello world"
+#'
+#' @export
+`%<+>%` <- function(lhs, rhs) {
+  lhs_name <- deparse(substitute(lhs))
+  assign(lhs_name, lhs %+% rhs, envir = parent.frame())
+}
+
+
 paste0notNA <- function(arg1, arg2){
   if (length(arg1)==1 && length(arg2)==1 && not.na(arg1) && not.na(arg2)) return(paste0(arg1,arg2));
   if (length(arg1)==0) return(arg2);

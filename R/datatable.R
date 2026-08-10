@@ -223,10 +223,10 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
 
 #  browser()
 
-  re.gid <- '.*[?&]id=([a-zA-Z0-9_-]+).*'
+  re.gid <- '.*[?&]id=([a-zA-Z0-9_-]{33,44}).*'
   if (fnRead %~~% re.gid){fnRead <- gsub(re.gid,'\\1',fnRead)}
 
-  re.gid <- ".*/d/([a-zA-Z0-9_-]+)/?.*"
+  re.gid <- ".*/d/([a-zA-Z0-9_-]{33,44})/?.*"
   if (fnRead %~~% re.gid){fnRead <- gsub(re.gid,'\\1',fnRead)}
 
 
@@ -2288,7 +2288,7 @@ rbindV <- function(...,fill=T){
   # if (!'fill' %in% names(arglist)) {
   #   fill<-T;
   #   } else fill <- arglist[['fill']];
-  re.attr <- 'Class attribute on column (.*) of item (.*) does not match with column (.*) of item (.*).'
+  re.attr <- 'Class attribute on column (\\d+) of item (\\d+) does not match with column (\\d+) of item (\\d+).*'
 
   key1 <- if (is.data.table(arglist[[1]])) data.table::key(arglist[[1]]) else NULL
 
@@ -2301,16 +2301,17 @@ rbindV <- function(...,fill=T){
       if (errmsg$message %~~% re.attr){
         itemN1 <- gsub(re.attr,'\\4',errmsg$message)
         itemN2 <- gsub(re.attr,'\\2',errmsg$message)
-        col1 <- gsub(re.attr,'\\3',errmsg$message)
-        col2 <- gsub(re.attr,'\\1',errmsg$message)
+        col1   <- gsub(re.attr,'\\3',errmsg$message)
+        col2   <- gsub(re.attr,'\\1',errmsg$message)
         dt1 <- arglist[[as.numeric(itemN1)]]
         dt2 <- arglist[[as.numeric(itemN2)]]
         name1 <- names(dt1)[as.numeric(col1)]
         name2 <- names(dt2)[as.numeric(col2)]
-        class1 <- paste(class(dt1[[name1]]), collapse = ',')
-        class2 <- paste(class(dt2[[name2]]), collapse = ',')
-        message(sprintf('Item %s: column %s (%s): %s', itemN1, bold(col1), bold(name1), bold(class1)))
-        message(sprintf('Item %s: column %s (%s): %s', itemN2, bold(col2), bold(name2), bold(class2)))
+        class1 <- paste(class(dt1[[name1]]), collapse = ', ')
+        class2 <- paste(class(dt2[[name2]]), collapse = ', ')
+        message(sprintf('Item %s: column %s (%s): %s', bold(itemN1), bold(col1), italic(silver(name1)), bold(class1)))
+        message(sprintf('Item %s: column %s (%s): %s', bold(itemN2), bold(col2), italic(silver(name2)), bold(class2)))
+#        browser()
       }
       stop(errmsg);
       return(NULL);
@@ -3234,7 +3235,7 @@ dt_explore_column_levels <- function(dt_in, threshold=6){
 #' dt %<>% dt_addnote(colname = 'Note', note = 'Long petal!',
 #'                    condition = 'Petal.Length > 5')
 #'
-#' # Skip rows that already have the note
+#' # Skip rows that already have _this_ note
 #' dt %<>% dt_addnote(colname = 'Note', note = 'Long petal!',
 #'                    condition = 'Petal.Length > 5', dedup = 'row')
 #'
@@ -3269,7 +3270,7 @@ dt_addnote <- function(dtIn, colname, note, condition=NA, sep='; ', dedup=NA, do
   if (length(i_parts) == 0) {
     dtIn[, c(colname) := get(colname) %++% sep %+% note]
   } else {
-    i_expr <- parse(text = paste(i_parts, collapse = " & "))
+    i_expr <- parse(text = paste(paste0("(", i_parts, ")"), collapse = " & "))
     dtIn[eval(i_expr), c(colname) := get(colname) %++% sep %+% note]    
   }
 
