@@ -4,7 +4,7 @@
 \alias{reqq}
 \title{Install (if needed) and attach one or more packages}
 \usage{
-reqq(..., verbose = F, tryBioconductor = T, reload = F)
+reqq(..., verbose = F, tryBioconductor = FALSE, reload = F)
 }
 \arguments{
 \item{verbose}{\code{logical(1)}. If \code{TRUE}, prints progress messages.}

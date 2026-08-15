@@ -13,6 +13,6 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{magrittr}{\code{\link[magrittr:pipe-eager]{\%!>\%}}, \code{\link[magrittr:compound]{\%<>\%}}, \code{\link[magrittr:tee]{\%T>\%}}}
+  \item{magrittr}{\code{\link[magrittr:\%!>\%]{\%!>\%}}, \code{\link[magrittr:\%<>\%]{\%<>\%}}, \code{\link[magrittr:\%T>\%]{\%T>\%}}}
 }}
 

@@ -7,7 +7,7 @@
 dt_last(
   dtIn,
   by = key(dtIn),
-  orderby,
+  orderby = NULL,
   return_all = FALSE,
   byref = TRUE,
   comment = NULL

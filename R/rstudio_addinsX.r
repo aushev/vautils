@@ -90,21 +90,6 @@ selectionTab <- function(){
 
 } # e. selectionTab
 
-#' Calls tab() for an object identified by the provided text string.
-#' Invoked by the vautils-positron extension, which captures the text
-#' from the active editor or console at keybinding time.
-#' @export
-selectionTab_ext <- function(sel_text) {
-  if (sel_text == '') { message(' Nothing selected! '); return(invisible(NULL)) }
-  sel_obj <- txt2obj(sel_text)
-  if (grepl('tab\\(', sel_text)) {
-    this_tab <- sel_obj
-  } else {
-    this_tab <- tab(sel_obj)
-  }
-  View(this_tab, title = sel_text)
-} # e. selectionTab_ext
-
 
 
 expFun <- function(){
@@ -135,11 +120,11 @@ flexread_clip <- function(fnOri=fromClip(), obj_open='dt1', write_code=T){
   checkPlus()
   if (file.exists(fnOri)){
     message('Existing file found! \nExtension: ' %+% tools::file_ext(fnOri))
-    txt2inp <- sprintf("fn1 <- '%s';\n", gsub('\\','/',fnOri, fixed=TRUE))
+    txt2inp <- sprintf("fn1 <- '%s';\n", gsub('\\\\','/',fnOri))
     txt2inp <- txt2inp %+% 'dt1 <- flexread(fn1, deluseless = T)\n'
     if (tools::file_ext(fnOri) %~~i% 'Rdat'){
       message('RDat file')
-      txt2inp <- sprintf("loadv('%s')\n", gsub('\\','/',fnOri, fixed=TRUE))
+      txt2inp <- sprintf("loadv('%s')\n", gsub('\\\\','/',fnOri))
       obj_open <- NA
     }
 
