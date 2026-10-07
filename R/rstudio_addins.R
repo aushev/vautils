@@ -77,6 +77,25 @@ selectionView <- function(){
   }
 } # e. selectionView
 
+#' Views the object identified by the provided text string.
+#' Invoked by the vautils-positron extension, which captures the text
+#' from the active editor or console at keybinding time.
+#' @export
+selectionView_ext <- function(sel_text) {
+  if (sel_text == '') { message(' Nothing selected! '); return(NULL) }
+  sel_obj <- txt2obj(sel_text)
+  if ('ExpressionSet' %in% class(sel_obj) | 'RccSet' %in% class(sel_obj)) {
+    View(exprs(sel_obj),  title = paste0(sel_text, '$X'))
+    View(fData(sel_obj),  title = paste0(sel_text, '$F'))
+    View(pData(sel_obj),  title = paste0(sel_text, '$P'))
+  } else if (is.function(sel_obj)) {
+    message('Function ', sel_text, '() will be debugged once. ')
+    debugonce(sel_obj)
+  } else {
+    View(sel_obj, title = sel_text)
+  }
+} # e. selectionView_ext
+
 #' Calls tab() for selected object
 selectionTab <- function(){
   sel_text <- getrseltxt();
