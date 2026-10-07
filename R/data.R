@@ -590,36 +590,29 @@ minDate <- function(inpX, na.rm=T) {
 # maxI() and minI(): modified max() and min();
 # when input is NA only, return NA instead of Inf
 #' @export
-maxI <- function(inp){
-  inp <- na.omit(inp)
-  if (length(inp)==0) {
-     if (is.integer(inp)) {
-       return(NA_integer_);
-     } else if (inp %inherits% 'Date') {
-       return(as.Date(NA))
-     } else if (is.character(inp)) {
-       return(NA_character_)
-     } else return(NA_real_);
-  } # e. if length 0
+maxI <- function(inp) {
+  if (all(is.na(inp))) inp[NA_integer_] else max(inp, na.rm = TRUE)
+}
 
-  return(max(inp))
+
+#' @export
+minI <- function(inp) {
+  if (all(is.na(inp))) inp[NA_integer_] else min(inp, na.rm = TRUE)
 }
 
 #' @export
-minI <- function(inp){
-  inp <- na.omit(inp)
-  if (length(inp)==0) {
-    if (is.integer(inp)) {
-      return(NA_integer_);
-    } else if (inp %inherits% 'Date') {
-      return(as.Date(NA))
-    } else if (is.character(inp)) {
-      return(NA_character_)
-    } else return(NA_real_);
-  } # e. if length 0
-
-  return(min(inp))
+firstI <- function(inp) {
+  if (all(is.na(inp))) inp[NA_integer_] else first(na.omit(inp))
 }
+
+#' @export
+lastI <- function(inp) {
+  if (all(is.na(inp))) inp[NA_integer_] else last(na.omit(inp))
+}
+
+
+
+
 
 medianI <- function(inp, digs=NA){
   inp <- na.omit(inp)

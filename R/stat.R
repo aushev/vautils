@@ -464,22 +464,16 @@ between <- function (x, lower, upper, incbounds = TRUE, NAbounds = TRUE,
 # Checks if `x` falls in any of the intervals provided in `rng`
 # vectorized for `x`
 mybetween <- function(x, rng, incbounds=F, NAbounds=NA){
-  if (length(rng)== 0) {
-    return(rep(F,length(x)))
-    # browser()
-    # stop('provided range is empty!')
-  }
-  # if (length(rng) != 2 & length(rng) != 2*length(x)) {
-  #   message('Length of rng: ' %+% length(rng))
-  #   message('Length of x: ' %+% length(x))
-  #   # browser()
-  #   # stop('range must be length 2 or 2x .')
-  # }
-  n<-length(x);
-#  browser()
-  lower <- ifelse1(length(rng)>2, rng[1:n],         rng[1]) # WTF!!! ifelse doesn't work!
-  upper <- ifelse1(length(rng)>2, rng[(n+1):(2*n)], rng[2]) # WTF!!! ifelse doesn't work!
-  between(x,lower,upper,incbounds=incbounds, NAbounds = NAbounds)
+  n <- length(x)
+  if (length(rng) == 0) return(rep(F, n))
+  if (length(rng) == 2) {                  # one interval for all x
+    lower <- rng[1]
+    upper <- rng[2]
+  } else if (length(rng) == 2*n) {         # one interval per x: n lower bounds, then n upper bounds
+    lower <- rng[1:n]
+    upper <- rng[(n+1):(2*n)]
+  } else stop('%bw%: range must have length 2 or 2*length(x); got length(x)=', n, ', length(range)=', length(rng))
+  between(x, lower, upper, incbounds=incbounds, NAbounds=NAbounds)
 }
 
 `%bw%`   <- function(x,rng){mybetween(x,rng, incbounds=F);}

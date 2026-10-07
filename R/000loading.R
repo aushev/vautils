@@ -326,6 +326,22 @@ loadv <- function(file=NULL, envir = parent.frame(n=1L), verbose=T){
   cat('\t',blue(bold(file_size)),'\t')
 
   returned.objects <- base::load(file, envir = envir, verbose=verbose)
+
+  if (verbose) {
+    cat('\n')
+    for (obj_name in returned.objects) {
+      obj <- get(obj_name, envir = envir)
+      d <- dim(obj)
+      dim_str <- if (!is.null(d)) {
+            paste0('[', paste(d, collapse = ' \u00d7 '), ']')  # e.g. [1000 × 25]
+          } else {
+            paste0('[length: ', length(obj), ']')              # vectors, lists
+      }
+      cat('\t', bold(obj_name), ':\t', italic(class(obj)[1]), dim_str, '\n')
+    }
+  }
+
+  
   if ('run_on_load_dat' %in% returned.objects) {
     cat('\n Running', italic('run_on_load_dat()'))
     run_on_load_dat()

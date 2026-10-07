@@ -198,7 +198,10 @@ ggsaveopen <- function(
   if (use_print==T){
    message('Using print')    
    do.call(device, args = device_args)
-   on.exit(expr = grDevices::dev.off(), add = TRUE)
+   # Guarded cleanup: closes the device only if it is still open (the explicit
+   # dev.off() below normally closes it first), so no 'null device' error.
+   dev.id <- grDevices::dev.cur()
+   on.exit(expr = if (dev.id %in% grDevices::dev.list()) grDevices::dev.off(dev.id), add = TRUE)
    print(inpPlot, newpage=FALSE)
 
    if (isTRUE(multipage_device && any(not.na(debug_text)))) {
@@ -218,7 +221,7 @@ ggsaveopen <- function(
         gp = grid::gpar(fontsize = 9, fontfamily = "mono")
       )
    } # e. if (multipage)
-  grDevices::dev.off()
+  grDevices::dev.off(dev.id)
     
   } else if (is.list(inpPlot)) {
     message('Plot is a list. Printing with ', bold('ggpubr::ggexport()'))
