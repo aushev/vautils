@@ -147,94 +147,115 @@ annotation_compass <- function(label,position='N',
 
 
 
+
+# Resolve the graphics device. Returns list(fun, bitmap, multipage); fun is NULL when ggsave() should infer it from the extension.
+#  - default for PDF: cairo_pdf() (pdf() if cairo is unavailable)
+#  - macOS: pdf()/cairo_pdf()/png() fail with system fonts, so use quartz
+ggsaveopen_device <- function(device, ext) {
+  if (is.character(device)) device <- match.fun(device)
+
+  if (is.null(device)) {
+    # Other formats (tiff, jpeg, svg, ...): let ggsave() infer the device from the extension.
+    if (nzchar(ext) && !ext %in% c("pdf", "png")) {
+      return(list(fun = NULL, bitmap = FALSE, multipage = FALSE))
+    }
+    if (ext != "png" && ext != "pdf") message("No file extension! Using pdf by default.")
+    device <- if (ext == "png") grDevices::png
+              else if (isTRUE(capabilities("cairo"))) grDevices::cairo_pdf
+              else grDevices::pdf
+  }
+
+  is_pdf <- (device %===% grDevices::pdf) || (device %===% grDevices::cairo_pdf)
+  is_png <- (device %===% grDevices::png)
+
+  if (Sys.info()[["sysname"]] == "Darwin" && exists("quartz", mode = "function")) {
+    if (is_pdf) device <- function(filename, width = 8, height = 8,            ...) {grDevices::quartz(file = filename, width = width, height = height, type = "pdf")}
+    if (is_png) device <- function(filename, width = 8, height = 8, res = 300, ...) {grDevices::png(          filename, width = width, height = height, units = "in", res = res, type = "quartz")}
+  }
+  list(fun = device, bitmap = is_png, multipage = is_pdf)
+} # e. ggsaveopen_device()
+
+
+# Open device, print every plot, optionally add a debug-text page, close device.
+ggsaveopen_draw <- function(device, device_args, plots, debug_text = NA) {
+  do.call(device, device_args)
+  id <- grDevices::dev.cur()
+  # Closes the device even on error; the file is complete when this function returns.
+  on.exit(if (id %in% grDevices::dev.list()) grDevices::dev.off(id))
+
+  for (one_plot in plots) print(one_plot)
+
+  if (any(!is.na(debug_text))) {
+    message("Printing debug_text.")
+    grid::grid.newpage()
+    grid::grid.text(
+      debug_text,
+      x    = grid::unit(0.02, "npc"), 
+      y    = grid::unit(0.98, "npc"),
+      just = c("left", "top"),
+      gp   = grid::gpar(fontsize = 9, fontfamily = "mono")
+    )
+  } # e. if (debug_text)
+} # e. ggsaveopen_draw()
+
+# Cross-platform ggsaveopen(): save a plot (or list of plots) to PDF/PNG and open it.
+# Platform quirks are isolated in ggsaveopen_device(); path and launch use file_*().
 ggsaveopen <- function(
-  fn, 
-  inpPlot=last_plot(), 
-  OUT=2, 
-  device=NULL, 
-  dir=NULL, 
-  use_print=F, 
-  width=8, height=8, res=300, 
-  debug_text=NA, 
-  ...){
- 
-  if (exists('OUT') && OUT==0) {message("OUT==0. Skipping saving. "); return(FALSE);}
-  fn <- trimws(fn)
-  fn_dir  <- dir
-  if (is.null(fn_dir)) fn_dir <- fs::path_dir(fn)
-  fn_name <- fs::path_sanitize(fs::path_file(fn))
+    fn,
+    inpPlot = last_plot(),
+    OUT = 2,                # 0 = skip, 1 = save only, 2 = save and open
+    device = NULL,          # function, or name such as "pdf", "png", "cairo_pdf"
+    dir = NULL,
+    use_print = FALSE,      # draw with print() on an explicit device instead of ggsave()
+    width = 8, height = 8, res = 300,
+    debug_text = NA,        # extra last page (multipage devices, use_print path only)
+    ...) {
 
-  fn <- ifelse(fn_dir=='.',fn_name,fs::path(fn_dir,fn_name))
-  ext <- tools::file_ext(fn_name)
-  #if (!exists('device') || is.na(device)) device <- ext;
-  if (file.exists(fn)) {warning('File already exists! Will try to save under different name. '); fn <- gsub(fn_name,nicedate() %+% fn_name,fn, fixed = T)}
-  message('Saving as ' %+% bold(fn) )
-
-  if (ext=='pdf' && is.null(device)) device <- grDevices::pdf
-  if (ext=='png' && is.null(device)) device <- grDevices::png
-  if (is.null(device)){
-    message('Device not defined! Using pdf by default.')
-    device <- grDevices::pdf
-  }
-#  browser()
-  message('Input plot is of class:\t', paste0(bold(class(inpPlot)), collapse = ', '))
-
-  device_args <- list(
-    file    = fn,
-    width   = width,
-    height  = height
-  )
-  if (device %===% png) {
-    device_args$res <- res
-    device_args$units <- "in"
+  if (OUT == 0) {
+    message("OUT==0. Skipping saving.")
+    return(invisible(FALSE))
   }
 
+  fn  %<>% file_safeSavePath(dir, create_dir = TRUE)
+  ext <- tolower(tools::file_ext(fn))
+  dev <- ggsaveopen_device(device, ext)
 
-  multipage_device <- (device %===% pdf) || (device %===% cairo_pdf)  
+  message("Saving as ", crayon::bold(fn))
+  message("Input plot is of class:\t", paste(crayon::bold(class(inpPlot)), collapse = ", "))
 
-#  browser()
+  # A plain list is a list of separate plots; ggplot/ggsurvplot objects are not.
+  is_plot_list <- class(inpPlot) %===% "list"
 
-
-  if (use_print==T){
-   message('Using print')    
-   do.call(device, args = device_args)
-   # Guarded cleanup: closes the device only if it is still open (the explicit
-   # dev.off() below normally closes it first), so no 'null device' error.
-   dev.id <- grDevices::dev.cur()
-   on.exit(expr = if (dev.id %in% grDevices::dev.list()) grDevices::dev.off(dev.id), add = TRUE)
-   print(inpPlot, newpage=FALSE)
-
-   if (isTRUE(multipage_device && any(not.na(debug_text)))) {
-      message('Printing debug_text.')
-      grid::grid.newpage()
-      # browser()
-
-      debug_text_wrapped <- 
-        debug_text
-        # paste(strwrap(debug_text, width = 100), collapse = "\n")
-    
-      grid::grid.text(
-        label = debug_text_wrapped,
-        x = grid::unit(x = 0.02, units = "npc"),
-        y = grid::unit(x = 0.98, units = "npc"),
-        just = c("left", "top"),
-        gp = grid::gpar(fontsize = 9, fontfamily = "mono")
-      )
-   } # e. if (multipage)
-  grDevices::dev.off(dev.id)
-    
-  } else if (is.list(inpPlot)) {
-    message('Plot is a list. Printing with ', bold('ggpubr::ggexport()'))
-    ggpubr::ggexport(filename=fn,plot=inpPlot, device=device, width=width, height=height, ...)
+  if (use_print || is_plot_list || inherits(inpPlot, "ggsurvplot")) {
+    if (is.null(dev$fun)) {
+      stop("Printing a plot list / ggsurvplot / use_print=TRUE to '.", ext, "' requires an explicit `device`.", call. = FALSE)
+    }
+    message(if (is_plot_list) "Plot is a list. Printing each plot." else "Using print")
+    device_args <- c(
+      list(fn, width = width, height = height),
+      if (dev$bitmap) list(res = res, units = "in"),
+      list(...)
+    )
+    ggsaveopen_draw(
+      dev$fun, device_args,
+      plots = if (is_plot_list) inpPlot else list(inpPlot),
+      debug_text = if (dev$multipage) debug_text
+    )
   } else {
-    message('Printing with ', bold('ggsave()'))
-    ggsave(fn, inpPlot, device=device, width=width, height=height,  ...)
+    message("Printing with ", crayon::bold("ggsave()"))
+    ggplot2::ggsave(fn, inpPlot, device = dev$fun, width = width, height = height, dpi = res, ...)
   }
-  if (exists('OUT') & OUT==1) {message("Saved but won't be open. "); return(FALSE);}
-  cmd_str <- ifelse(Sys.info()['sysname'] == 'Windows', 'cmd /C "', 'open "')
-  ret <- system(command = paste0(cmd_str, fn, '"'), wait = F);
-#  browser()
+
+  if (OUT == 1) {
+    message("Saved but won't be open.")
+    return(invisible(FALSE))
+  }
+  file_launch(fn)
+  invisible(fn)
 }
+
+
+
 
 
 # https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette

@@ -284,6 +284,7 @@ trylocs <- function(..., req=F, all=F){
 
 
 savev <- function(..., file, envir = parent.frame()){
+  file %<>% file_safeSavePath(on_exists = "overwrite", create_dir = TRUE)
   base::save(..., file = file, envir=envir)
   f_info <- fs::file_info(file)
   f_path <- f_info$path %>% path.expand %>% fs::path_abs()

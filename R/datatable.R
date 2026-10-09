@@ -55,6 +55,7 @@ save_DT <- function(dtIn, fnSaveTo=NULL, quote=F, sep="\t", header=T, row.names=
     if (sep=='\t') fnSaveTo <- paste0(fnSaveTo, '.tsv');
     if (sep==',')  fnSaveTo <- paste0(fnSaveTo, '.csv');
   }
+  fnSaveTo %<>% file_safeSavePath(on_exists = "overwrite", create_dir = TRUE)
   cat('Saving', nrow(dtIn),'records to:', fnSaveTo, "... ");
   con <- file(fnSaveTo, open="wt")
   if (!is.null(commentString)) writeLines(paste0('# ',commentString), con)
@@ -73,7 +74,7 @@ inexcel <- function(dtIn, row.names=F, na='', name_dt=NA, quotize=c(), ...){
     dtIn[not.na(get(q.col)), c(q.col):="'" %+% get(q.col)]
   }
   save_DT(dtIn, fnSaveTo = fn_save, na=na, ...)
-  system(command = paste0('cmd /C ', fn_save), wait = FALSE);
+  file_launch(fn_save)
   return(fn_save);
 }
 
@@ -98,7 +99,7 @@ inexcel2 <- function(dtIn, row.names=F, na='', name_dt=NA, ...){
   openxlsx::writeData(wb,name_sheet,dtIn)
 
   openxlsx::saveWorkbook(wb, file = fn_save,overwrite = T)
-  system('cmd /C ' %+% fn_save)
+  file_launch(fn_save)
 
   return(fn_save)
 
@@ -245,8 +246,7 @@ flexread <- function(fnRead, sheetIndex=1, sheetName=NA,
     meta_fn  <- meta$name
     meta_ext <- tools::file_ext(meta_fn)
     fn_save  <- if (nchar(meta_ext) > 0) meta_fn else paste0(meta_fn, ".xlsx")
-    fn_save  %<>% fs::path_sanitize()
-    dest <- file.path(dir_save, fn_save)
+    dest <- file_safeSavePath(fn_save, dir = dir_save, on_exists = "overwrite")
     
     if (!file.exists(dest) & (basename(dest) %in% list.files(dir_save, all.files = TRUE))){
       message(' Seems the file already exists as a stub.');
